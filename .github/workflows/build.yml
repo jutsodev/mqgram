@@ -42,6 +42,7 @@ jobs:
           mkdir -p build-system/bazel-rules
           _clone_at() {
             local dir="$1" url="$2" sha="$3"
+            rm -rf "$dir"
             mkdir -p "$dir"
             git -C "$dir" init -q
             git -C "$dir" remote add origin "$url"
