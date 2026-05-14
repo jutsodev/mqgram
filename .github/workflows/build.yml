@@ -161,6 +161,7 @@ jobs:
           python3 -u build-system/Make/Make.py \
             --cacheDir="$CACHE_DIR" \
             --bazelUserRoot="$BAZEL_USER_ROOT" \
+            --overrideXcodeVersion \
             build \
             --configurationPath="build-system/ci-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
