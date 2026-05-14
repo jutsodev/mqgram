@@ -30,12 +30,15 @@ jobs:
           mv /Users/Shared/$(basename $GITHUB_WORKSPACE) /Users/Shared/telegram-ios
 
       - name: Inject API secrets into config
-        if: ${{ secrets.TELEGRAM_API_ID != '' }}
         run: |
           CONFIG="/Users/Shared/telegram-ios/build-system/appstore-configuration.json"
-          sed -i '' "s/\"api_id\": \"[^\"]*\"/\"api_id\": \"$TELEGRAM_API_ID\"/" "$CONFIG"
-          sed -i '' "s/\"api_hash\": \"[^\"]*\"/\"api_hash\": \"$TELEGRAM_API_HASH\"/" "$CONFIG"
-          echo "Injected API secrets from GitHub Secrets"
+          if [ -n "$TELEGRAM_API_ID" ]; then
+            sed -i '' "s/\"api_id\": \"[^\"]*\"/\"api_id\": \"$TELEGRAM_API_ID\"/" "$CONFIG"
+            sed -i '' "s/\"api_hash\": \"[^\"]*\"/\"api_hash\": \"$TELEGRAM_API_HASH\"/" "$CONFIG"
+            echo "Injected API secrets from GitHub Secrets"
+          else
+            echo "No TELEGRAM_API_ID secret set; using values from config file"
+          fi
         env:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
