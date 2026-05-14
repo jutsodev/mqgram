@@ -54,8 +54,9 @@ final class PeerInfoScreenDisclosureItem: PeerInfoScreenItem {
     let iconSignal: Signal<UIImage?, NoError>?
     let hasArrow: Bool
     let action: (() -> Void)?
+    let longPressAction: (() -> Void)?
     
-    init(id: AnyHashable, label: Label = .none, additionalBadgeLabel: String? = nil, additionalBadgeIcon: UIImage? = nil, text: String, icon: UIImage? = nil, iconSignal: Signal<UIImage?, NoError>? = nil, hasArrow: Bool = true, action: (() -> Void)?) {
+    init(id: AnyHashable, label: Label = .none, additionalBadgeLabel: String? = nil, additionalBadgeIcon: UIImage? = nil, text: String, icon: UIImage? = nil, iconSignal: Signal<UIImage?, NoError>? = nil, hasArrow: Bool = true, action: (() -> Void)?, longPressAction: (() -> Void)? = nil) {
         self.id = id
         self.label = label
         self.additionalBadgeLabel = additionalBadgeLabel
@@ -65,6 +66,7 @@ final class PeerInfoScreenDisclosureItem: PeerInfoScreenItem {
         self.iconSignal = iconSignal
         self.hasArrow = hasArrow
         self.action = action
+        self.longPressAction = longPressAction
     }
     
     func node() -> PeerInfoScreenItemNode {
@@ -152,6 +154,7 @@ private final class PeerInfoScreenDisclosureItemNode: PeerInfoScreenItemNode {
         self.item = item
         
         self.selectionNode.pressed = item.action
+        self.selectionNode.longPressed = item.longPressAction
         
         let sideInset: CGFloat = 16.0 + safeInsets.left
         let leftInset = (item.icon == nil && item.iconSignal == nil ? sideInset : sideInset + 29.0 + 16.0)

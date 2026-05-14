@@ -1,5 +1,6 @@
 import SGStrings
 import SGSettingsUI
+import MQGramSettingsUI
 import Foundation
 import UIKit
 import Display
@@ -47,6 +48,8 @@ extension PeerInfoScreenNode {
             }
         }
         switch section {
+        case .mqgram:
+            self.controller?.push(mqgramSettingsController(context: self.context))
         case .swiftgram:
             self.controller?.push(sgSettingsController(context: self.context))
         case .swiftgramPro:

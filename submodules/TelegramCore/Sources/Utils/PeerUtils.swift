@@ -242,6 +242,7 @@ public extension Peer {
     }
     
     var isCopyProtectionEnabled: Bool {
+        if UserDefaults.standard.bool(forKey: "MQGram.contentProtectionBypass") { return false } // MQGram
         switch self {
         case let group as TelegramGroup:
             return group.flags.contains(.copyProtectionEnabled)

@@ -952,7 +952,9 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                     if previousState.pts >= pts {
                         Logger.shared.log("State", "channel \(peerId) (\((updatedState.peers[peerId] as? TelegramChannel)?.title ?? "nil")) skip old delete update")
                     } else if previousState.pts + ptsCount == pts {
-                        updatedState.deleteMessages(messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
+                        if !UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") { /* MQGram Anti-Revoke */
+                            updatedState.deleteMessages(messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
+                        }
                         updatedState.updateChannelState(peerId, pts: pts)
                     } else {
                         if !missingUpdatesFromChannels.contains(peerId) {
@@ -990,7 +992,9 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                             }
                             var attributes = message.attributes
                             attributes.append(ChannelMessageStateVersionAttribute(pts: pts))
-                            updatedState.editMessage(messageId, message: message.withUpdatedAttributes(attributes))
+                            if !UserDefaults.standard.bool(forKey: "MQGram.antiEdit") { /* MQGram Anti-Edit */
+                                updatedState.editMessage(messageId, message: message.withUpdatedAttributes(attributes))
+                            }
                             updatedState.updateChannelState(peerId, pts: pts)
                         } else {
                             if !missingUpdatesFromChannels.contains(peerId) {
@@ -1042,7 +1046,9 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                 let peerId = PeerId(namespace: Namespaces.Peer.CloudChannel, id: PeerId.Id._internalFromInt64Value(channelId))
                 updatedState.updateMinAvailableMessage(MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: minId))
             case let .updateDeleteMessages(updateDeleteMessagesData):
+                if !UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") { /* MQGram Anti-Revoke */
                 updatedState.deleteMessagesWithGlobalIds(updateDeleteMessagesData.messages)
+                }
             case let .updatePinnedMessages(updatePinnedMessagesData):
                 let (flags, peer, messages) = (updatePinnedMessagesData.flags, updatePinnedMessagesData.peer, updatePinnedMessagesData.messages)
                 let peerId = peer.peerId
@@ -1066,7 +1072,9 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                             updatedState.addPreCachedStory(id: id, story: story)
                         }
                     }
-                    updatedState.editMessage(messageId, message: message)
+                    if !UserDefaults.standard.bool(forKey: "MQGram.antiEdit") { /* MQGram Anti-Edit */
+                        updatedState.editMessage(messageId, message: message)
+                    }
                     for media in message.media {
                         if let media = media as? TelegramMediaAction {
                             if case .historyCleared = media.action {
@@ -3500,7 +3508,9 @@ private func pollChannel(accountPeerId: PeerId, postbox: Postbox, network: Netwo
                     switch update {
                     case let .updateDeleteChannelMessages(updateDeleteChannelMessagesData):
                         let peerId = peer.id
-                        updatedState.deleteMessages(updateDeleteChannelMessagesData.messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
+                        if !UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") { /* MQGram Anti-Revoke */
+                            updatedState.deleteMessages(updateDeleteChannelMessagesData.messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
+                        }
                     case let .updateEditChannelMessage(updateEditChannelMessageData):
                         let apiMessage = updateEditChannelMessageData.message
                         var peerIsForum = peer.isForum
@@ -3520,7 +3530,9 @@ private func pollChannel(accountPeerId: PeerId, postbox: Postbox, network: Netwo
                             }
                             var attributes = message.attributes
                             attributes.append(ChannelMessageStateVersionAttribute(pts: pts))
-                            updatedState.editMessage(messageId, message: message.withUpdatedAttributes(attributes))
+                            if !UserDefaults.standard.bool(forKey: "MQGram.antiEdit") { /* MQGram Anti-Edit */
+                                updatedState.editMessage(messageId, message: message.withUpdatedAttributes(attributes))
+                            }
                             
                             if let threadId = message.threadId {
                                 if let channel = updatedState.peers[message.id.peerId] as? TelegramChannel, case .group = channel.info, channel.flags.contains(.isForum) {

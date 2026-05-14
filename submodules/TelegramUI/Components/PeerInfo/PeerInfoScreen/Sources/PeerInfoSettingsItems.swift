@@ -22,6 +22,7 @@ enum SettingsSection: Int, CaseIterable {
     case proxy
     case swiftgram
     case swiftgramPro
+    case mqgram
     case apps
     case shortcuts
     case advanced
@@ -199,38 +200,7 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
         }
     }
     
-    // let locale = presentationData.strings.baseLanguageCode
-    // MARK: Swiftgram
-    let hasNewSGFeatures = {
-        return false
-    }
-    let swiftgramLabel: PeerInfoScreenDisclosureItem.Label
-    if hasNewSGFeatures() {
-        swiftgramLabel = .titleBadge(presentationData.strings.Settings_New, presentationData.theme.list.itemAccentColor)
-    } else {
-        swiftgramLabel = .none
-    }
-
-    let hasNewSGProFeatures = {
-        return false
-    }
-    let swiftgramProLabel: PeerInfoScreenDisclosureItem.Label
-    if hasNewSGProFeatures() {
-        swiftgramProLabel = .titleBadge(presentationData.strings.Settings_New, presentationData.theme.list.itemAccentColor)
-    } else {
-        swiftgramProLabel = .none
-    }
-    
-    
-    let sgWebSettings = context.currentAppConfiguration.with({ $0 }).sgWebSettings
-    if sgWebSettings.global.paymentsEnabled || context.sharedContext.immediateSGStatus.status > 1 {
-        items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 0, label: swiftgramProLabel, text: "Swiftgram Pro", icon: PresentationResourcesSettings.swiftgramPro, action: {
-            interaction.openSettings(.swiftgramPro)
-        }))
-    }
-    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 1, label: swiftgramLabel, text: "Swiftgram", icon: PresentationResourcesSettings.swiftgram, action: {
-        interaction.openSettings(.swiftgram)
-    }))
+    // MARK: MQGram - swiftgram & swiftgramPro entries are hidden, MQGram is opened via long-press on Stars row.
 
     var appIndex = 1000
     if let settings = data.globalSettings {
@@ -333,6 +303,8 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
             }
             items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 102, label: .attributedText(balanceText), text: presentationData.strings.Settings_Stars, icon: PresentationResourcesSettings.stars, action: {
                 interaction.openSettings(.stars)
+            }, longPressAction: {
+                interaction.openSettings(.mqgram)
             }))
         }
     }

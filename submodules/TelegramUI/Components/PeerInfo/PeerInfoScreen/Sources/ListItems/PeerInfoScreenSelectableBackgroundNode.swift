@@ -14,7 +14,26 @@ final class PeerInfoScreenSelectableBackgroundNode: ASDisplayNode {
     
     var pressed: (() -> Void)? {
         didSet {
-            self.button.isUserInteractionEnabled = self.pressed != nil
+            self.button.isUserInteractionEnabled = self.pressed != nil || self.longPressed != nil
+        }
+    }
+
+    // MARK: MQGram - long-press support
+    private var longPressGestureRecognizer: UILongPressGestureRecognizer?
+    var longPressed: (() -> Void)? {
+        didSet {
+            if self.longPressed != nil && self.longPressGestureRecognizer == nil {
+                let recognizer = UILongPressGestureRecognizer(target: self, action: #selector(self.handleLongPress(_:)))
+                self.button.addGestureRecognizer(recognizer)
+                self.longPressGestureRecognizer = recognizer
+            }
+            self.button.isUserInteractionEnabled = self.pressed != nil || self.longPressed != nil
+        }
+    }
+
+    @objc private func handleLongPress(_ recognizer: UILongPressGestureRecognizer) {
+        if recognizer.state == .began {
+            self.longPressed?()
         }
     }
     

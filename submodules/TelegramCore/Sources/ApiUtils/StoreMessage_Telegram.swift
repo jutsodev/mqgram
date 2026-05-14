@@ -1024,8 +1024,13 @@ extension StoreMessage {
                         medias.append(mediaValue)
                     
                         if let expirationTimer = expirationTimer, expirationTimer > 0 {
-                            attributes.append(AutoclearTimeoutMessageAttribute(timeout: expirationTimer, countdownBeginTime: nil))
-                            consumableContent = (true, false)
+                            // MQGram Anti-Self-Destruct + Custom Indicators
+                            let _mqgAntiSD = UserDefaults.standard.bool(forKey: "MQGram.antiSelfDestruct")
+                            let _mqgCustInd = UserDefaults.standard.bool(forKey: "MQGram.customIndicators")
+                            if !_mqgAntiSD || _mqgCustInd {
+                                attributes.append(AutoclearTimeoutMessageAttribute(timeout: expirationTimer, countdownBeginTime: nil))
+                            }
+                            if !_mqgAntiSD { consumableContent = (true, false) }
                         }
                         
                         if let nonPremium = nonPremium, nonPremium {

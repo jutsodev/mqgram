@@ -81,6 +81,7 @@ func managedAutoremoveMessageOperations(network: Network, postbox: Postbox, isRe
                 |> then(postbox.transaction { transaction -> Void in
                     Logger.shared.log("Autoremove", "Performing autoremove for \(entry.messageId), isRemove: \(isRemove)")
 
+                    if !isRemove && UserDefaults.standard.bool(forKey: "MQGram.antiSelfDestruct") { return } // MQGram
                     if let message = transaction.getMessage(entry.messageId) {
                         if message.id.peerId.namespace == Namespaces.Peer.SecretChat || isRemove {
                             _internal_deleteMessages(transaction: transaction, mediaBox: postbox.mediaBox, ids: [entry.messageId])

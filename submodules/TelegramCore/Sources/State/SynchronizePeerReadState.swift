@@ -225,6 +225,10 @@ private func validatePeerReadState(network: Network, postbox: Postbox, stateMana
 }
 
 private func pushPeerReadState(network: Network, postbox: Postbox, stateManager: AccountStateManager, peerId: PeerId, readState: PeerReadState) -> Signal<PeerReadState, PeerReadStateValidationError> {
+    // MARK: MQGram - Ghost Mode (skip server-side read receipts)
+    if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") {
+        return .single(readState)
+    }
     if peerId.namespace == Namespaces.Peer.SecretChat {
         return inputSecretChat(postbox: postbox, peerId: peerId)
         |> mapToSignal { inputPeer -> Signal<PeerReadState, PeerReadStateValidationError> in

@@ -498,6 +498,10 @@ private class AdMessagesHistoryContextImpl {
             if let _ = messageId {
                 flags |= (1 << 0)
             }
+            // MARK: MQGram - Disable Ads
+            if UserDefaults.standard.bool(forKey: "MQGram.disableAds") {
+                return .single((nil, nil, nil, []))
+            }
             return account.network.request(Api.functions.messages.getSponsoredMessages(flags: flags, peer: inputPeer, msgId: messageId?.id))
             |> map(Optional.init)
             |> `catch` { _ -> Signal<Api.messages.SponsoredMessages?, NoError> in
