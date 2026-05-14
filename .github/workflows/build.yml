@@ -29,6 +29,23 @@ jobs:
           cp -R $GITHUB_WORKSPACE /Users/Shared/
           mv /Users/Shared/$(basename $GITHUB_WORKSPACE) /Users/Shared/telegram-ios
 
+      - name: Inject API secrets into config
+        run: |
+          SOURCE_DIR=/Users/Shared/telegram-ios
+          CONFIG="$SOURCE_DIR/build-system/appstore-configuration.json"
+          if [ -n "${{ secrets.TELEGRAM_API_ID }}" ]; then
+            python3 -c "
+import json, sys
+with open('$CONFIG') as f: cfg = json.load(f)
+cfg['api_id'] = '${{ secrets.TELEGRAM_API_ID }}'
+cfg['api_hash'] = '${{ secrets.TELEGRAM_API_HASH }}'
+with open('$CONFIG','w') as f: json.dump(cfg, f, indent=2)
+print('Injected API secrets from GitHub Secrets')
+"
+          else
+            echo "No TELEGRAM_API_ID secret set; using values from config file"
+          fi
+
       - name: Build the App (Swiftgram target)
         run: |
           set -x
