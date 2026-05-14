@@ -166,8 +166,7 @@ jobs:
             --configurationPath="build-system/ci-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
             --configuration=release_arm64 \
-            --buildNumber="$BUILD_NUMBER" \
-            --target MQGram
+            --buildNumber="$BUILD_NUMBER"
       - name: Collect artifacts
         run: |
           SOURCE_DIR=/Users/Shared/telegram-ios
@@ -178,11 +177,11 @@ jobs:
           # IPA — prefer the bazel-bin symlink (always points to the current
           # configuration), fall back to a recursive search under bazel-out.
           IPA_FOUND=0
-          if [ -f bazel-bin/Telegram/MQGram.ipa ]; then
-            cp -L bazel-bin/Telegram/MQGram.ipa "$OUTPUT_PATH/MQGram.ipa"
+          if [ -f bazel-bin/Telegram/Swiftgram.ipa ]; then
+            cp -L bazel-bin/Telegram/Swiftgram.ipa "$OUTPUT_PATH/MQGram.ipa"
             IPA_FOUND=1
           else
-            CANDIDATE=$(find bazel-out -path '*/bin/Telegram/MQGram.ipa' -type f 2>/dev/null | head -n 1)
+            CANDIDATE=$(find bazel-out -path '*/bin/Telegram/Swiftgram.ipa' -type f 2>/dev/null | head -n 1)
             if [ -z "$CANDIDATE" ]; then
               CANDIDATE=$(find bazel-out -path '*/bin/Telegram/*.ipa' -type f 2>/dev/null | head -n 1)
             fi
@@ -232,15 +231,16 @@ jobs:
           rm -rf "$STAGE" && mkdir -p "$STAGE"
           cd "$STAGE"
           unzip -q "$ARTIFACTS_DIR/MQGram.ipa"
-          rm -rf Payload/MQGram.app/PlugIns
-          rm -rf Payload/MQGram.app/Watch
-          rm -f  Payload/MQGram.app/embedded.mobileprovision
-          rm -rf Payload/MQGram.app/_CodeSignature
+          APP_DIR=$(find Payload -maxdepth 1 -name '*.app' -type d | head -n 1)
+          rm -rf "$APP_DIR/PlugIns"
+          rm -rf "$APP_DIR/Watch"
+          rm -f  "$APP_DIR/embedded.mobileprovision"
+          rm -rf "$APP_DIR/_CodeSignature"
           # Strip framework signatures too — Sideloadly re-signs them anyway.
-          find Payload/MQGram.app/Frameworks -name "_CodeSignature" -type d -prune -exec rm -rf {} +
-          python3 - <<'PY'
-          import plistlib
-          path = 'Payload/MQGram.app/Info.plist'
+          find "$APP_DIR/Frameworks" -name "_CodeSignature" -type d -prune -exec rm -rf {} +
+          python3 - "$APP_DIR" <<'PY'
+          import plistlib, sys
+          path = sys.argv[1] + '/Info.plist'
           with open(path, 'rb') as f: p = plistlib.load(f)
           modes = p.get('UIBackgroundModes', [])
           keep = [m for m in modes if m in ('fetch', 'processing')]
