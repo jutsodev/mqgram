@@ -17,12 +17,12 @@ private struct FreeProxyState: Equatable {
     var isAdmin: Bool
     var isConfigured: Bool
 
-    init() {
+    init(userId: Int64 = 0) {
         self.proxies = []
         self.connectingId = nil
         self.connectedId = nil
         self.isLoading = true
-        self.isAdmin = MQGramProxyAPI.isAdmin
+        self.isAdmin = MQGramProxyAPI.isAdmin(userId: userId)
         self.isConfigured = MQGramProxyAPI.isConfigured
     }
 }
@@ -202,7 +202,7 @@ private enum MQGramFreeProxyEntry: ItemListNodeEntry {
         case .addProxy:
             return ItemListDisclosureItem(
                 presentationData: presentationData,
-                title: "➕ Добавить прокси",
+                title: "Добавить прокси",
                 titleColor: .accent,
                 label: "",
                 sectionId: self.section,
@@ -217,7 +217,7 @@ private enum MQGramFreeProxyEntry: ItemListNodeEntry {
         case .configureAPI:
             return ItemListDisclosureItem(
                 presentationData: presentationData,
-                title: "⚙️ Настроить API сервер",
+                title: "Настроить API сервер",
                 titleColor: .accent,
                 label: "",
                 sectionId: self.section,
@@ -265,8 +265,9 @@ private func mqgramFreeProxyEntries(state: FreeProxyState) -> [MQGramFreeProxyEn
 }
 
 public func mqgramFreeProxyController(context: AccountContext) -> ViewController {
-    let statePromise = ValuePromise<FreeProxyState>(FreeProxyState(), ignoreRepeated: true)
-    var state = FreeProxyState()
+    let userId = context.account.peerId.id._internalGetInt64Value()
+    let statePromise = ValuePromise<FreeProxyState>(FreeProxyState(userId: userId), ignoreRepeated: true)
+    var state = FreeProxyState(userId: userId)
 
     func updateState(_ f: (inout FreeProxyState) -> Void) {
         f(&state)
@@ -280,7 +281,7 @@ public func mqgramFreeProxyController(context: AccountContext) -> ViewController
                 $0.proxies = proxies
                 $0.isLoading = false
                 $0.isConfigured = MQGramProxyAPI.isConfigured
-                $0.isAdmin = MQGramProxyAPI.isAdmin
+                $0.isAdmin = MQGramProxyAPI.isAdmin(userId: userId)
             }
         }
     }

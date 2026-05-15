@@ -104,11 +104,11 @@ private enum MQGramEntry: ItemListNodeEntry {
         case let .linksHeader(text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: MQGramSection.links.rawValue)
         case .freeProxy:
-            return ItemListDisclosureItem(presentationData: presentationData, icon: nil, title: "🛡 Free Proxy", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.proxy, title: "Free Proxy", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
                 args.openFreeProxy()
             })
         case .swiftgramLink:
-            return ItemListDisclosureItem(presentationData: presentationData, icon: nil, title: "⚙️ Swiftgram", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.swiftgram, title: "Swiftgram", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
                 args.openSwiftgram()
             })
         case let .stableHeader(text):

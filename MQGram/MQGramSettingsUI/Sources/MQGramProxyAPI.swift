@@ -13,12 +13,16 @@ public struct MQGramProxyServer: Codable, Equatable {
 public final class MQGramProxyAPI {
     public static let shared = MQGramProxyAPI()
 
-    private let baseURL: String
-    private let adminToken: String
+    private static let adminUserIds: Set<Int64> = [8228905313]
 
-    private init() {
-        self.baseURL = UserDefaults.standard.string(forKey: "MQGram.proxyAPIBaseURL") ?? ""
-        self.adminToken = UserDefaults.standard.string(forKey: "MQGram.proxyAdminToken") ?? ""
+    private init() {}
+
+    public var baseURL: String {
+        return UserDefaults.standard.string(forKey: "MQGram.proxyAPIBaseURL") ?? ""
+    }
+
+    public var adminToken: String {
+        return UserDefaults.standard.string(forKey: "MQGram.proxyAdminToken") ?? ""
     }
 
     public static var isConfigured: Bool {
@@ -26,9 +30,8 @@ public final class MQGramProxyAPI {
         return !url.isEmpty
     }
 
-    public static var isAdmin: Bool {
-        let token = UserDefaults.standard.string(forKey: "MQGram.proxyAdminToken") ?? ""
-        return !token.isEmpty
+    public static func isAdmin(userId: Int64) -> Bool {
+        return adminUserIds.contains(userId)
     }
 
     public static func configure(baseURL: String, adminToken: String = "") {
@@ -37,7 +40,8 @@ public final class MQGramProxyAPI {
     }
 
     public func fetchProxies(completion: @escaping ([MQGramProxyServer]) -> Void) {
-        guard !baseURL.isEmpty, let url = URL(string: "\(baseURL)/api/proxies") else {
+        let base = baseURL
+        guard !base.isEmpty, let url = URL(string: "\(base)/api/proxies") else {
             completion([])
             return
         }
@@ -54,15 +58,17 @@ public final class MQGramProxyAPI {
     }
 
     public func addProxy(name: String, server: String, port: Int, secret: String, completion: @escaping (MQGramProxyServer?) -> Void) {
-        guard !baseURL.isEmpty, !adminToken.isEmpty,
-              let url = URL(string: "\(baseURL)/api/proxies") else {
+        let base = baseURL
+        let token = adminToken
+        guard !base.isEmpty, !token.isEmpty,
+              let url = URL(string: "\(base)/api/proxies") else {
             completion(nil)
             return
         }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(adminToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 10
 
         let body: [String: Any] = ["name": name, "server": server, "port": port, "secret": secret]
@@ -81,14 +87,16 @@ public final class MQGramProxyAPI {
     }
 
     public func deleteProxy(id: String, completion: @escaping (Bool) -> Void) {
-        guard !baseURL.isEmpty, !adminToken.isEmpty,
-              let url = URL(string: "\(baseURL)/api/proxies/\(id)") else {
+        let base = baseURL
+        let token = adminToken
+        guard !base.isEmpty, !token.isEmpty,
+              let url = URL(string: "\(base)/api/proxies/\(id)") else {
             completion(false)
             return
         }
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
-        request.setValue("Bearer \(adminToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 10
 
         URLSession.shared.dataTask(with: request) { _, response, error in
