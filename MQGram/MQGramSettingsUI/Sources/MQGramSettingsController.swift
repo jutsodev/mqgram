@@ -153,9 +153,7 @@ private struct MQGramText {
 private func mqgramText(_ languageCode: String) -> MQGramText {
     if languageCode.lowercased().hasPrefix("ru") {
         return MQGramText(
-            hero: "**MQGram Control Center**
-
-Плавные переключатели, разделы и защитные функции собраны в одном месте. Включай только то, что нужно — всё применяется через безопасные системные настройки Telegram.",
+            hero: "**MQGram Control Center**\n\nПлавные переключатели, разделы и защитные функции собраны в одном месте. Включай только то, что нужно — всё применяется через безопасные системные настройки Telegram.",
             stable: "ОСНОВНЫЕ ФУНКЦИИ",
             stableInfo: "Базовая защита сообщений и медиа без лишнего визуального шума.",
             ghost: "ПРИЗРАК · НЕВИДИМОСТЬ",
@@ -202,9 +200,7 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         )
     }
     return MQGramText(
-        hero: "**MQGram Control Center**
-
-Smooth switches, clear sections, and privacy controls in one place. Enable only what you need — everything is stored via Telegram-safe settings.",
+        hero: "**MQGram Control Center**\n\nSmooth switches, clear sections, and privacy controls in one place. Enable only what you need — everything is stored via Telegram-safe settings.",
         stable: "CORE FEATURES",
         stableInfo: "Base message and media protection without extra visual noise.",
         ghost: "GHOST · INVISIBILITY",
