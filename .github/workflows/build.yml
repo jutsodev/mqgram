@@ -127,9 +127,12 @@ jobs:
       - name: Cache Bazel output
         uses: actions/cache@v4
         with:
-          path: ~/telegram-bazel-cache
-          key: bazel-${{ runner.os }}-${{ hashFiles('WORKSPACE', 'variables.bzl') }}
-          restore-keys: bazel-${{ runner.os }}-
+          path: |
+            ~/telegram-bazel-cache
+            ~/.cache/mqgram-bazel-user-root
+          key: bazel-${{ runner.os }}-${{ hashFiles('WORKSPACE', 'MODULE.bazel', 'MODULE.bazel.lock', 'variables.bzl', 'versions.json') }}
+          restore-keys: |
+            bazel-${{ runner.os }}-
 
       - name: Compute build number and app version
         id: meta
@@ -157,8 +160,9 @@ jobs:
         run: |
           set -euo pipefail
           SOURCE_DIR=/Users/Shared/telegram-ios
-          BAZEL_USER_ROOT="/private/var/tmp/_bazel_containerhost"
+          BAZEL_USER_ROOT="$HOME/.cache/mqgram-bazel-user-root"
           CACHE_DIR="$HOME/telegram-bazel-cache"
+          mkdir -p "$BAZEL_USER_ROOT" "$CACHE_DIR"
           cd "$SOURCE_DIR"
           python3 -u build-system/Make/Make.py \
             --cacheDir="$CACHE_DIR" \

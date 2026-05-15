@@ -74,3 +74,8 @@
 ## Обновление: фикс сборки после дизайна
 - Исправлены hero-тексты MQGram: многострочные Swift-строки заменены на обычные строки с `\n\n`, чтобы не ломать компиляцию.
 - Дизайн вкладки сохранён: intro-блок и пояснения разделов остаются через стандартные ItemList markdown rows.
+
+## Обновление: ускорение GitHub Actions сборки
+- Расширен cache workflow: теперь сохраняется не только `~/telegram-bazel-cache`, но и стабильный Bazel user root `~/.cache/mqgram-bazel-user-root`.
+- `BAZEL_USER_ROOT` перенесён из временного `/private/var/tmp` в кэшируемую домашнюю папку runner-а.
+- Ключ кэша учитывает Bazel/Xcode metadata (`WORKSPACE`, `MODULE.bazel`, lock-файл, `variables.bzl`, `versions.json`) и имеет широкий restore-key для повторного использования.
