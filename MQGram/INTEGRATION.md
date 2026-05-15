@@ -33,7 +33,7 @@ grep -rn "MQGram" submodules/
 | Файл | Что меняется |
 |---|---|
 | `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoScreen.swift` | `case mqgram` в `PeerInfoSettingsSection` |
-| `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoSettingsItems.swift` | `case mqgram` в `SettingsSection`; long-press на Stars row; скрытые swiftgram/Pro пункты |
+| `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoSettingsItems.swift` | `case mqgram` в `SettingsSection`; видимая кнопка MQGram в секции swiftgram; скрытые swiftgram/Pro пункты |
 | `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoScreenSettingsActions.swift` | `case .mqgram` → `mqgramSettingsController` |
 | `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/ListItems/PeerInfoScreenDisclosureItem.swift` | `longPressAction` параметр |
 | `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/ListItems/PeerInfoScreenSelectableBackgroundNode.swift` | `longPressed` callback + UILongPressGestureRecognizer |
