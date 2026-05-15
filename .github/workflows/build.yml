@@ -2,40 +2,89 @@ name: Build MQGram
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
   workflow_dispatch:
+    inputs:
+      build_number:
+        description: 'Build number override (leave empty for auto)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
-          fetch-depth: '0'
+          submodules: recursive
+          fetch-depth: 0
 
-      - name: Select Xcode (latest available)
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Initialize Bazel rule submodules
         run: |
-          # versions.json may pin a future Xcode that's not on the runner.
-          # Use whatever GitHub provides.
-          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          mkdir -p build-system/bazel-rules
+          _clone_at() {
+            local dir="$1" url="$2" sha="$3"
+            rm -rf "$dir"
+            mkdir -p "$dir"
+            git -C "$dir" init -q
+            git -C "$dir" remote add origin "$url"
+            git -C "$dir" fetch --depth=1 -q origin "$sha"
+            git -C "$dir" checkout -q FETCH_HEAD
+          }
+          _clone_at build-system/bazel-rules/rules_xcodeproj \
+            https://github.com/MobileNativeFoundation/rules_xcodeproj.git \
+            79f26ec1315531a8459fe95934440cb3ca3c16df
+          _clone_at build-system/bazel-rules/rules_apple \
+            https://github.com/ali-fareed/rules_apple.git \
+            39cc2529241335d20afcb6700c587d064e7a2870
+          _clone_at build-system/bazel-rules/rules_swift \
+            https://github.com/bazelbuild/rules_swift.git \
+            2b9261134a123ad83f8b1d2dc7fc69ae83fe7172
+          _clone_at build-system/bazel-rules/apple_support \
+            https://github.com/bazelbuild/apple_support.git \
+            7967e453d1f54963935a1ae06808e1c64420bfb1
+          _clone_at build-system/bazel-rules/sourcekit-bazel-bsp \
+            https://github.com/spotify/sourcekit-bazel-bsp.git \
+            e2e532ab9d9296343ce77c93286dd7d472947157
+
+      - name: Set Xcode version
+        run: |
+          XCODE_VERSION=$(python3 -c 'import json; d=json.load(open("versions.json")); print(d["xcode"])')
+          XCODE_PATH="/Applications/Xcode_${XCODE_VERSION}.app/Contents/Developer"
+          if [ -d "$XCODE_PATH" ]; then
+            sudo xcode-select -s "$XCODE_PATH"
+            echo "Activated Xcode ${XCODE_VERSION}"
+          else
+            echo "Xcode ${XCODE_VERSION} not found at $XCODE_PATH, using default: $(xcode-select -p)"
+          fi
           xcodebuild -version
-
-      - name: Create canonical source directory
-        run: |
-          set -x
-          sudo mkdir -p /Users/Shared
-          cp -R $GITHUB_WORKSPACE /Users/Shared/
-          mv /Users/Shared/$(basename $GITHUB_WORKSPACE) /Users/Shared/telegram-ios
 
       - name: Inject API secrets into config
         run: |
-          CONFIG="/Users/Shared/telegram-ios/build-system/appstore-configuration.json"
+          CONFIG="build-system/appstore-configuration.json"
           if [ -n "$TELEGRAM_API_ID" ]; then
-            sed -i '' "s/\"api_id\": \"[^\"]*\"/\"api_id\": \"$TELEGRAM_API_ID\"/" "$CONFIG"
-            sed -i '' "s/\"api_hash\": \"[^\"]*\"/\"api_hash\": \"$TELEGRAM_API_HASH\"/" "$CONFIG"
-            echo "Injected API secrets from GitHub Secrets"
+            python3 - <<'EOF'
+          import json, os
+          path = "build-system/appstore-configuration.json"
+          with open(path) as f:
+              cfg = json.load(f)
+          cfg["api_id"] = os.environ["TELEGRAM_API_ID"]
+          cfg["api_hash"] = os.environ["TELEGRAM_API_HASH"]
+          with open(path, "w") as f:
+              json.dump(cfg, f, indent="\t")
+          print("Injected API secrets from GitHub Secrets")
+          EOF
           else
             echo "No TELEGRAM_API_ID secret set; using values from config file"
           fi
@@ -43,60 +92,132 @@ jobs:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
 
-      - name: Build the App (Swiftgram target)
+      - name: Copy sources to canonical path
         run: |
-          set -x
+          sudo mkdir -p /Users/Shared
+          cp -R "$GITHUB_WORKSPACE" /Users/Shared/
+          mv "/Users/Shared/$(basename "$GITHUB_WORKSPACE")" /Users/Shared/telegram-ios
+
+      - name: Cache Bazel output
+        uses: actions/cache@v4
+        with:
+          path: ~/telegram-bazel-cache
+          key: bazel-${{ runner.os }}-${{ hashFiles('WORKSPACE', 'variables.bzl') }}
+          restore-keys: bazel-${{ runner.os }}-
+
+      - name: Compute build number
+        run: |
+          SOURCE_DIR=/Users/Shared/telegram-ios
+          if [ -n "${{ github.event.inputs.build_number }}" ]; then
+            BUILD_NUMBER="${{ github.event.inputs.build_number }}"
+          else
+            OFFSET=$(cat "$SOURCE_DIR/build_number_offset" 2>/dev/null || echo 0)
+            COMMIT_COUNT=$(git -C "$SOURCE_DIR" rev-list --count HEAD)
+            BUILD_NUMBER=$((COMMIT_COUNT + OFFSET))
+          fi
+          APP_VERSION=$(python3 -c 'import json; print(json.load(open("/Users/Shared/telegram-ios/versions.json"))["app"])')
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
+          echo "MQGram $APP_VERSION build $BUILD_NUMBER"
+
+      - name: Import fake certificates
+        run: |
+          cd /Users/Shared/telegram-ios
+          python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
+
+      - name: Build MQGram (release_arm64)
+        run: |
+          set -euo pipefail
           SOURCE_DIR=/Users/Shared/telegram-ios
           BAZEL_USER_ROOT="/private/var/tmp/_bazel_containerhost"
-
-          cd $SOURCE_DIR
-
-          BUILD_NUMBER_OFFSET="$(cat build_number_offset)"
-          export APP_VERSION=$(python3 -c 'import json;print(json.load(open("versions.json"))["app"])')
-          export COMMIT_COUNT=$(git rev-list --count HEAD)
-          export COMMIT_COUNT="$(($COMMIT_COUNT+$BUILD_NUMBER_OFFSET))"
-          export BUILD_NUMBER="$COMMIT_COUNT"
-          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
-          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
-
-          python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
+          CACHE_DIR="$HOME/telegram-bazel-cache"
+          cd "$SOURCE_DIR"
           python3 -u build-system/Make/Make.py \
+            --cacheDir="$CACHE_DIR" \
             --bazelUserRoot="$BAZEL_USER_ROOT" \
+            --overrideXcodeVersion \
             build \
             --configurationPath="build-system/appstore-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
             --configuration=release_arm64 \
             --buildNumber="$BUILD_NUMBER"
 
-          # Swiftgram fork outputs Swiftgram.ipa
+      - name: Collect artifacts
+        run: |
+          SOURCE_DIR=/Users/Shared/telegram-ios
+          cd "$SOURCE_DIR"
           OUTPUT_PATH="build/artifacts"
           rm -rf "$OUTPUT_PATH"
           mkdir -p "$OUTPUT_PATH"
-          for f in bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Swiftgram.ipa bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Telegram.ipa; do
-            [ -f "$f" ] && cp "$f" $OUTPUT_PATH/MQGram.ipa
-          done
-
-          mkdir -p build/DSYMs
-          for f in bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/*.dSYM; do
-            [ -d "$f" ] && cp -R "$f" build/DSYMs/
-          done
-          if [ -d build/DSYMs ] && [ "$(ls -A build/DSYMs)" ]; then
-            zip -r "./$OUTPUT_PATH/MQGram.DSYMs.zip" build/DSYMs 1>/dev/null
+          IPA_FOUND=0
+          if [ -f bazel-bin/Telegram/Swiftgram.ipa ]; then
+            cp -L bazel-bin/Telegram/Swiftgram.ipa "$OUTPUT_PATH/MQGram.ipa"
+            IPA_FOUND=1
+          else
+            CANDIDATE=$(find bazel-out -path '*/bin/Telegram/Swiftgram.ipa' -type f 2>/dev/null | head -n 1)
+            if [ -z "$CANDIDATE" ]; then
+              CANDIDATE=$(find bazel-out -path '*/bin/Telegram/*.ipa' -type f 2>/dev/null | head -n 1)
+            fi
+            if [ -n "$CANDIDATE" ]; then
+              cp "$CANDIDATE" "$OUTPUT_PATH/MQGram.ipa"
+              IPA_FOUND=1
+            fi
           fi
+          if [ "$IPA_FOUND" = "0" ]; then
+            echo "::error::No IPA found under bazel-bin or bazel-out"
+            ls -la bazel-bin/Telegram 2>&1 || true
+            find bazel-out -name '*.ipa' 2>/dev/null | head -n 20 || true
+            exit 1
+          fi
+          mkdir -p build/DSYMs
+          for f in bazel-bin/Telegram/*.dSYM; do
+            [ -e "$f" ] && cp -RL "$f" build/DSYMs/ 2>/dev/null || true
+          done
+          while IFS= read -r f; do
+            [ -d "$f" ] && cp -R "$f" build/DSYMs/ 2>/dev/null || true
+          done < <(find bazel-out -path '*/bin/Telegram/*.dSYM' -prune 2>/dev/null)
+          zip -r "$OUTPUT_PATH/MQGram.DSYMs.zip" build/DSYMs 1>/dev/null || true
+          echo "Artifacts:"
+          ls -lh "$OUTPUT_PATH/"
 
-      - name: Upload IPA artifact
+      - name: Build sideload-friendly lite IPA
+        run: |
+          set -euo pipefail
+          SOURCE_DIR=/Users/Shared/telegram-ios
+          ARTIFACTS_DIR="$SOURCE_DIR/build/artifacts"
+          STAGE="$SOURCE_DIR/build/lite-stage"
+          rm -rf "$STAGE" && mkdir -p "$STAGE"
+          cd "$STAGE"
+          unzip -q "$ARTIFACTS_DIR/MQGram.ipa"
+          APP_DIR=$(find Payload -maxdepth 1 -name '*.app' -type d | head -n 1)
+          rm -rf "$APP_DIR/PlugIns"
+          rm -rf "$APP_DIR/Watch"
+          rm -f  "$APP_DIR/embedded.mobileprovision"
+          rm -rf "$APP_DIR/_CodeSignature"
+          find "$APP_DIR/Frameworks" -name "_CodeSignature" -type d -prune -exec rm -rf {} +
+          python3 - "$APP_DIR" <<'PY'
+          import plistlib, sys
+          path = sys.argv[1] + '/Info.plist'
+          with open(path, 'rb') as f: p = plistlib.load(f)
+          modes = p.get('UIBackgroundModes', [])
+          keep = [m for m in modes if m in ('fetch', 'processing')]
+          if keep: p['UIBackgroundModes'] = keep
+          else:    p.pop('UIBackgroundModes', None)
+          p.pop('NSUserActivityTypes', None)
+          with open(path, 'wb') as f: plistlib.dump(p, f, fmt=plistlib.FMT_BINARY)
+          PY
+          zip -r -q -X "$ARTIFACTS_DIR/MQGram-lite.ipa" Payload SwiftSupport
+          echo "Lite artifact:"
+          ls -lh "$ARTIFACTS_DIR/MQGram-lite.ipa"
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: MQGram-ipa
-          path: /Users/Shared/telegram-ios/build/artifacts/MQGram.ipa
-          if-no-files-found: warn
-
-      - name: Upload DSYM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: MQGram-dsym
-          path: /Users/Shared/telegram-ios/build/artifacts/MQGram.DSYMs.zip
-          if-no-files-found: warn
+          name: MQGram-${{ env.BUILD_NUMBER }}
+          path: |
+            /Users/Shared/telegram-ios/build/artifacts/MQGram.ipa
+            /Users/Shared/telegram-ios/build/artifacts/MQGram-lite.ipa
+          retention-days: 30
 
       - name: Create Release
         if: github.event_name == 'workflow_dispatch'
@@ -105,13 +226,22 @@ jobs:
           tag_name: build-${{ env.BUILD_NUMBER }}
           name: MQGram ${{ env.APP_VERSION }} (${{ env.BUILD_NUMBER }})
           body: |
-            Unsigned build of MQGram ${{ env.APP_VERSION }} (build ${{ env.BUILD_NUMBER }}).
+            Unsigned MQGram ${{ env.APP_VERSION }} build ${{ env.BUILD_NUMBER }}
 
-            To install you need to re-sign the IPA (e.g. with Sideloadly / AltStore / TrollStore).
-          files: |
-            /Users/Shared/telegram-ios/build/artifacts/MQGram.ipa
-            /Users/Shared/telegram-ios/build/artifacts/MQGram.DSYMs.zip
+            **Two IPAs are attached:**
+            - `MQGram.ipa` — full build with all extensions (push, share,
+              widgets, Siri, broadcast upload, watch companion). Best for
+              **TrollStore** or a paid Apple Developer certificate.
+            - `MQGram-lite.ipa` — stripped build with no extensions, no watch
+              app. Use this with **Sideloadly / AltStore / ESign** and a
+              free Apple ID on iOS 17+/18+.
+
+            > Unsigned IPA — you must resign it before installing.
           draft: false
           prerelease: false
+          files: |
+            /Users/Shared/telegram-ios/build/artifacts/MQGram.ipa
+            /Users/Shared/telegram-ios/build/artifacts/MQGram-lite.ipa
+            /Users/Shared/telegram-ios/build/artifacts/MQGram.DSYMs.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

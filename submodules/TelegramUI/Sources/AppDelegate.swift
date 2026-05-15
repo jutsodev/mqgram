@@ -541,7 +541,10 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         
         let baseAppBundleId = Bundle.main.bundleIdentifier!
         let appGroupName = "group.\(baseAppBundleId)"
-        let maybeAppGroupUrl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupName)
+        // MQGram: fall back to the app's own container when the shared app
+        // group is unavailable (e.g. sideloaded with a free Apple ID).
+        let maybeAppGroupUrl: URL? = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupName)
+            ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
         
         let buildConfig = BuildConfig(baseAppBundleId: baseAppBundleId)
         self.buildConfig = buildConfig
@@ -654,7 +657,8 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         )
         
         guard let appGroupUrl = maybeAppGroupUrl else {
-            self.mainWindow?.presentNative(UIAlertController(title: nil, message: "Error 2", preferredStyle: .alert))
+            self.window?.makeKeyAndVisible()
+            self.mainWindow?.presentNative(UIAlertController(title: nil, message: "Error 2: App container unavailable", preferredStyle: .alert))
             return true
         }
         
