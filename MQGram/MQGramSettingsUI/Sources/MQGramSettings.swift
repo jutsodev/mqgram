@@ -12,6 +12,7 @@ public final class MQGramSettings {
         case contentProtectionBypass
         case antiEdit
         case disableAds
+        case readAfterAction
     }
 
     private let defaults: UserDefaults
@@ -67,5 +68,46 @@ public final class MQGramSettings {
     public var disableAds: Bool {
         get { bool(for: .disableAds) }
         set { setBool(newValue, for: .disableAds) }
+    }
+
+    public var readAfterAction: Bool {
+        get { bool(for: .readAfterAction) }
+        set { setBool(newValue, for: .readAfterAction) }
+    }
+}
+
+// MARK: - Revoked Messages Tracker
+
+public final class MQGramRevokedMessages {
+    public static let shared = MQGramRevokedMessages()
+
+    private var revokedIds: Set<String> = []
+    private let key = "MQGram.revokedMessageIds"
+    private let lock = NSLock()
+
+    private init() {
+        if let saved = UserDefaults.standard.array(forKey: key) as? [String] {
+            revokedIds = Set(saved.suffix(5000))
+        }
+    }
+
+    public func markRevoked(peerId: Int64, messageId: Int32) {
+        let id = "\(peerId)_\(messageId)"
+        lock.lock()
+        revokedIds.insert(id)
+        if revokedIds.count > 5000 {
+            revokedIds = Set(Array(revokedIds).suffix(4000))
+        }
+        let toSave = Array(revokedIds)
+        lock.unlock()
+        UserDefaults.standard.set(toSave, forKey: key)
+    }
+
+    public func isRevoked(peerId: Int64, messageId: Int32) -> Bool {
+        let id = "\(peerId)_\(messageId)"
+        lock.lock()
+        let result = revokedIds.contains(id)
+        lock.unlock()
+        return result
     }
 }

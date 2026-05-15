@@ -518,6 +518,19 @@ func enqueueMessages(transaction: Transaction, account: Account, peerId: PeerId,
         }
     }
     
+    // MARK: MQGram - Read After Action: mark chat as read when sending a message
+    if UserDefaults.standard.bool(forKey: "MQGram.readAfterAction") {
+        let namespace: MessageId.Namespace
+        if peerId.namespace == Namespaces.Peer.SecretChat {
+            namespace = Namespaces.Message.SecretIncoming
+        } else {
+            namespace = Namespaces.Message.Cloud
+        }
+        if let index = transaction.getTopPeerMessageIndex(peerId: peerId, namespace: namespace) {
+            _internal_applyMaxReadIndexInteractively(transaction: transaction, stateManager: account.stateManager, index: index)
+        }
+    }
+    
     var forwardedMessageIds = Set<MessageId>()
     for (_, message) in messages {
         if case let .forward(sourceId, _, _, _, _) = message {

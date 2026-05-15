@@ -20,21 +20,32 @@ MQGram/
 ### Вкладка настроек MQGram
 - Видимая кнопка **«MQGram»** в настройках профиля (на месте, где раньше был Swiftgram)
 - Свои disclosure-пункты Swiftgram и Swiftgram Pro **скрыты**
-- 7 переключателей фич, разделённых на STABLE и BETA секции
+- 8 переключателей фич (все в одной секции ФУНКЦИИ)
+- Локализация: русский и английский (автоматически по языку Telegram)
 
 ### Реализованные фичи (тумблеры)
 
 | Фича | Что делает |
 |---|---|
 | **Anti-Self-Destruct** | Не запускает таймеры на disappearing photos/videos; (опц.) сохраняет timer-индикатор как «Custom Indicator» |
-| **Anti-Revoke** | Игнорирует входящие `updateDeleteMessages` и `updateDeleteChannelMessages` |
+| **Anti-Revoke** | Игнорирует входящие `updateDeleteMessages` и `updateDeleteChannelMessages`. Удалённые сообщения помечаются иконкой 🗑️ |
 | **Ghost Mode** | Не отправляет read-receipts (history, stories, voice/round playback) |
 | **Custom Indicators** | В паре с Anti-Self-Destruct оставляет AutoclearTimeoutMessageAttribute, чтобы UI рисовал timer-иконку, но фактическое удаление не происходит |
 | **Content Protection Bypass** | Возвращает `false` из `Peer.isCopyProtectionEnabled` и `Message.isCopyProtected()` |
 | **Anti-Edit** | Игнорирует входящие `updateEditMessage` и `updateEditChannelMessage` |
 | **Disable Ads** | Возвращает пусто из `getSponsoredMessages` и `getSponsoredPeers` |
+| **Read After Action** | При отправке сообщения все входящие в чате автоматически прочитываются (2 галочки) |
 
 Все фичи читают `UserDefaults.standard` под ключами `MQGram.<feature>`.
+
+### Визуальные индикаторы
+- **Иконка корзины** (🗑️) — красная иконка корзины слева от сообщения, если оно было удалено собеседником (Anti-Revoke)
+
+### Брендинг
+- Логотип MQGram (фиолетовый) заменяет все иконки Swiftgram:
+  - Иконка приложения
+  - Экран приветствия (intro)
+  - Иконка в настройках
 
 ## Как собрать
 
