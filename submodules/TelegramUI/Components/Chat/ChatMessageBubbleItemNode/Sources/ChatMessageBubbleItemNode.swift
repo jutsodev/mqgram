@@ -712,6 +712,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
     
     private var selectionNode: ChatMessageSelectionNode?
     private var deliveryFailedNode: ChatMessageDeliveryFailedNode?
+    private var mqgramRevokedNode: ASImageNode? // MQGram Anti-Revoke indicator
     private var swipeToReplyNode: ChatMessageSwipeToReplyNode?
     private var swipeToReplyFeedback: HapticFeedback?
     
@@ -3939,6 +3940,35 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             animation.animator.updateFrame(layer: deliveryFailedNode.layer, frame: deliveryFailedNode.frame.offsetBy(dx: 24.0, dy: 0.0), completion: { [weak deliveryFailedNode] _ in
                 deliveryFailedNode?.removeFromSupernode()
             })
+        }
+        
+        // MARK: MQGram - Revoked message trash icon
+        do {
+            let msg = item.content.firstMessage
+            let peerIdVal = msg.id.peerId.id._internalGetInt64Value()
+            let msgIdVal = msg.id.id
+            let revokedIds = UserDefaults.standard.array(forKey: "MQGram.revokedMessageIds") as? [String] ?? []
+            let isRevoked = revokedIds.contains("\(peerIdVal)_\(msgIdVal)")
+            if isRevoked {
+                let revokedNode: ASImageNode
+                if let existing = strongSelf.mqgramRevokedNode {
+                    revokedNode = existing
+                } else {
+                    revokedNode = ASImageNode()
+                    revokedNode.displayWithoutProcessing = true
+                    revokedNode.displaysAsynchronously = false
+                    let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+                    revokedNode.image = UIImage(systemName: "trash.fill", withConfiguration: config)?.withTintColor(.systemRed, renderingMode: .alwaysOriginal)
+                    strongSelf.mqgramRevokedNode = revokedNode
+                    strongSelf.insertSubnode(revokedNode, belowSubnode: strongSelf.messageAccessibilityArea)
+                }
+                let iconSize = CGSize(width: 18, height: 18)
+                let revokedFrame = CGRect(origin: CGPoint(x: backgroundFrame.minX - iconSize.width - 4, y: backgroundFrame.maxY - iconSize.height - 2), size: iconSize)
+                revokedNode.frame = revokedFrame
+            } else if let revokedNode = strongSelf.mqgramRevokedNode {
+                strongSelf.mqgramRevokedNode = nil
+                revokedNode.removeFromSupernode()
+            }
         }
         
         if let nameNode = nameNodeSizeApply.1() {
