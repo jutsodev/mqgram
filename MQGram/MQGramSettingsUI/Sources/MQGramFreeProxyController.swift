@@ -333,7 +333,7 @@ public func mqgramFreeProxyController(context: AccountContext) -> ViewController
     |> map { presentationData, proxyState -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let controllerState = ItemListControllerState(
             presentationData: ItemListPresentationData(presentationData),
-            title: .text("Free Proxy"),
+            title: .text("Бесплатный Прокси"),
             leftNavigationButton: nil,
             rightNavigationButton: nil,
             backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back)

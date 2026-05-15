@@ -252,7 +252,7 @@ public func mqgramDeveloperController(context: AccountContext) -> ViewController
     |> map { presentationData, devState -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let controllerState = ItemListControllerState(
             presentationData: ItemListPresentationData(presentationData),
-            title: .text("Developer"),
+            title: .text("Разработчики"),
             leftNavigationButton: nil,
             rightNavigationButton: nil,
             backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back)

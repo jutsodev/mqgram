@@ -118,7 +118,7 @@ private enum MQGramEntry: ItemListNodeEntry {
         case let .linksHeader(text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: MQGramSection.links.rawValue)
         case .freeProxy:
-            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.proxy, title: "Free Proxy", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.proxy, title: "Бесплатный Прокси", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
                 args.openFreeProxy()
             })
         case .passcodeLink:
@@ -130,7 +130,7 @@ private enum MQGramEntry: ItemListNodeEntry {
                 args.openSwiftgram()
             })
         case .developer:
-            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.developer, title: "Developer", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.developer, title: "Разработчики", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
                 args.openDeveloper()
             })
         case let .stableHeader(text):
@@ -158,7 +158,7 @@ private enum MQGramEntry: ItemListNodeEntry {
 private func mqgramEntries(settings: MQGramSettings) -> [MQGramEntry] {
     var entries: [MQGramEntry] = []
 
-    entries.append(.linksHeader("TOOLS"))
+    entries.append(.linksHeader("ИНСТРУМЕНТЫ"))
     entries.append(.freeProxy(-99))
     entries.append(.passcodeLink(-98))
     entries.append(.developer(-97))
@@ -166,54 +166,54 @@ private func mqgramEntries(settings: MQGramSettings) -> [MQGramEntry] {
 
     var id: Int32 = 1
 
-    entries.append(.stableHeader("STABLE"))
+    entries.append(.stableHeader("СТАБИЛЬНЫЕ"))
 
     entries.append(.toggle(id, .stable, .antiSelfDestruct,
-        "Anti-Self-Destruct",
-        "Save disappearing photos/videos and remove timers.",
+        "Анти-Самоуничтожение",
+        "Сохраняет исчезающие фото/видео и убирает таймеры.",
         settings.antiSelfDestruct))
     id += 1
 
     entries.append(.toggle(id, .stable, .antiRevoke,
-        "Anti-Revoke",
-        "Messages are never deleted for you. Deleted messages are marked with a ⏱️ icon.",
+        "Анти-Удаление",
+        "Сообщения никогда не удаляются у вас. Удалённые отмечены иконкой ⏱️.",
         settings.antiRevoke))
     id += 1
 
     entries.append(.toggle(id, .stable, .ghostMode,
-        "Ghost Mode",
-        "Read messages and view stories without read receipts.",
+        "Невидимка",
+        "Читайте сообщения и смотрите истории без отметки о прочтении.",
         settings.ghostMode))
     id += 1
 
     entries.append(.toggle(id, .stable, .customIndicators,
-        "Custom Indicators",
-        "Adds italic/spoiler labels to intercepted disappearing content.",
+        "Индикаторы",
+        "Добавляет метки к перехваченному исчезающему контенту.",
         settings.customIndicators))
     id += 1
 
-    entries.append(.betaHeader("BETA · WORK IN PROGRESS"))
+    entries.append(.betaHeader("БЕТА · В РАЗРАБОТКЕ"))
     id = 1001
 
     entries.append(.toggle(id, .beta, .contentProtectionBypass,
-        "Content Protection Bypass",
-        "Forward and save media from restricted channels and chats.",
+        "Обход Защиты Контента",
+        "Пересылайте и сохраняйте медиа из защищённых каналов и чатов.",
         settings.contentProtectionBypass))
     id += 1
 
     entries.append(.toggle(id, .beta, .antiEdit,
-        "Anti-Edit",
-        "See original content of edited messages.",
+        "Анти-Редактирование",
+        "Смотрите оригинальный текст отредактированных сообщений.",
         settings.antiEdit))
     id += 1
 
     entries.append(.toggle(id, .beta, .disableAds,
-        "Disable Ads",
-        "Remove sponsored messages and ads from channels.",
+        "Отключить Рекламу",
+        "Убирает спонсорские сообщения и рекламу из каналов.",
         settings.disableAds))
     id += 1
 
-    entries.append(.footer("MQGram features. Restart the app to apply changes."))
+    entries.append(.footer("Функции MQGram. Перезапустите приложение для применения изменений."))
 
     return entries
 }
