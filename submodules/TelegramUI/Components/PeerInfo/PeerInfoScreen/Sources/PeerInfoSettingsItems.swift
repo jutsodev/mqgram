@@ -200,7 +200,10 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
         }
     }
     
-    // MARK: MQGram - swiftgram & swiftgramPro entries are hidden, MQGram is opened via long-press on Stars row.
+    // MARK: MQGram - visible settings button (replaces Swiftgram entries)
+    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 1, label: .none, text: "MQGram", icon: PresentationResourcesSettings.swiftgram, action: {
+        interaction.openSettings(.mqgram)
+    }))
 
     var appIndex = 1000
     if let settings = data.globalSettings {
@@ -303,11 +306,13 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
             }
             items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 102, label: .attributedText(balanceText), text: presentationData.strings.Settings_Stars, icon: PresentationResourcesSettings.stars, action: {
                 interaction.openSettings(.stars)
-            }, longPressAction: {
-                interaction.openSettings(.mqgram)
             }))
         }
     }
+    // MARK: MQGram - StivenVPN button
+    items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 106, label: .text(""), text: "StivenVPN", icon: PresentationResourcesSettings.vpn, action: {
+        interaction.openSettings(.stivenVPN)
+    }))
     if let tonState = data.tonState {
         if abs(tonState.balance.value) > 0 {
             let balanceText: NSAttributedString
@@ -331,7 +336,7 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
         }))
     }
     if let starsState = data.starsState {
-        if (!isPremiumDisabled || starsState.balance > StarsAmount.zero) && sgWebSettings.global.canGrant {
+        if (!isPremiumDisabled || starsState.balance > StarsAmount.zero) && context.currentAppConfiguration.with({ $0 }).sgWebSettings.global.canGrant {
             items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 105, label: .text(""), text: "Telegram Gifts", icon: PresentationResourcesSettings.premiumGift, action: {
                 interaction.openSettings(.premiumGift)
             }))

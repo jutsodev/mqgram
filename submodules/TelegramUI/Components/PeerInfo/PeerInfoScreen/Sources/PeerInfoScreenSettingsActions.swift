@@ -49,7 +49,25 @@ extension PeerInfoScreenNode {
         }
         switch section {
         case .mqgram:
-            self.controller?.push(mqgramSettingsController(context: self.context))
+            self.controller?.push(mqgramSettingsController(context: self.context, openSwiftgramSettings: { [weak self] in
+                guard let self else { return }
+                self.controller?.push(sgSettingsController(context: self.context))
+            }))
+        case .stivenVPN:
+            let context = self.context
+            let navigationController = self.controller?.navigationController as? NavigationController
+            let _ = (context.engine.peers.resolvePeerByName(name: "stivenvpbbot", referrer: nil)
+            |> mapToSignal { result -> Signal<EnginePeer?, NoError> in
+                guard case let .result(result) = result else {
+                    return .complete()
+                }
+                return .single(result)
+            }
+            |> deliverOnMainQueue).startStandalone(next: { peer in
+                if let peer = peer, let navigationController = navigationController {
+                    context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: context, chatLocation: .peer(peer)))
+                }
+            })
         case .swiftgram:
             self.controller?.push(sgSettingsController(context: self.context))
         case .swiftgramPro:

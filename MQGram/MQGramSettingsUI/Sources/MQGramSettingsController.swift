@@ -7,22 +7,37 @@ import TelegramPresentationData
 import ItemListUI
 import PresentationDataUtils
 import AccountContext
+import TelegramCore
 
 private final class MQGramArguments {
     let toggleSetting: (MQGramSettings.Key, Bool) -> Void
+    let openFreeProxy: () -> Void
+    let openSwiftgram: () -> Void
+    let openDeveloper: () -> Void
+    let openPasscode: () -> Void
 
-    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void) {
+    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openFreeProxy: @escaping () -> Void, openSwiftgram: @escaping () -> Void, openDeveloper: @escaping () -> Void, openPasscode: @escaping () -> Void) {
         self.toggleSetting = toggleSetting
+        self.openFreeProxy = openFreeProxy
+        self.openSwiftgram = openSwiftgram
+        self.openDeveloper = openDeveloper
+        self.openPasscode = openPasscode
     }
 }
 
 private enum MQGramSection: Int32 {
+    case links
     case stable
     case beta
     case footer
 }
 
 private enum MQGramEntry: ItemListNodeEntry {
+    case linksHeader(String)
+    case freeProxy(Int32)
+    case passcodeLink(Int32)
+    case swiftgramLink(Int32)
+    case developer(Int32)
     case stableHeader(String)
     case toggle(Int32, MQGramSection, MQGramSettings.Key, String, String?, Bool)
     case betaHeader(String)
@@ -30,6 +45,8 @@ private enum MQGramEntry: ItemListNodeEntry {
 
     var section: ItemListSectionId {
         switch self {
+        case .linksHeader, .freeProxy, .passcodeLink, .swiftgramLink, .developer:
+            return MQGramSection.links.rawValue
         case .stableHeader:
             return MQGramSection.stable.rawValue
         case .betaHeader:
@@ -43,6 +60,16 @@ private enum MQGramEntry: ItemListNodeEntry {
 
     var stableId: Int32 {
         switch self {
+        case .linksHeader:
+            return -100
+        case let .freeProxy(id):
+            return id
+        case let .passcodeLink(id):
+            return id
+        case let .swiftgramLink(id):
+            return id
+        case let .developer(id):
+            return id
         case .stableHeader:
             return 0
         case let .toggle(id, _, _, _, _, _):
@@ -56,6 +83,16 @@ private enum MQGramEntry: ItemListNodeEntry {
 
     static func ==(lhs: MQGramEntry, rhs: MQGramEntry) -> Bool {
         switch lhs {
+        case let .linksHeader(lText):
+            if case let .linksHeader(rText) = rhs, lText == rText { return true } else { return false }
+        case let .freeProxy(lId):
+            if case let .freeProxy(rId) = rhs, lId == rId { return true } else { return false }
+        case let .passcodeLink(lId):
+            if case let .passcodeLink(rId) = rhs, lId == rId { return true } else { return false }
+        case let .swiftgramLink(lId):
+            if case let .swiftgramLink(rId) = rhs, lId == rId { return true } else { return false }
+        case let .developer(lId):
+            if case let .developer(rId) = rhs, lId == rId { return true } else { return false }
         case let .stableHeader(lText):
             if case let .stableHeader(rText) = rhs, lText == rText { return true } else { return false }
         case let .betaHeader(lText):
@@ -78,6 +115,24 @@ private enum MQGramEntry: ItemListNodeEntry {
     func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
         let args = arguments as! MQGramArguments
         switch self {
+        case let .linksHeader(text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: MQGramSection.links.rawValue)
+        case .freeProxy:
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.proxy, title: "Бесплатный Прокси", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
+                args.openFreeProxy()
+            })
+        case .passcodeLink:
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.passcode, title: "Код-пароль", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
+                args.openPasscode()
+            })
+        case .swiftgramLink:
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.swiftgram, title: "Swiftgram", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
+                args.openSwiftgram()
+            })
+        case .developer:
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.developer, title: "Разработчики", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
+                args.openDeveloper()
+            })
         case let .stableHeader(text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: MQGramSection.stable.rawValue)
         case let .betaHeader(text):
@@ -102,67 +157,95 @@ private enum MQGramEntry: ItemListNodeEntry {
 
 private func mqgramEntries(settings: MQGramSettings) -> [MQGramEntry] {
     var entries: [MQGramEntry] = []
+
+    entries.append(.linksHeader("ИНСТРУМЕНТЫ"))
+    entries.append(.freeProxy(-99))
+    entries.append(.passcodeLink(-98))
+    entries.append(.developer(-97))
+    entries.append(.swiftgramLink(-96))
+
     var id: Int32 = 1
 
-    entries.append(.stableHeader("STABLE"))
+    entries.append(.stableHeader("СТАБИЛЬНЫЕ"))
 
     entries.append(.toggle(id, .stable, .antiSelfDestruct,
-        "Anti-Self-Destruct",
-        "Save disappearing photos/videos and remove timers.",
+        "Анти-Самоуничтожение",
+        "Сохраняет исчезающие фото/видео и убирает таймеры.",
         settings.antiSelfDestruct))
     id += 1
 
     entries.append(.toggle(id, .stable, .antiRevoke,
-        "Anti-Revoke",
-        "Messages are never deleted for you. Deleted messages are marked with a ⏱️ icon.",
+        "Анти-Удаление",
+        "Сообщения никогда не удаляются у вас. Удалённые отмечены иконкой ⏱️.",
         settings.antiRevoke))
     id += 1
 
     entries.append(.toggle(id, .stable, .ghostMode,
-        "Ghost Mode",
-        "Read messages and view stories without read receipts.",
+        "Невидимка",
+        "Читайте сообщения и смотрите истории без отметки о прочтении.",
         settings.ghostMode))
     id += 1
 
     entries.append(.toggle(id, .stable, .customIndicators,
-        "Custom Indicators",
-        "Adds italic/spoiler labels to intercepted disappearing content.",
+        "Индикаторы",
+        "Добавляет метки к перехваченному исчезающему контенту.",
         settings.customIndicators))
     id += 1
 
-    entries.append(.betaHeader("BETA · WORK IN PROGRESS"))
+    entries.append(.betaHeader("БЕТА · В РАЗРАБОТКЕ"))
     id = 1001
 
     entries.append(.toggle(id, .beta, .contentProtectionBypass,
-        "Content Protection Bypass",
-        "Forward and save media from restricted channels and chats.",
+        "Обход Защиты Контента",
+        "Пересылайте и сохраняйте медиа из защищённых каналов и чатов.",
         settings.contentProtectionBypass))
     id += 1
 
     entries.append(.toggle(id, .beta, .antiEdit,
-        "Anti-Edit",
-        "See original content of edited messages.",
+        "Анти-Редактирование",
+        "Смотрите оригинальный текст отредактированных сообщений.",
         settings.antiEdit))
     id += 1
 
     entries.append(.toggle(id, .beta, .disableAds,
-        "Disable Ads",
-        "Remove sponsored messages and ads from channels.",
+        "Отключить Рекламу",
+        "Убирает спонсорские сообщения и рекламу из каналов.",
         settings.disableAds))
     id += 1
 
-    entries.append(.footer("MQGram features. Restart the app to apply changes."))
+    entries.append(.footer("Функции MQGram. Перезапустите приложение для применения изменений."))
 
     return entries
 }
 
-public func mqgramSettingsController(context: AccountContext) -> ViewController {
+public func mqgramSettingsController(context: AccountContext, openSwiftgramSettings: (() -> Void)? = nil) -> ViewController {
     let updatePromise = ValuePromise<Bool>(true, ignoreRepeated: false)
 
-    let arguments = MQGramArguments(toggleSetting: { key, value in
-        MQGramSettings.shared.setBool(value, for: key)
-        updatePromise.set(true)
-    })
+    var pushControllerImpl: ((ViewController) -> Void)?
+
+    let arguments = MQGramArguments(
+        toggleSetting: { key, value in
+            MQGramSettings.shared.setBool(value, for: key)
+            updatePromise.set(true)
+        },
+        openFreeProxy: {
+            let proxyController = mqgramFreeProxyController(context: context)
+            pushControllerImpl?(proxyController)
+        },
+        openSwiftgram: {
+            if let openSwiftgramSettings = openSwiftgramSettings {
+                openSwiftgramSettings()
+            }
+        },
+        openDeveloper: {
+            let devController = mqgramDeveloperController(context: context)
+            pushControllerImpl?(devController)
+        },
+        openPasscode: {
+            let passcodeController = mqgramPasscodeController(context: context)
+            pushControllerImpl?(passcodeController)
+        }
+    )
 
     let signal = combineLatest(context.sharedContext.presentationData, updatePromise.get())
     |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
@@ -186,5 +269,8 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
     }
 
     let controller = ItemListController(context: context, state: signal)
+    pushControllerImpl = { [weak controller] c in
+        controller?.push(c)
+    }
     return controller
 }
