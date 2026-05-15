@@ -13,11 +13,13 @@ private final class MQGramArguments {
     let toggleSetting: (MQGramSettings.Key, Bool) -> Void
     let openFreeProxy: () -> Void
     let openSwiftgram: () -> Void
+    let openDeveloper: () -> Void
 
-    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openFreeProxy: @escaping () -> Void, openSwiftgram: @escaping () -> Void) {
+    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openFreeProxy: @escaping () -> Void, openSwiftgram: @escaping () -> Void, openDeveloper: @escaping () -> Void) {
         self.toggleSetting = toggleSetting
         self.openFreeProxy = openFreeProxy
         self.openSwiftgram = openSwiftgram
+        self.openDeveloper = openDeveloper
     }
 }
 
@@ -32,6 +34,7 @@ private enum MQGramEntry: ItemListNodeEntry {
     case linksHeader(String)
     case freeProxy(Int32)
     case swiftgramLink(Int32)
+    case developer(Int32)
     case stableHeader(String)
     case toggle(Int32, MQGramSection, MQGramSettings.Key, String, String?, Bool)
     case betaHeader(String)
@@ -39,7 +42,7 @@ private enum MQGramEntry: ItemListNodeEntry {
 
     var section: ItemListSectionId {
         switch self {
-        case .linksHeader, .freeProxy, .swiftgramLink:
+        case .linksHeader, .freeProxy, .swiftgramLink, .developer:
             return MQGramSection.links.rawValue
         case .stableHeader:
             return MQGramSection.stable.rawValue
@@ -60,6 +63,8 @@ private enum MQGramEntry: ItemListNodeEntry {
             return id
         case let .swiftgramLink(id):
             return id
+        case let .developer(id):
+            return id
         case .stableHeader:
             return 0
         case let .toggle(id, _, _, _, _, _):
@@ -79,6 +84,8 @@ private enum MQGramEntry: ItemListNodeEntry {
             if case let .freeProxy(rId) = rhs, lId == rId { return true } else { return false }
         case let .swiftgramLink(lId):
             if case let .swiftgramLink(rId) = rhs, lId == rId { return true } else { return false }
+        case let .developer(lId):
+            if case let .developer(rId) = rhs, lId == rId { return true } else { return false }
         case let .stableHeader(lText):
             if case let .stableHeader(rText) = rhs, lText == rText { return true } else { return false }
         case let .betaHeader(lText):
@@ -111,6 +118,10 @@ private enum MQGramEntry: ItemListNodeEntry {
             return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.swiftgram, title: "Swiftgram", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
                 args.openSwiftgram()
             })
+        case .developer:
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.developer, title: "Developer", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
+                args.openDeveloper()
+            })
         case let .stableHeader(text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: MQGramSection.stable.rawValue)
         case let .betaHeader(text):
@@ -138,7 +149,8 @@ private func mqgramEntries(settings: MQGramSettings) -> [MQGramEntry] {
 
     entries.append(.linksHeader("TOOLS"))
     entries.append(.freeProxy(-99))
-    entries.append(.swiftgramLink(-98))
+    entries.append(.developer(-98))
+    entries.append(.swiftgramLink(-97))
 
     var id: Int32 = 1
 
@@ -212,6 +224,10 @@ public func mqgramSettingsController(context: AccountContext, openSwiftgramSetti
             if let openSwiftgramSettings = openSwiftgramSettings {
                 openSwiftgramSettings()
             }
+        },
+        openDeveloper: {
+            let devController = mqgramDeveloperController(context: context)
+            pushControllerImpl?(devController)
         }
     )
 

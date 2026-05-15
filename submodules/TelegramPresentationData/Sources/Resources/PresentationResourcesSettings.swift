@@ -347,6 +347,7 @@ public struct PresentationResourcesSettings {
     
     public static let bot = renderSettingsIcon(name: "Item List/Icons/Bot", backgroundColors: [colorBlue])
     public static let vpn = renderSettingsIcon(name: "Item List/Icons/Proxy", backgroundColors: [colorLightBlue])
+    public static let developer = renderSettingsIcon(name: "Item List/Icons/Member", backgroundColors: [colorPurple])
 
     public static let passport = renderAttachAppIcon(iconImage: UIImage(bundleImageName: "Settings/Menu/Passport"))
     public static let watch = renderAttachAppIcon(iconImage: UIImage(bundleImageName: "Settings/Menu/Watch"))
