@@ -308,6 +308,10 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
             }))
         }
     }
+    // MARK: MQGram - StivenVPN button
+    items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 106, label: .text(""), text: "StivenVPN", icon: PresentationResourcesSettings.vpn, action: {
+        interaction.openSettings(.stivenVPN)
+    }))
     if let tonState = data.tonState {
         if abs(tonState.balance.value) > 0 {
             let balanceText: NSAttributedString
