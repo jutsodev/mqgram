@@ -286,7 +286,6 @@ public func mqgramFreeProxyController(context: AccountContext) -> ViewController
         }
     }
 
-    var _presentControllerImpl: ((ViewController, Any?) -> Void)?
     var pushControllerImpl: ((ViewController) -> Void)?
 
     let arguments = MQGramFreeProxyArguments(
@@ -352,9 +351,6 @@ public func mqgramFreeProxyController(context: AccountContext) -> ViewController
     }
 
     let controller = ItemListController(context: context, state: signal)
-    _presentControllerImpl = { [weak controller] c, a in
-        controller?.present(c, in: .window(.root), with: a as? ViewControllerPresentationArguments)
-    }
     pushControllerImpl = { [weak controller] c in
         controller?.push(c)
     }
