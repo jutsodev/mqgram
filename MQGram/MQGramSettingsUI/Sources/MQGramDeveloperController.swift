@@ -132,7 +132,7 @@ private enum DeveloperEntry: ItemListNodeEntry {
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         case let .contactsHeader(text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
-        case let .contactItem(_, contact, isAdmin):
+        case let .contactItem(_, contact, _):
             return ItemListDisclosureItem(
                 presentationData: presentationData,
                 title: contact.name,
@@ -372,9 +372,9 @@ func mqgramAddContactController(context: AccountContext, presentationData: Prese
     }
 
     let arguments = AddContactArguments(
-        updateName: { updateForm { $0.name = $1 } },
-        updateURL: { updateForm { $0.url = $1 } },
-        updateIcon: { updateForm { $0.icon = $1 } }
+        updateName: { text in updateForm { $0.name = text } },
+        updateURL: { text in updateForm { $0.url = text } },
+        updateIcon: { text in updateForm { $0.icon = text } }
     )
 
     var dismissImpl: (() -> Void)?
@@ -536,12 +536,6 @@ func mqgramEditContactController(context: AccountContext, presentationData: Pres
         formState.set(currentFormState)
     }
 
-    let arguments = EditContactArguments(
-        updateName: { updateForm { $0.name = $1 } },
-        updateURL: { updateForm { $0.url = $1 } },
-        updateIcon: { updateForm { $0.icon = $1 } }
-    ) { /* deleteContact */ }
-
     var dismissImpl: (() -> Void)?
 
     let deleteAction = {
@@ -554,9 +548,9 @@ func mqgramEditContactController(context: AccountContext, presentationData: Pres
     }
 
     let editArguments = EditContactArguments(
-        updateName: { updateForm { $0.name = $1 } },
-        updateURL: { updateForm { $0.url = $1 } },
-        updateIcon: { updateForm { $0.icon = $1 } },
+        updateName: { text in updateForm { $0.name = text } },
+        updateURL: { text in updateForm { $0.url = text } },
+        updateIcon: { text in updateForm { $0.icon = text } },
         deleteContact: deleteAction
     )
 
