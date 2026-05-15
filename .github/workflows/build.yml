@@ -40,15 +40,12 @@ jobs:
           mkdir -p build-system/bazel-rules
           _clone_at() {
             local dir="$1" url="$2" sha="$3"
-            [ -d "$dir/.git" ] && return 0
             rm -rf "$dir"
-            git clone --depth=1 -q "$url" "$dir" || {
-              mkdir -p "$dir" && git -C "$dir" init -q
-              git -C "$dir" remote add origin "$url"
-              git -C "$dir" fetch --depth=1 -q origin "$sha"
-              git -C "$dir" checkout -q FETCH_HEAD
-            }
-            git -C "$dir" checkout -q "$sha" 2>/dev/null || true
+            mkdir -p "$dir"
+            git -C "$dir" init -q
+            git -C "$dir" remote add origin "$url"
+            git -C "$dir" fetch --depth=1 -q origin "$sha"
+            git -C "$dir" checkout -q FETCH_HEAD
           }
           _clone_at build-system/bazel-rules/rules_xcodeproj \
             https://github.com/MobileNativeFoundation/rules_xcodeproj.git \
@@ -121,10 +118,11 @@ jobs:
           print(f"Created {path} (bundle_id={cfg['bundle_id']})")
           EOF
 
-      - name: Symlink sources to canonical path
+      - name: Copy sources to canonical path
         run: |
           sudo mkdir -p /Users/Shared
-          sudo ln -sfn "$GITHUB_WORKSPACE/telegram-ios" /Users/Shared/telegram-ios
+          cp -Rc "$GITHUB_WORKSPACE/telegram-ios" /Users/Shared/telegram-ios 2>/dev/null \
+            || cp -R "$GITHUB_WORKSPACE/telegram-ios" /Users/Shared/telegram-ios
 
       - name: Cache Bazel output
         uses: actions/cache@v4
