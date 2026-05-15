@@ -1474,6 +1474,10 @@ public final class PendingMessageManager {
                             transaction.setPeerChatState(message.id.peerId, state: updatedState)
                         }
                     } else if case .historyScreenshot = media.action {
+                        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostScreenshots") {
+                            sentAsAction = true
+                            break
+                        }
                         sentAsAction = true
                         let updatedState = addSecretChatOutgoingOperation(transaction: transaction, peerId: message.id.peerId, operation: .screenshotMessages(layer: layer, actionGloballyUniqueId: message.globallyUniqueId!, globallyUniqueIds: [], messageId: message.id), state: state)
                         if updatedState != state {
@@ -1984,26 +1988,31 @@ public final class PendingMessageManager {
                         sendMessageRequest = network.request(Api.functions.messages.sendInlineBotResult(flags: flags, peer: inputPeer, replyTo: replyTo, randomId: uniqueId, queryId: chatContextResult.queryId, id: chatContextResult.id, scheduleDate: scheduleTime, sendAs: sendAsInputPeer, quickReplyShortcut: quickReplyShortcut, allowPaidStars: allowPaidStars))
                         |> map(NetworkRequestResult.result)
                     case .messageScreenshot:
-                        let replyTo: Api.InputReplyTo
-                    
-                        if let replyMessageId = replyMessageId {
-                            let replyFlags: Int32 = 0
-                            replyTo = .inputReplyToMessage(.init(flags: replyFlags, replyToMsgId: replyMessageId, topMsgId: nil, replyToPeerId: nil, quoteText: nil, quoteEntities: nil, quoteOffset: nil, monoforumPeerId: nil, todoItemId: nil, pollOption: nil))
-                        } else if let replyToStoryId = replyToStoryId {
-                            if let inputPeer = transaction.getPeer(replyToStoryId.peerId).flatMap(apiInputPeer) {
-                                flags |= 1 << 0
-                                replyTo = .inputReplyToStory(.init(peer: inputPeer, storyId: replyToStoryId.id))
-                            } else {
-                                let replyFlags: Int32 = 0
-                                replyTo = .inputReplyToMessage(.init(flags: replyFlags, replyToMsgId: 0, topMsgId: nil, replyToPeerId: nil, quoteText: nil, quoteEntities: nil, quoteOffset: nil, monoforumPeerId: monoforumPeerId, todoItemId: nil, pollOption: nil))
-                            }
+                        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostScreenshots") {
+                            sendMessageRequest = .single(.acknowledged)
                         } else {
-                            let replyFlags: Int32 = 0
-                            replyTo = .inputReplyToMessage(.init(flags: replyFlags, replyToMsgId: 0, topMsgId: nil, replyToPeerId: nil, quoteText: nil, quoteEntities: nil, quoteOffset: nil, monoforumPeerId: monoforumPeerId, todoItemId: nil, pollOption: nil))
+                                                    let replyTo: Api.InputReplyTo
+                                                
+                                                    if let replyMessageId = replyMessageId {
+                                                        let replyFlags: Int32 = 0
+                                                        replyTo = .inputReplyToMessage(.init(flags: replyFlags, replyToMsgId: replyMessageId, topMsgId: nil, replyToPeerId: nil, quoteText: nil, quoteEntities: nil, quoteOffset: nil, monoforumPeerId: nil, todoItemId: nil, pollOption: nil))
+                                                    } else if let replyToStoryId = replyToStoryId {
+                                                        if let inputPeer = transaction.getPeer(replyToStoryId.peerId).flatMap(apiInputPeer) {
+                                                            flags |= 1 << 0
+                                                            replyTo = .inputReplyToStory(.init(peer: inputPeer, storyId: replyToStoryId.id))
+                                                        } else {
+                                                            let replyFlags: Int32 = 0
+                                                            replyTo = .inputReplyToMessage(.init(flags: replyFlags, replyToMsgId: 0, topMsgId: nil, replyToPeerId: nil, quoteText: nil, quoteEntities: nil, quoteOffset: nil, monoforumPeerId: monoforumPeerId, todoItemId: nil, pollOption: nil))
+                                                        }
+                                                    } else {
+                                                        let replyFlags: Int32 = 0
+                                                        replyTo = .inputReplyToMessage(.init(flags: replyFlags, replyToMsgId: 0, topMsgId: nil, replyToPeerId: nil, quoteText: nil, quoteEntities: nil, quoteOffset: nil, monoforumPeerId: monoforumPeerId, todoItemId: nil, pollOption: nil))
+                                                    }
+                                                
+                                                    sendMessageRequest = network.request(Api.functions.messages.sendScreenshotNotification(peer: inputPeer, replyTo: replyTo, randomId: uniqueId))
+                                                    |> map(NetworkRequestResult.result)
                         }
-                    
-                        sendMessageRequest = network.request(Api.functions.messages.sendScreenshotNotification(peer: inputPeer, replyTo: replyTo, randomId: uniqueId))
-                        |> map(NetworkRequestResult.result)
+
                     case .secretMedia:
                         assertionFailure()
                         sendMessageRequest = .fail(MTRpcError(errorCode: 400, errorDescription: "internal"))

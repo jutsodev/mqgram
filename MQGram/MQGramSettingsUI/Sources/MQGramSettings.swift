@@ -8,6 +8,10 @@ public final class MQGramSettings {
         case antiSelfDestruct
         case antiRevoke
         case ghostMode
+        case ghostReadReceipts
+        case ghostStories
+        case ghostContentReads
+        case ghostTypingActions
         case customIndicators
         case contentProtectionBypass
         case antiEdit
@@ -47,6 +51,61 @@ public final class MQGramSettings {
     public var ghostMode: Bool {
         get { bool(for: .ghostMode) }
         set { setBool(newValue, for: .ghostMode) }
+    }
+
+    public var ghostReadReceipts: Bool {
+        get { bool(for: .ghostReadReceipts) }
+        set { setBool(newValue, for: .ghostReadReceipts) }
+    }
+
+    public var ghostStories: Bool {
+        get { bool(for: .ghostStories) }
+        set { setBool(newValue, for: .ghostStories) }
+    }
+
+    public var ghostContentReads: Bool {
+        get { bool(for: .ghostContentReads) }
+        set { setBool(newValue, for: .ghostContentReads) }
+    }
+
+    public var ghostPersonalActions: Bool {
+        get { bool(for: .ghostPersonalActions) }
+        set { setBool(newValue, for: .ghostPersonalActions) }
+    }
+
+    public var ghostScreenshots: Bool {
+        get { bool(for: .ghostScreenshots) }
+        set { setBool(newValue, for: .ghostScreenshots) }
+    }
+
+    public var ghostDrafts: Bool {
+        get { bool(for: .ghostDrafts) }
+        set { setBool(newValue, for: .ghostDrafts) }
+    }
+
+    public var ghostEmojiInteractions: Bool {
+        get { bool(for: .ghostEmojiInteractions) }
+        set { setBool(newValue, for: .ghostEmojiInteractions) }
+    }
+
+    public var ghostReactions: Bool {
+        get { bool(for: .ghostReactions) }
+        set { setBool(newValue, for: .ghostReactions) }
+    }
+
+    public var ghostStickerActivity: Bool {
+        get { bool(for: .ghostStickerActivity) }
+        set { setBool(newValue, for: .ghostStickerActivity) }
+    }
+
+    public var ghostOnlineStatus: Bool {
+        get { bool(for: .ghostOnlineStatus) }
+        set { setBool(newValue, for: .ghostOnlineStatus) }
+    }
+
+    public var ghostTypingActions: Bool {
+        get { bool(for: .ghostTypingActions) }
+        set { setBool(newValue, for: .ghostTypingActions) }
     }
 
     public var customIndicators: Bool {

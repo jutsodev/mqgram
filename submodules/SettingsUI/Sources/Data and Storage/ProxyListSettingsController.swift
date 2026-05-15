@@ -20,6 +20,7 @@ private final class ProxySettingsControllerArguments {
     let toggleLocalDNS: (Bool) -> Void
     let toggleEnabled: (Bool) -> Void
     let addNewServer: () -> Void
+    let addFreeProxy: () -> Void
     let activateServer: (ProxyServerSettings) -> Void
     let editServer: (ProxyServerSettings) -> Void
     let removeServer: (ProxyServerSettings) -> Void
@@ -27,10 +28,11 @@ private final class ProxySettingsControllerArguments {
     let toggleUseForCalls: (Bool) -> Void
     let shareProxyList: () -> Void
     
-    init(toggleLocalDNS: @escaping (Bool) -> Void, toggleEnabled: @escaping (Bool) -> Void, addNewServer: @escaping () -> Void, activateServer: @escaping (ProxyServerSettings) -> Void, editServer: @escaping (ProxyServerSettings) -> Void, removeServer: @escaping (ProxyServerSettings) -> Void, setServerWithRevealedOptions: @escaping (ProxyServerSettings?, ProxyServerSettings?) -> Void, toggleUseForCalls: @escaping (Bool) -> Void, shareProxyList: @escaping () -> Void) {
+    init(toggleLocalDNS: @escaping (Bool) -> Void, toggleEnabled: @escaping (Bool) -> Void, addNewServer: @escaping () -> Void, addFreeProxy: @escaping () -> Void, activateServer: @escaping (ProxyServerSettings) -> Void, editServer: @escaping (ProxyServerSettings) -> Void, removeServer: @escaping (ProxyServerSettings) -> Void, setServerWithRevealedOptions: @escaping (ProxyServerSettings?, ProxyServerSettings?) -> Void, toggleUseForCalls: @escaping (Bool) -> Void, shareProxyList: @escaping () -> Void) {
         self.toggleLocalDNS = toggleLocalDNS
         self.toggleEnabled = toggleEnabled
         self.addNewServer = addNewServer
+        self.addFreeProxy = addFreeProxy
         self.activateServer = activateServer
         self.editServer = editServer
         self.removeServer = removeServer
@@ -85,6 +87,7 @@ private enum ProxySettingsControllerEntry: ItemListNodeEntry {
     case localDNSNotice(PresentationTheme, String)
     case serversHeader(PresentationTheme, String)
     case addServer(PresentationTheme, String, Bool)
+    case addFreeProxy(PresentationTheme, String, Bool)
     case server(Int, PresentationTheme, PresentationStrings, ProxyServerSettings, Bool, DisplayProxyServerStatus, ProxySettingsServerItemEditing, Bool)
     case shareProxyList(PresentationTheme, String)
     case useForCalls(PresentationTheme, String, Bool)
@@ -96,7 +99,7 @@ private enum ProxySettingsControllerEntry: ItemListNodeEntry {
                 return ProxySettingsControllerSection.enabled.rawValue
             case .enabled:
                 return ProxySettingsControllerSection.enabled.rawValue
-            case .serversHeader, .addServer, .server:
+            case .serversHeader, .addServer, .addFreeProxy, .server:
                 return ProxySettingsControllerSection.servers.rawValue
             case .shareProxyList:
                 return ProxySettingsControllerSection.share.rawValue
@@ -117,14 +120,16 @@ private enum ProxySettingsControllerEntry: ItemListNodeEntry {
                 return .index(1)
             case .addServer:
                 return .index(2)
+            case .addFreeProxy:
+                return .index(3)
             case let .server(_, _, _, settings, _, _, _, _):
                 return .server(settings.host, settings.port, settings.connection)
             case .shareProxyList:
-                return .index(3)
-            case .useForCalls:
                 return .index(4)
-            case .useForCallsInfo:
+            case .useForCalls:
                 return .index(5)
+            case .useForCallsInfo:
+                return .index(6)
         }
     }
     
@@ -156,6 +161,12 @@ private enum ProxySettingsControllerEntry: ItemListNodeEntry {
                 }
             case let .addServer(lhsTheme, lhsText, lhsEditing):
                 if case let .addServer(rhsTheme, rhsText, rhsEditing) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsEditing == rhsEditing {
+                    return true
+                } else {
+                    return false
+                }
+            case let .addFreeProxy(lhsTheme, lhsText, lhsEditing):
+                if case let .addFreeProxy(rhsTheme, rhsText, rhsEditing) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsEditing == rhsEditing {
                     return true
                 } else {
                     return false
@@ -224,9 +235,16 @@ private enum ProxySettingsControllerEntry: ItemListNodeEntry {
                     default:
                         return true
                 }
+            case .addFreeProxy:
+                switch rhs {
+                    case .enabled, .localDNSToggle, .localDNSNotice, .serversHeader, .addServer, .addFreeProxy:
+                        return false
+                    default:
+                        return true
+                }
             case let .server(lhsIndex, _, _, _, _, _, _, _):
                 switch rhs {
-                    case .enabled, .localDNSToggle, .localDNSNotice, .serversHeader, .addServer:
+                    case .enabled, .localDNSToggle, .localDNSNotice, .serversHeader, .addServer, .addFreeProxy:
                         return false
                     case let .server(rhsIndex, _, _, _, _, _, _, _):
                         return lhsIndex < rhsIndex
@@ -235,14 +253,14 @@ private enum ProxySettingsControllerEntry: ItemListNodeEntry {
                 }
             case .shareProxyList:
                 switch rhs {
-                    case .enabled, .localDNSToggle, .localDNSNotice, .serversHeader, .addServer, .server, .shareProxyList:
+                    case .enabled, .localDNSToggle, .localDNSNotice, .serversHeader, .addServer, .addFreeProxy, .server, .shareProxyList:
                         return false
                     default:
                         return true
             }
             case .useForCalls:
                 switch rhs {
-                    case .enabled, .localDNSToggle, .localDNSNotice, .serversHeader, .addServer, .server, .shareProxyList, .useForCalls:
+                    case .enabled, .localDNSToggle, .localDNSNotice, .serversHeader, .addServer, .addFreeProxy, .server, .shareProxyList, .useForCalls:
                         return false
                     default:
                         return true
@@ -274,6 +292,10 @@ private enum ProxySettingsControllerEntry: ItemListNodeEntry {
             case let .addServer(_, text, _):
                 return ProxySettingsActionItem(presentationData: presentationData, systemStyle: .glass, title: text, icon: .add, sectionId: self.section, editing: false, action: {
                     arguments.addNewServer()
+                })
+            case let .addFreeProxy(_, text, _):
+                return ProxySettingsActionItem(presentationData: presentationData, systemStyle: .glass, title: text, icon: .add, sectionId: self.section, editing: false, action: {
+                    arguments.addFreeProxy()
                 })
             case let .server(_, theme, strings, settings, active, status, editing, enabled):
                 return ProxySettingsServerItem(theme: theme, strings: strings, systemStyle: .glass, server: settings, activity: status.activity, active: active, color: enabled ? .accent : .secondary, label: status.text, labelAccent: status.textActive, editing: editing, sectionId: self.section, action: {
@@ -308,6 +330,8 @@ private func proxySettingsControllerEntries(theme: PresentationTheme, strings: P
     entries.append(.localDNSNotice(theme, i18n("ProxySettings.UseSystemDNS.Notice", strings.baseLanguageCode)))
     entries.append(.serversHeader(theme, strings.SocksProxySetup_SavedProxies))
     entries.append(.addServer(theme, strings.SocksProxySetup_AddProxy, state.editing))
+    let freeProxyTitle = strings.baseLanguageCode.lowercased().hasPrefix("ru") ? "Добавить бесплатный прокси" : "Add Free Proxy"
+    entries.append(.addFreeProxy(theme, freeProxyTitle, state.editing))
     var index = 0
     for server in proxySettings.servers {
         let status: ProxyServerStatus = statuses[server] ?? .checking
@@ -433,6 +457,32 @@ public func proxySettingsController(accountManager: AccountManager<TelegramAccou
         }).start()
     }, addNewServer: {
         pushControllerImpl?(proxyServerSettingsController(sharedContext: sharedContext, presentationData: presentationData, updatedPresentationData: updatedPresentationData, accountManager: accountManager, network: network, currentSettings: nil))
+    }, addFreeProxy: {
+        let freeProxySeeds: [(String, Int32, String)] = [
+            ("proxy.digitalresistance.dog", 443, "00000000000000000000000000000000"),
+            ("proxy.digitalresistance.dog", 443, "dd0000000000000000000000000000000000"),
+            ("proxy.digitalresistance.dog", 443, "ee000000000000000000000000000000007777772e676f6f676c652e636f6d")
+        ]
+        let servers = freeProxySeeds.compactMap { seed -> ProxyServerSettings? in
+            guard let parsedSecret = MTProxySecret.parse(seed.2) else {
+                return nil
+            }
+            return ProxyServerSettings(host: seed.0, port: seed.1, connection: .mtp(secret: parsedSecret.serialize()))
+        }
+        guard let activeServer = servers.first else {
+            return
+        }
+        let _ = updateProxySettingsInteractively(accountManager: accountManager, { current in
+            var current = current
+            for server in servers {
+                if !current.servers.contains(server) {
+                    current.servers.append(server)
+                }
+            }
+            current.activeServer = activeServer
+            current.enabled = true
+            return current
+        }).start()
     }, activateServer: { server in
         let _ = updateProxySettingsInteractively(accountManager: accountManager, { current in
             var current = current

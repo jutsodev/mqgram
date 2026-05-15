@@ -17,23 +17,25 @@ private final class MQGramArguments {
 }
 
 private enum MQGramSection: Int32 {
+    case intro
     case stable
+    case ghost
     case beta
     case footer
 }
 
 private enum MQGramEntry: ItemListNodeEntry {
-    case stableHeader(String)
+    case header(Int32, String)
+    case info(Int32, Int32, String)
     case toggle(Int32, MQGramSection, MQGramSettings.Key, String, String?, Bool)
-    case betaHeader(String)
     case footer(String)
 
     var section: ItemListSectionId {
         switch self {
-        case .stableHeader:
-            return MQGramSection.stable.rawValue
-        case .betaHeader:
-            return MQGramSection.beta.rawValue
+        case let .header(section, _):
+            return section
+        case let .info(section, _, _):
+            return section
         case .footer:
             return MQGramSection.footer.rawValue
         case let .toggle(_, section, _, _, _, _):
@@ -43,12 +45,12 @@ private enum MQGramEntry: ItemListNodeEntry {
 
     var stableId: Int32 {
         switch self {
-        case .stableHeader:
-            return 0
-        case let .toggle(id, _, _, _, _, _):
-            return id
-        case .betaHeader:
-            return 1000
+        case let .header(section, _):
+            return section * 1000
+        case let .info(section, id, _):
+            return section * 1000 + id
+        case let .toggle(id, section, _, _, _, _):
+            return section.rawValue * 1000 + 100 + id
         case .footer:
             return 9999
         }
@@ -56,10 +58,10 @@ private enum MQGramEntry: ItemListNodeEntry {
 
     static func ==(lhs: MQGramEntry, rhs: MQGramEntry) -> Bool {
         switch lhs {
-        case let .stableHeader(lText):
-            if case let .stableHeader(rText) = rhs, lText == rText { return true } else { return false }
-        case let .betaHeader(lText):
-            if case let .betaHeader(rText) = rhs, lText == rText { return true } else { return false }
+        case let .header(lSection, lText):
+            if case let .header(rSection, rText) = rhs, lSection == rSection, lText == rText { return true } else { return false }
+        case let .info(lSection, lId, lText):
+            if case let .info(rSection, rId, rText) = rhs, lSection == rSection, lId == rId, lText == rText { return true } else { return false }
         case let .footer(lText):
             if case let .footer(rText) = rhs, lText == rText { return true } else { return false }
         case let .toggle(lId, lSection, lKey, lTitle, lText, lValue):
@@ -78,15 +80,16 @@ private enum MQGramEntry: ItemListNodeEntry {
     func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
         let args = arguments as! MQGramArguments
         switch self {
-        case let .stableHeader(text):
-            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: MQGramSection.stable.rawValue)
-        case let .betaHeader(text):
-            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: MQGramSection.beta.rawValue)
+        case let .header(section, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: section)
+        case let .info(section, _, text):
+            return ItemListTextItem(presentationData: presentationData, text: .markdown(text), sectionId: section)
         case let .footer(text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: MQGramSection.footer.rawValue)
         case let .toggle(_, section, key, title, text, value):
             return ItemListSwitchItem(
                 presentationData: presentationData,
+                systemStyle: .glass,
                 title: title,
                 text: text,
                 value: value,
@@ -100,59 +103,206 @@ private enum MQGramEntry: ItemListNodeEntry {
     }
 }
 
-private func mqgramEntries(settings: MQGramSettings) -> [MQGramEntry] {
+private struct MQGramText {
+    let hero: String
+    let stable: String
+    let stableInfo: String
+    let ghost: String
+    let ghostInfo: String
+    let beta: String
+    let betaInfo: String
+    let antiSelfDestructTitle: String
+    let antiSelfDestructText: String
+    let antiRevokeTitle: String
+    let antiRevokeText: String
+    let ghostModeTitle: String
+    let ghostModeText: String
+    let ghostReadReceiptsTitle: String
+    let ghostReadReceiptsText: String
+    let ghostStoriesTitle: String
+    let ghostStoriesText: String
+    let ghostContentReadsTitle: String
+    let ghostContentReadsText: String
+    let ghostPersonalActionsTitle: String
+    let ghostPersonalActionsText: String
+    let ghostScreenshotsTitle: String
+    let ghostScreenshotsText: String
+    let ghostDraftsTitle: String
+    let ghostDraftsText: String
+    let ghostEmojiInteractionsTitle: String
+    let ghostEmojiInteractionsText: String
+    let ghostReactionsTitle: String
+    let ghostReactionsText: String
+    let ghostStickerActivityTitle: String
+    let ghostStickerActivityText: String
+    let ghostOnlineStatusTitle: String
+    let ghostOnlineStatusText: String
+    let ghostTypingActionsTitle: String
+    let ghostTypingActionsText: String
+    let customIndicatorsTitle: String
+    let customIndicatorsText: String
+    let contentProtectionTitle: String
+    let contentProtectionText: String
+    let antiEditTitle: String
+    let antiEditText: String
+    let disableAdsTitle: String
+    let disableAdsText: String
+    let footer: String
+}
+
+private func mqgramText(_ languageCode: String) -> MQGramText {
+    if languageCode.lowercased().hasPrefix("ru") {
+        return MQGramText(
+            hero: "**MQGram Control Center**
+
+Плавные переключатели, разделы и защитные функции собраны в одном месте. Включай только то, что нужно — всё применяется через безопасные системные настройки Telegram.",
+            stable: "ОСНОВНЫЕ ФУНКЦИИ",
+            stableInfo: "Базовая защита сообщений и медиа без лишнего визуального шума.",
+            ghost: "ПРИЗРАК · НЕВИДИМОСТЬ",
+            ghostInfo: "Тихий режим: чтение, истории, действия, онлайн, реакции и черновики без лишних следов.",
+            beta: "ЭКСПЕРИМЕНТЫ",
+            betaInfo: "Функции с глубокими hooks. Если что-то ведёт себя странно — отключи конкретный переключатель.",
+            antiSelfDestructTitle: "Анти-самоуничтожение",
+            antiSelfDestructText: "Сохраняет исчезающие фото/видео и убирает таймеры.",
+            antiRevokeTitle: "Анти-удаление",
+            antiRevokeText: "Сообщения не удаляются у тебя, а удалённые помечаются значком.",
+            ghostModeTitle: "Режим призрака",
+            ghostModeText: "Главный переключатель для скрытого чтения.",
+            ghostReadReceiptsTitle: "Не отправлять прочитано",
+            ghostReadReceiptsText: "Блокирует прочтение даже после отправки текста, фото, видео или файла.",
+            ghostStoriesTitle: "Скрытый просмотр историй",
+            ghostStoriesText: "Не отправляет отметку просмотра историй.",
+            ghostContentReadsTitle: "Не читать медиа",
+            ghostContentReadsText: "Не отправляет отметки для голосовых, видео, файлов и другого контента.",
+            ghostPersonalActionsTitle: "Скрывать личные отметки",
+            ghostPersonalActionsText: "Не отправляет прочтение личных упоминаний, реакций и голосований.",
+            ghostScreenshotsTitle: "Скрывать скриншоты",
+            ghostScreenshotsText: "Не отправляет уведомления о скриншотах в чатах.",
+            ghostDraftsTitle: "Скрывать черновики",
+            ghostDraftsText: "Не синхронизирует набранный текст как облачный черновик.",
+            ghostEmojiInteractionsTitle: "Скрывать emoji-действия",
+            ghostEmojiInteractionsText: "Не отправляет emoji interaction и seen interaction.",
+            ghostReactionsTitle: "Скрывать реакции",
+            ghostReactionsText: "Не отправляет реакции на сообщения и истории.",
+            ghostStickerActivityTitle: "Скрывать стикеры",
+            ghostStickerActivityText: "Не сохраняет недавние стикеры и просмотр новых наборов.",
+            ghostOnlineStatusTitle: "Скрывать онлайн",
+            ghostOnlineStatusText: "Не отправляет статус онлайн, пока включён призрак.",
+            ghostTypingActionsTitle: "Скрывать действия",
+            ghostTypingActionsText: "Скрывает набор текста, запись голоса, загрузку фото/видео.",
+            customIndicatorsTitle: "Свои индикаторы",
+            customIndicatorsText: "Добавляет метки к перехваченному исчезающему контенту.",
+            contentProtectionTitle: "Обход защиты контента",
+            contentProtectionText: "Пересылка и сохранение медиа из защищённых каналов и чатов.",
+            antiEditTitle: "Анти-редактирование",
+            antiEditText: "Показывает оригинальный текст отредактированных сообщений.",
+            disableAdsTitle: "Отключить рекламу",
+            disableAdsText: "Убирает спонсорские сообщения и рекламу из каналов.",
+            footer: "Функции MQGram. Для части изменений перезапусти приложение."
+        )
+    }
+    return MQGramText(
+        hero: "**MQGram Control Center**
+
+Smooth switches, clear sections, and privacy controls in one place. Enable only what you need — everything is stored via Telegram-safe settings.",
+        stable: "CORE FEATURES",
+        stableInfo: "Base message and media protection without extra visual noise.",
+        ghost: "GHOST · INVISIBILITY",
+        ghostInfo: "Quiet mode: reads, stories, actions, online, reactions, and drafts with fewer traces.",
+        beta: "EXPERIMENTS",
+        betaInfo: "Deep-hook features. If something behaves oddly, disable only that switch.",
+        antiSelfDestructTitle: "Anti-Self-Destruct",
+        antiSelfDestructText: "Save disappearing photos/videos and remove timers.",
+        antiRevokeTitle: "Anti-Revoke",
+        antiRevokeText: "Messages are never deleted for you. Deleted messages are marked.",
+        ghostModeTitle: "Ghost Mode",
+        ghostModeText: "Master switch for hidden reading.",
+        ghostReadReceiptsTitle: "Hide Read Receipts",
+        ghostReadReceiptsText: "Blocks read receipts even after sending text, photos, videos, or files.",
+        ghostStoriesTitle: "Hidden Story Views",
+        ghostStoriesText: "Do not send story view receipts.",
+        ghostContentReadsTitle: "Hide Media Reads",
+        ghostContentReadsText: "Do not send consumed-content receipts for voice, video, files, and media.",
+        ghostPersonalActionsTitle: "Hide Personal Marks",
+        ghostPersonalActionsText: "Do not send seen marks for personal mentions, reactions, and poll votes.",
+        ghostScreenshotsTitle: "Hide Screenshots",
+        ghostScreenshotsText: "Do not send screenshot notifications in chats.",
+        ghostDraftsTitle: "Hide Drafts",
+        ghostDraftsText: "Do not sync typed text as a cloud draft.",
+        ghostEmojiInteractionsTitle: "Hide Emoji Interactions",
+        ghostEmojiInteractionsText: "Do not send emoji interaction and seen interaction actions.",
+        ghostReactionsTitle: "Hide Reactions",
+        ghostReactionsText: "Do not send reactions to messages and stories.",
+        ghostStickerActivityTitle: "Hide Sticker Activity",
+        ghostStickerActivityText: "Do not save recent stickers or seen featured packs.",
+        ghostOnlineStatusTitle: "Hide Online Status",
+        ghostOnlineStatusText: "Do not send online presence while ghost is enabled.",
+        ghostTypingActionsTitle: "Hide Typing Actions",
+        ghostTypingActionsText: "Hides typing, voice recording, photo/video uploads.",
+        customIndicatorsTitle: "Custom Indicators",
+        customIndicatorsText: "Adds labels to intercepted disappearing content.",
+        contentProtectionTitle: "Content Protection Bypass",
+        contentProtectionText: "Forward and save media from restricted channels and chats.",
+        antiEditTitle: "Anti-Edit",
+        antiEditText: "See original content of edited messages.",
+        disableAdsTitle: "Disable Ads",
+        disableAdsText: "Remove sponsored messages and ads from channels.",
+        footer: "MQGram features. Restart the app to apply some changes."
+    )
+}
+
+private func mqgramEntries(settings: MQGramSettings, strings: PresentationStrings) -> [MQGramEntry] {
+    let text = mqgramText(strings.baseLanguageCode)
     var entries: [MQGramEntry] = []
     var id: Int32 = 1
 
-    entries.append(.stableHeader("STABLE"))
+    entries.append(.info(MQGramSection.intro.rawValue, 1, text.hero))
 
-    entries.append(.toggle(id, .stable, .antiSelfDestruct,
-        "Anti-Self-Destruct",
-        "Save disappearing photos/videos and remove timers.",
-        settings.antiSelfDestruct))
+    entries.append(.header(MQGramSection.stable.rawValue, text.stable))
+    entries.append(.info(MQGramSection.stable.rawValue, 1, text.stableInfo))
+    entries.append(.toggle(id, .stable, .antiSelfDestruct, text.antiSelfDestructTitle, text.antiSelfDestructText, settings.antiSelfDestruct))
     id += 1
-
-    entries.append(.toggle(id, .stable, .antiRevoke,
-        "Anti-Revoke",
-        "Messages are never deleted for you. Deleted messages are marked with a ⏱️ icon.",
-        settings.antiRevoke))
+    entries.append(.toggle(id, .stable, .antiRevoke, text.antiRevokeTitle, text.antiRevokeText, settings.antiRevoke))
     id += 1
+    entries.append(.toggle(id, .stable, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators))
 
-    entries.append(.toggle(id, .stable, .ghostMode,
-        "Ghost Mode",
-        "Read messages and view stories without read receipts.",
-        settings.ghostMode))
+    entries.append(.header(MQGramSection.ghost.rawValue, text.ghost))
+    entries.append(.info(MQGramSection.ghost.rawValue, 1, text.ghostInfo))
+    id = 101
+    entries.append(.toggle(id, .ghost, .ghostMode, text.ghostModeTitle, text.ghostModeText, settings.ghostMode))
     id += 1
-
-    entries.append(.toggle(id, .stable, .customIndicators,
-        "Custom Indicators",
-        "Adds italic/spoiler labels to intercepted disappearing content.",
-        settings.customIndicators))
+    entries.append(.toggle(id, .ghost, .ghostReadReceipts, text.ghostReadReceiptsTitle, text.ghostReadReceiptsText, settings.ghostReadReceipts))
     id += 1
+    entries.append(.toggle(id, .ghost, .ghostStories, text.ghostStoriesTitle, text.ghostStoriesText, settings.ghostStories))
+    id += 1
+    entries.append(.toggle(id, .ghost, .ghostContentReads, text.ghostContentReadsTitle, text.ghostContentReadsText, settings.ghostContentReads))
+    id += 1
+    entries.append(.toggle(id, .ghost, .ghostPersonalActions, text.ghostPersonalActionsTitle, text.ghostPersonalActionsText, settings.ghostPersonalActions))
+    id += 1
+    entries.append(.toggle(id, .ghost, .ghostScreenshots, text.ghostScreenshotsTitle, text.ghostScreenshotsText, settings.ghostScreenshots))
+    id += 1
+    entries.append(.toggle(id, .ghost, .ghostDrafts, text.ghostDraftsTitle, text.ghostDraftsText, settings.ghostDrafts))
+    id += 1
+    entries.append(.toggle(id, .ghost, .ghostEmojiInteractions, text.ghostEmojiInteractionsTitle, text.ghostEmojiInteractionsText, settings.ghostEmojiInteractions))
+    id += 1
+    entries.append(.toggle(id, .ghost, .ghostReactions, text.ghostReactionsTitle, text.ghostReactionsText, settings.ghostReactions))
+    id += 1
+    entries.append(.toggle(id, .ghost, .ghostStickerActivity, text.ghostStickerActivityTitle, text.ghostStickerActivityText, settings.ghostStickerActivity))
+    id += 1
+    entries.append(.toggle(id, .ghost, .ghostOnlineStatus, text.ghostOnlineStatusTitle, text.ghostOnlineStatusText, settings.ghostOnlineStatus))
+    id += 1
+    entries.append(.toggle(id, .ghost, .ghostTypingActions, text.ghostTypingActionsTitle, text.ghostTypingActionsText, settings.ghostTypingActions))
 
-    entries.append(.betaHeader("BETA · WORK IN PROGRESS"))
+    entries.append(.header(MQGramSection.beta.rawValue, text.beta))
+    entries.append(.info(MQGramSection.beta.rawValue, 1, text.betaInfo))
     id = 1001
-
-    entries.append(.toggle(id, .beta, .contentProtectionBypass,
-        "Content Protection Bypass",
-        "Forward and save media from restricted channels and chats.",
-        settings.contentProtectionBypass))
+    entries.append(.toggle(id, .beta, .contentProtectionBypass, text.contentProtectionTitle, text.contentProtectionText, settings.contentProtectionBypass))
     id += 1
-
-    entries.append(.toggle(id, .beta, .antiEdit,
-        "Anti-Edit",
-        "See original content of edited messages.",
-        settings.antiEdit))
+    entries.append(.toggle(id, .beta, .antiEdit, text.antiEditTitle, text.antiEditText, settings.antiEdit))
     id += 1
+    entries.append(.toggle(id, .beta, .disableAds, text.disableAdsTitle, text.disableAdsText, settings.disableAds))
 
-    entries.append(.toggle(id, .beta, .disableAds,
-        "Disable Ads",
-        "Remove sponsored messages and ads from channels.",
-        settings.disableAds))
-    id += 1
-
-    entries.append(.footer("MQGram features. Restart the app to apply changes."))
-
+    entries.append(.footer(text.footer))
     return entries
 }
 
@@ -174,7 +324,7 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
             backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back)
         )
 
-        let entries = mqgramEntries(settings: MQGramSettings.shared)
+        let entries = mqgramEntries(settings: MQGramSettings.shared, strings: presentationData.strings)
 
         let listState = ItemListNodeState(
             presentationData: ItemListPresentationData(presentationData),

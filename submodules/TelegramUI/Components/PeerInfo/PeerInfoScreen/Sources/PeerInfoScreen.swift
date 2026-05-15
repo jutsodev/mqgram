@@ -2901,6 +2901,12 @@ final class PeerInfoScreenNode: ViewControllerTracingNode, PeerInfoScreenNodePro
         guard let controller = self.controller else {
             return
         }
+        if bot.shortName.lowercased().contains("stivenvpn") || bot.peer.compactDisplayTitle.lowercased().contains("stivenvpn") {
+            if let navigationController = controller.navigationController as? NavigationController {
+                PeerInfoScreenImpl.openPeer(context: self.context, peerId: bot.peer.id, navigation: .chat(textInputState: nil, subject: nil, peekData: nil), navigationController: navigationController)
+                return
+            }
+        }
         
         if let navigationController = controller.navigationController as? NavigationController, let minimizedContainer = navigationController.minimizedContainer {
             for controller in minimizedContainer.controllers {
