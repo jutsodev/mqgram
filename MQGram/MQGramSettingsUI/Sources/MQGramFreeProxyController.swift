@@ -322,7 +322,7 @@ public func mqgramFreeProxyController(context: AccountContext) -> ViewController
             let controller = mqgramConfigureAPIController(context: context, presentationData: presentationData) {
                 updateState {
                     $0.isConfigured = MQGramProxyAPI.isConfigured
-                    $0.isAdmin = MQGramProxyAPI.isAdmin
+                    $0.isAdmin = MQGramProxyAPI.isAdmin(userId: userId)
                 }
                 loadProxies()
             }
@@ -485,10 +485,10 @@ func mqgramAddProxyController(context: AccountContext, presentationData: Present
     }
 
     let arguments = AddProxyArguments(
-        updateName: { updateForm { $0.name = $1 } },
-        updateServer: { updateForm { $0.server = $1 } },
-        updatePort: { updateForm { $0.port = $1 } },
-        updateSecret: { updateForm { $0.secret = $1 } }
+        updateName: { text in updateForm { $0.name = text } },
+        updateServer: { text in updateForm { $0.server = text } },
+        updatePort: { text in updateForm { $0.port = text } },
+        updateSecret: { text in updateForm { $0.secret = text } }
     )
 
     var dismissImpl: (() -> Void)?
@@ -644,8 +644,8 @@ func mqgramConfigureAPIController(context: AccountContext, presentationData: Pre
     }
 
     let arguments = ConfigureAPIArguments(
-        updateURL: { updateForm { $0.baseURL = $1 } },
-        updateToken: { updateForm { $0.adminToken = $1 } }
+        updateURL: { text in updateForm { $0.baseURL = text } },
+        updateToken: { text in updateForm { $0.adminToken = text } }
     )
 
     var dismissImpl: (() -> Void)?
