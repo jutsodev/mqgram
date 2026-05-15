@@ -308,6 +308,10 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
             }))
         }
     }
+    // MARK: MQGram - StivenVPN button
+    items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 106, label: .text(""), text: "StivenVPN", icon: PresentationResourcesSettings.vpn, action: {
+        interaction.openSettings(.stivenVPN)
+    }))
     if let tonState = data.tonState {
         if abs(tonState.balance.value) > 0 {
             let balanceText: NSAttributedString
@@ -331,7 +335,7 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
         }))
     }
     if let starsState = data.starsState {
-        if (!isPremiumDisabled || starsState.balance > StarsAmount.zero) && sgWebSettings.global.canGrant {
+        if (!isPremiumDisabled || starsState.balance > StarsAmount.zero) && context.currentAppConfiguration.with({ $0 }).sgWebSettings.global.canGrant {
             items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 105, label: .text(""), text: "Telegram Gifts", icon: PresentationResourcesSettings.premiumGift, action: {
                 interaction.openSettings(.premiumGift)
             }))
