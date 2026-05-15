@@ -681,6 +681,14 @@ func chatListNodeEntriesForView(view: EngineChatList, state: ChatListNodeState, 
         if let peerId = peerId, state.pendingRemovalItemIds.contains(ChatListNodeState.ItemId(peerId: peerId, threadId: threadId)) {
             continue loop
         }
+        // MARK: MQGram - Hide locked chats
+        if let peerId = peerId {
+            let lockedIds = UserDefaults.standard.array(forKey: "MQGram.lockedPeerIds") as? [Int64] ?? []
+            let isUnlocked = UserDefaults.standard.bool(forKey: "MQGram.passcodeUnlocked")
+            if !isUnlocked && lockedIds.contains(peerId.id._internalGetInt64Value()) {
+                continue loop
+            }
+        }
         var updatedMessages = entry.messages
         var updatedCombinedReadState = entry.readCounters
         if let peerId = peerId, state.pendingClearHistoryPeerIds.contains(ChatListNodeState.ItemId(peerId: peerId, threadId: threadId)) {

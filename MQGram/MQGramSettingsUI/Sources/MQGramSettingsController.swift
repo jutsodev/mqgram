@@ -14,12 +14,14 @@ private final class MQGramArguments {
     let openFreeProxy: () -> Void
     let openSwiftgram: () -> Void
     let openDeveloper: () -> Void
+    let openPasscode: () -> Void
 
-    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openFreeProxy: @escaping () -> Void, openSwiftgram: @escaping () -> Void, openDeveloper: @escaping () -> Void) {
+    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openFreeProxy: @escaping () -> Void, openSwiftgram: @escaping () -> Void, openDeveloper: @escaping () -> Void, openPasscode: @escaping () -> Void) {
         self.toggleSetting = toggleSetting
         self.openFreeProxy = openFreeProxy
         self.openSwiftgram = openSwiftgram
         self.openDeveloper = openDeveloper
+        self.openPasscode = openPasscode
     }
 }
 
@@ -33,6 +35,7 @@ private enum MQGramSection: Int32 {
 private enum MQGramEntry: ItemListNodeEntry {
     case linksHeader(String)
     case freeProxy(Int32)
+    case passcodeLink(Int32)
     case swiftgramLink(Int32)
     case developer(Int32)
     case stableHeader(String)
@@ -42,7 +45,7 @@ private enum MQGramEntry: ItemListNodeEntry {
 
     var section: ItemListSectionId {
         switch self {
-        case .linksHeader, .freeProxy, .swiftgramLink, .developer:
+        case .linksHeader, .freeProxy, .passcodeLink, .swiftgramLink, .developer:
             return MQGramSection.links.rawValue
         case .stableHeader:
             return MQGramSection.stable.rawValue
@@ -60,6 +63,8 @@ private enum MQGramEntry: ItemListNodeEntry {
         case .linksHeader:
             return -100
         case let .freeProxy(id):
+            return id
+        case let .passcodeLink(id):
             return id
         case let .swiftgramLink(id):
             return id
@@ -82,6 +87,8 @@ private enum MQGramEntry: ItemListNodeEntry {
             if case let .linksHeader(rText) = rhs, lText == rText { return true } else { return false }
         case let .freeProxy(lId):
             if case let .freeProxy(rId) = rhs, lId == rId { return true } else { return false }
+        case let .passcodeLink(lId):
+            if case let .passcodeLink(rId) = rhs, lId == rId { return true } else { return false }
         case let .swiftgramLink(lId):
             if case let .swiftgramLink(rId) = rhs, lId == rId { return true } else { return false }
         case let .developer(lId):
@@ -113,6 +120,10 @@ private enum MQGramEntry: ItemListNodeEntry {
         case .freeProxy:
             return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.proxy, title: "Free Proxy", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
                 args.openFreeProxy()
+            })
+        case .passcodeLink:
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.passcode, title: "Код-пароль", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
+                args.openPasscode()
             })
         case .swiftgramLink:
             return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.swiftgram, title: "Swiftgram", label: "", sectionId: MQGramSection.links.rawValue, style: .blocks, action: {
@@ -149,8 +160,9 @@ private func mqgramEntries(settings: MQGramSettings) -> [MQGramEntry] {
 
     entries.append(.linksHeader("TOOLS"))
     entries.append(.freeProxy(-99))
-    entries.append(.developer(-98))
-    entries.append(.swiftgramLink(-97))
+    entries.append(.passcodeLink(-98))
+    entries.append(.developer(-97))
+    entries.append(.swiftgramLink(-96))
 
     var id: Int32 = 1
 
@@ -228,6 +240,10 @@ public func mqgramSettingsController(context: AccountContext, openSwiftgramSetti
         openDeveloper: {
             let devController = mqgramDeveloperController(context: context)
             pushControllerImpl?(devController)
+        },
+        openPasscode: {
+            let passcodeController = mqgramPasscodeController(context: context)
+            pushControllerImpl?(passcodeController)
         }
     )
 
