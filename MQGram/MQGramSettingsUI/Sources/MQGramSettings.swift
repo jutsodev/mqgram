@@ -11,6 +11,13 @@ public final class MQGramSettings {
         case ghostReadReceipts
         case ghostStories
         case ghostContentReads
+        case ghostPersonalActions
+        case ghostScreenshots
+        case ghostDrafts
+        case ghostEmojiInteractions
+        case ghostReactions
+        case ghostStickerActivity
+        case ghostOnlineStatus
         case ghostTypingActions
         case customIndicators
         case contentProtectionBypass
