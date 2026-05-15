@@ -200,7 +200,10 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
         }
     }
     
-    // MARK: MQGram - swiftgram & swiftgramPro entries are hidden, MQGram is opened via long-press on Stars row.
+    // MARK: MQGram - visible settings button (replaces Swiftgram entries)
+    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 1, label: .none, text: "MQGram", icon: PresentationResourcesSettings.swiftgram, action: {
+        interaction.openSettings(.mqgram)
+    }))
 
     var appIndex = 1000
     if let settings = data.globalSettings {
@@ -303,8 +306,6 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
             }
             items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 102, label: .attributedText(balanceText), text: presentationData.strings.Settings_Stars, icon: PresentationResourcesSettings.stars, action: {
                 interaction.openSettings(.stars)
-            }, longPressAction: {
-                interaction.openSettings(.mqgram)
             }))
         }
     }
