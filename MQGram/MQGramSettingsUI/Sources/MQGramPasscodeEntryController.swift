@@ -60,7 +60,7 @@ public final class MQGramPasscodeEntryController: ViewController {
 
     private func dismissSelf() {
         if let navigationController = self.navigationController as? NavigationController {
-            navigationController.popViewController(animated: true)
+            let _ = navigationController.popViewController(animated: true)
         }
     }
 

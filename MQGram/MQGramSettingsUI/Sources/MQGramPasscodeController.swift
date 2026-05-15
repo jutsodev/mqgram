@@ -204,7 +204,6 @@ private func mqgramPasscodeEntries(state: MQGramPasscodeState) -> [MQGramPasscod
 
 public func mqgramPasscodeController(context: AccountContext) -> ViewController {
     let statePromise = ValuePromise<MQGramPasscodeState>(ignoreRepeated: true)
-    let updatePromise = ValuePromise<Bool>(true, ignoreRepeated: false)
 
     func refreshState() {
         let manager = MQGramPasscodeManager.shared
