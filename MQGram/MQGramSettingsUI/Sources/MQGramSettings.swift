@@ -23,6 +23,11 @@ public final class MQGramSettings {
         case contentProtectionBypass
         case antiEdit
         case disableAds
+        case localPremium
+        case unlimitedAccounts
+        case hidePhoneNumber
+        case confirmCalls
+        case silentMessages
     }
 
     private let defaults: UserDefaults
@@ -133,5 +138,30 @@ public final class MQGramSettings {
     public var disableAds: Bool {
         get { bool(for: .disableAds) }
         set { setBool(newValue, for: .disableAds) }
+    }
+
+    public var localPremium: Bool {
+        get { bool(for: .localPremium) }
+        set { setBool(newValue, for: .localPremium) }
+    }
+
+    public var unlimitedAccounts: Bool {
+        get { bool(for: .unlimitedAccounts) }
+        set { setBool(newValue, for: .unlimitedAccounts) }
+    }
+
+    public var hidePhoneNumber: Bool {
+        get { bool(for: .hidePhoneNumber) }
+        set { setBool(newValue, for: .hidePhoneNumber) }
+    }
+
+    public var confirmCalls: Bool {
+        get { bool(for: .confirmCalls) }
+        set { setBool(newValue, for: .confirmCalls) }
+    }
+
+    public var silentMessages: Bool {
+        get { bool(for: .silentMessages) }
+        set { setBool(newValue, for: .silentMessages) }
     }
 }
