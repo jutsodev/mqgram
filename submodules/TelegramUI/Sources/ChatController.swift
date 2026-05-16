@@ -8329,7 +8329,19 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     }
             
     func transformEnqueueMessages(_ messages: [EnqueueMessage], postpone: Bool = false) -> [EnqueueMessage] {
-        let silentPosting = self.presentationInterfaceState.interfaceState.silentPosting
+        // MARK: MQGram - Silent Messages
+        let silentPosting = self.presentationInterfaceState.interfaceState.silentPosting || UserDefaults.standard.bool(forKey: "MQGram.silentMessages")
+        
+        // MARK: MQGram - readAfterActions: auto-deactivate ghost when sending
+        let ghostEnabled = UserDefaults.standard.bool(forKey: "MQGram.ghostMode")
+        let readAfterActions = UserDefaults.standard.bool(forKey: "MQGram.readAfterActions")
+        if ghostEnabled && readAfterActions && !messages.isEmpty {
+            UserDefaults.standard.set(false, forKey: "MQGram.ghostMode")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                UserDefaults.standard.set(true, forKey: "MQGram.ghostMode")
+            }
+        }
+        
         return transformEnqueueMessages(messages, silentPosting: silentPosting, postpone: postpone)
     }
     

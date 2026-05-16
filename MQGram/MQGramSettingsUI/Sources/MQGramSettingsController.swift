@@ -30,10 +30,12 @@ private enum MQGramEntry: ItemListNodeEntry {
 
     var section: ItemListSectionId {
         switch self {
-        case .footer:
-            return 1
-        default:
+        case .info:
             return 0
+        case .toggle, .link:
+            return 1
+        case .footer:
+            return 2
         }
     }
 
@@ -142,8 +144,6 @@ private struct MQGramText {
     let antiRevokeText: String
     let customIndicatorsTitle: String
     let customIndicatorsText: String
-    let redDeleteIconTitle: String
-    let redDeleteIconText: String
     let betaInfo: String
     let contentProtectionTitle: String
     let contentProtectionText: String
@@ -151,8 +151,6 @@ private struct MQGramText {
     let antiEditText: String
     let disableAdsTitle: String
     let disableAdsText: String
-    let businessFeaturesTitle: String
-    let businessFeaturesText: String
     let otherInfo: String
     let localPremiumTitle: String
     let localPremiumText: String
@@ -231,12 +229,10 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             stableInfo: "Базовая защита сообщений и медиа без лишнего визуального шума.",
             antiSelfDestructTitle: "Анти-самоуничтожение",
             antiSelfDestructText: "Сохраняет исчезающие фото/видео и убирает таймеры.",
-            antiRevokeTitle: "Анти-удаление",
-            antiRevokeText: "Сообщения не удаляются у тебя, а удалённые помечаются значком.",
+            antiRevokeTitle: "Анти-удаление + Красная корзина",
+            antiRevokeText: "Сообщения не удаляются у тебя, а при удалении показывается красная иконка корзины.",
             customIndicatorsTitle: "Свои индикаторы",
             customIndicatorsText: "Добавляет метки к перехваченному исчезающему контенту.",
-            redDeleteIconTitle: "Красная корзина",
-            redDeleteIconText: "Показывает красную иконку корзины рядом с сообщениями при удалении.",
             betaInfo: "Функции с глубокими hooks. Если что-то ведёт себя странно — отключи конкретный переключатель.",
             contentProtectionTitle: "Обход защиты контента",
             contentProtectionText: "Пересылка и сохранение медиа из защищённых каналов и чатов.",
@@ -244,11 +240,9 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             antiEditText: "Показывает оригинальный текст отредактированных сообщений.",
             disableAdsTitle: "Отключить рекламу",
             disableAdsText: "Убирает спонсорские сообщения и рекламу из каналов.",
-            businessFeaturesTitle: "Telegram для бизнеса",
-            businessFeaturesText: "Активирует бизнес-функции профиля локально.",
             otherInfo: "Дополнительные функции для расширенного управления приложением.",
-            localPremiumTitle: "Локальный Премиум",
-            localPremiumText: "Активирует премиум-функции интерфейса локально без подписки.",
+            localPremiumTitle: "Локальный Премиум / Бизнес",
+            localPremiumText: "Активирует премиум и бизнес-функции интерфейса локально без подписки.",
             unlimitedAccountsTitle: "Безлимитные аккаунты",
             unlimitedAccountsText: "Снимает ограничение на количество добавленных аккаунтов.",
             hidePhoneNumberTitle: "Скрыть номер телефона",
@@ -322,12 +316,10 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         stableInfo: "Base message and media protection without extra visual noise.",
         antiSelfDestructTitle: "Anti-Self-Destruct",
         antiSelfDestructText: "Save disappearing photos/videos and remove timers.",
-        antiRevokeTitle: "Anti-Revoke",
-        antiRevokeText: "Messages are never deleted for you. Deleted messages are marked.",
+        antiRevokeTitle: "Anti-Revoke + Red Trash",
+        antiRevokeText: "Messages are never deleted for you. Shows a red trash icon when deleting.",
         customIndicatorsTitle: "Custom Indicators",
         customIndicatorsText: "Adds labels to intercepted disappearing content.",
-        redDeleteIconTitle: "Red Delete Icon",
-        redDeleteIconText: "Shows a red trash icon next to messages when deleting.",
         betaInfo: "Deep-hook features. If something behaves oddly, disable only that switch.",
         contentProtectionTitle: "Content Protection Bypass",
         contentProtectionText: "Forward and save media from restricted channels and chats.",
@@ -335,11 +327,9 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         antiEditText: "See original content of edited messages.",
         disableAdsTitle: "Disable Ads",
         disableAdsText: "Remove sponsored messages and ads from channels.",
-        businessFeaturesTitle: "Telegram for Business",
-        businessFeaturesText: "Enable Business profile features locally.",
         otherInfo: "Extra features for extended app control.",
-        localPremiumTitle: "Local Premium",
-        localPremiumText: "Activates premium UI features locally without a subscription.",
+        localPremiumTitle: "Local Premium / Business",
+        localPremiumText: "Activates premium and business UI features locally without a subscription.",
         unlimitedAccountsTitle: "Unlimited Accounts",
         unlimitedAccountsText: "Removes the limit on the number of added accounts.",
         hidePhoneNumberTitle: "Hide Phone Number",
@@ -491,6 +481,32 @@ private func makeBotIcon() -> UIImage {
     }
 }
 
+private func makeVpnIcon() -> UIImage {
+    return makeRoundedIcon(backgroundColor: UIColor(red: 0.20, green: 0.60, blue: 0.86, alpha: 1.0)) { _, rect in
+        let cx = rect.midX
+        let cy = rect.midY
+        UIColor.white.setFill()
+        let shield = UIBezierPath()
+        shield.move(to: CGPoint(x: cx, y: cy - 9))
+        shield.addLine(to: CGPoint(x: cx + 8, y: cy - 5))
+        shield.addLine(to: CGPoint(x: cx + 7, y: cy + 3))
+        shield.addQuadCurve(to: CGPoint(x: cx, y: cy + 9), controlPoint: CGPoint(x: cx + 4, y: cy + 7))
+        shield.addQuadCurve(to: CGPoint(x: cx - 7, y: cy + 3), controlPoint: CGPoint(x: cx - 4, y: cy + 7))
+        shield.addLine(to: CGPoint(x: cx - 8, y: cy - 5))
+        shield.close()
+        shield.fill()
+        UIColor(red: 0.20, green: 0.60, blue: 0.86, alpha: 1.0).setStroke()
+        let check = UIBezierPath()
+        check.lineWidth = 2.0
+        check.lineCapStyle = .round
+        check.lineJoinStyle = .round
+        check.move(to: CGPoint(x: cx - 3, y: cy))
+        check.addLine(to: CGPoint(x: cx - 0.5, y: cy + 3))
+        check.addLine(to: CGPoint(x: cx + 4, y: cy - 3))
+        check.stroke()
+    }
+}
+
 // MARK: - Entry Generation
 
 private func mqgramEntries(settings: MQGramSettings, strings: PresentationStrings, tab: Int) -> [MQGramEntry] {
@@ -519,15 +535,13 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.info(1, text.stableInfo))
         entries.append(.toggle(id, .antiSelfDestruct, text.antiSelfDestructTitle, text.antiSelfDestructText, settings.antiSelfDestruct)); id += 1
         entries.append(.toggle(id, .antiRevoke, text.antiRevokeTitle, text.antiRevokeText, settings.antiRevoke)); id += 1
-        entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators)); id += 1
-        entries.append(.toggle(id, .redDeleteIcon, text.redDeleteIconTitle, text.redDeleteIconText, settings.redDeleteIcon))
+        entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators))
 
     case 2: // Beta
         entries.append(.info(1, text.betaInfo))
         entries.append(.toggle(id, .contentProtectionBypass, text.contentProtectionTitle, text.contentProtectionText, settings.contentProtectionBypass)); id += 1
         entries.append(.toggle(id, .antiEdit, text.antiEditTitle, text.antiEditText, settings.antiEdit)); id += 1
-        entries.append(.toggle(id, .disableAds, text.disableAdsTitle, text.disableAdsText, settings.disableAds)); id += 1
-        entries.append(.toggle(id, .businessFeatures, text.businessFeaturesTitle, text.businessFeaturesText, settings.businessFeatures))
+        entries.append(.toggle(id, .disableAds, text.disableAdsTitle, text.disableAdsText, settings.disableAds))
 
     case 3: // Other
         entries.append(.info(1, text.otherInfo))
@@ -581,6 +595,13 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
     let arguments = MQGramArguments(
         toggleSetting: { key, value in
             MQGramSettings.shared.setBool(value, for: key)
+            if key == .localPremium {
+                MQGramSettings.shared.setBool(value, for: .businessFeatures)
+            } else if key == .businessFeatures {
+                MQGramSettings.shared.setBool(value, for: .localPremium)
+            } else if key == .antiRevoke {
+                MQGramSettings.shared.setBool(value, for: .redDeleteIcon)
+            }
             updatePromise.set(true)
         },
         openUrl: { url, inTelegram in
