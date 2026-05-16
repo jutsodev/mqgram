@@ -330,6 +330,7 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
             interaction.openSettings(.businessSetup)
         }))
     }
+    let sgWebSettings = context.currentAppConfiguration.with { $0 }.sgWebSettings
     if let starsState = data.starsState {
         if (!isPremiumDisabled || starsState.balance > StarsAmount.zero) && sgWebSettings.global.canGrant {
             items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 105, label: .text(""), text: "Telegram Gifts", icon: PresentationResourcesSettings.premiumGift, action: {
