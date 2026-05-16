@@ -381,6 +381,11 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
         }
     }
     
+    // MARK: MQGram - StivenVPN link in settings
+    items[.extra]!.append(PeerInfoScreenDisclosureItem(id: 10, text: "StivenVPN", icon: PresentationResourcesSettings.proxy, action: {
+        interaction.performBioLinkAction(.tap, .url(url: "https://t.me/Stivenvpn", concealed: false))
+    }))
+    
     items[.support]!.append(PeerInfoScreenDisclosureItem(id: 0, text: presentationData.strings.Settings_Support, icon: PresentationResourcesSettings.support, action: {
         interaction.openSettings(.support)
     }))

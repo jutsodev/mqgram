@@ -195,9 +195,6 @@ private struct MQGramText {
     let devDeveloper: String
     let devChannel: String
     let devBot: String
-    let stivenVpnInfo: String
-    let stivenVpnChannel: String
-    let stivenVpnBot: String
     let footer: String
 }
 
@@ -234,12 +231,10 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             stableInfo: "Базовая защита сообщений и медиа без лишнего визуального шума.",
             antiSelfDestructTitle: "Анти-самоуничтожение",
             antiSelfDestructText: "Сохраняет исчезающие фото/видео и убирает таймеры.",
-            antiRevokeTitle: "Анти-удаление",
-            antiRevokeText: "Сообщения не удаляются у тебя, а удалённые помечаются значком.",
+            antiRevokeTitle: "Анти-удаление + Красная корзина",
+            antiRevokeText: "Сообщения не удаляются у тебя, а при удалении показывается красная иконка корзины.",
             customIndicatorsTitle: "Свои индикаторы",
             customIndicatorsText: "Добавляет метки к перехваченному исчезающему контенту.",
-            redDeleteIconTitle: "Красная корзина",
-            redDeleteIconText: "Показывает красную иконку корзины рядом с сообщениями при удалении.",
             betaInfo: "Функции с глубокими hooks. Если что-то ведёт себя странно — отключи конкретный переключатель.",
             contentProtectionTitle: "Обход защиты контента",
             contentProtectionText: "Пересылка и сохранение медиа из защищённых каналов и чатов.",
@@ -289,9 +284,6 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             devDeveloper: "Разработчик",
             devChannel: "Канал StivenVPN",
             devBot: "Бот StivenVPN",
-            stivenVpnInfo: "StivenVPN — быстрый и бесплатный VPN для Telegram.",
-            stivenVpnChannel: "Канал StivenVPN",
-            stivenVpnBot: "Бот StivenVPN",
             footer: "Функции MQGram. Для части изменений перезапусти приложение."
         )
     }
@@ -326,12 +318,10 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         stableInfo: "Base message and media protection without extra visual noise.",
         antiSelfDestructTitle: "Anti-Self-Destruct",
         antiSelfDestructText: "Save disappearing photos/videos and remove timers.",
-        antiRevokeTitle: "Anti-Revoke",
-        antiRevokeText: "Messages are never deleted for you. Deleted messages are marked.",
+        antiRevokeTitle: "Anti-Revoke + Red Trash",
+        antiRevokeText: "Messages are never deleted for you. Shows a red trash icon when deleting.",
         customIndicatorsTitle: "Custom Indicators",
         customIndicatorsText: "Adds labels to intercepted disappearing content.",
-        redDeleteIconTitle: "Red Delete Icon",
-        redDeleteIconText: "Shows a red trash icon next to messages when deleting.",
         betaInfo: "Deep-hook features. If something behaves oddly, disable only that switch.",
         contentProtectionTitle: "Content Protection Bypass",
         contentProtectionText: "Forward and save media from restricted channels and chats.",
@@ -381,9 +371,6 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         devDeveloper: "Developer",
         devChannel: "StivenVPN Channel",
         devBot: "StivenVPN Bot",
-        stivenVpnInfo: "StivenVPN — fast and free VPN for Telegram.",
-        stivenVpnChannel: "StivenVPN Channel",
-        stivenVpnBot: "StivenVPN Bot",
         footer: "MQGram features. Restart the app to apply some changes."
     )
 }
@@ -550,8 +537,7 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.info(1, text.stableInfo))
         entries.append(.toggle(id, .antiSelfDestruct, text.antiSelfDestructTitle, text.antiSelfDestructText, settings.antiSelfDestruct)); id += 1
         entries.append(.toggle(id, .antiRevoke, text.antiRevokeTitle, text.antiRevokeText, settings.antiRevoke)); id += 1
-        entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators)); id += 1
-        entries.append(.toggle(id, .redDeleteIcon, text.redDeleteIconTitle, text.redDeleteIconText, settings.redDeleteIcon))
+        entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators))
 
     case 2: // Beta
         entries.append(.info(1, text.betaInfo))
@@ -592,12 +578,6 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.link(id, text.devChannel, "https://t.me/Stivenvpn", true, makeChannelIcon())); id += 1
         entries.append(.link(id, text.devBot, "https://t.me/Stivenvpnbot", true, makeBotIcon()))
 
-    case 6: // StivenVPN
-        entries.append(.info(1, text.stivenVpnInfo))
-        entries.append(.link(id, text.stivenVpnChannel, "https://t.me/Stivenvpn", true, makeChannelIcon())); id += 1
-        entries.append(.link(id, text.stivenVpnBot, "https://t.me/Stivenvpnbot", true, makeBotIcon())); id += 1
-        entries.append(.link(id, "stivenvpn.org", "https://stivenvpn.org", false, makeVpnIcon()))
-
     default:
         break
     }
@@ -621,6 +601,8 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
                 MQGramSettings.shared.setBool(value, for: .businessFeatures)
             } else if key == .businessFeatures {
                 MQGramSettings.shared.setBool(value, for: .localPremium)
+            } else if key == .antiRevoke {
+                MQGramSettings.shared.setBool(value, for: .redDeleteIcon)
             }
             updatePromise.set(true)
         },
@@ -629,8 +611,8 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
         }
     )
 
-    let tabNamesRu: [String] = ["Призрак", "Основные", "Бета", "Прочее", "Скрыть", "Dev", "StivenVPN"]
-    let tabNamesEn: [String] = ["Ghost", "Core", "Beta", "Other", "Hide", "Dev", "StivenVPN"]
+    let tabNamesRu: [String] = ["Призрак", "Основные", "Бета", "Прочее", "Скрыть", "Dev"]
+    let tabNamesEn: [String] = ["Ghost", "Core", "Beta", "Other", "Hide", "Dev"]
 
     let signal = combineLatest(context.sharedContext.presentationData, updatePromise.get(), tabIndexPromise.get())
     |> map { presentationData, _, tabIndex -> (ItemListControllerState, (ItemListNodeState, Any)) in
