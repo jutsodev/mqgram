@@ -121,6 +121,10 @@ private enum SaveRecentlyUsedMediaError {
 }
 
 private func synchronizeRecentlyUsedMedia(transaction: Transaction, accountPeerId: PeerId, postbox: Postbox, network: Network, revalidationContext: MediaReferenceRevalidationContext, operation: SynchronizeRecentlyUsedMediaOperation) -> Signal<Void, NoError> {
+    // MARK: MQGram - Ghost Sticker Activity
+    if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostStickerActivity") {
+        return .complete()
+    }
     switch operation.content {
         case let .add(id, accessHash, fileReference):
             guard let fileReference = fileReference else {

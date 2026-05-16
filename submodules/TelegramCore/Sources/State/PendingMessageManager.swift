@@ -1089,6 +1089,10 @@ public final class PendingMessageManager {
                         suggestedPost = attribute.apiSuggestedPost(fixMinTime: Int32(Date().timeIntervalSince1970 + 10))
                     }
                 }
+                // MARK: MQGram - Silent Messages
+                if UserDefaults.standard.bool(forKey: "MQGram.silentMessages") {
+                    flags |= Int32(1 << 5)
+                }
                                 
                 let sendMessageRequest: Signal<Api.Updates, MTRpcError>
                 if isForward {
@@ -1626,6 +1630,10 @@ public final class PendingMessageManager {
                     } else if let attribute = attribute as? SuggestedPostMessageAttribute {
                         suggestedPost = attribute.apiSuggestedPost(fixMinTime: Int32(Date().timeIntervalSince1970 + 10))
                     }
+                }
+                // MARK: MQGram - Silent Messages
+                if UserDefaults.standard.bool(forKey: "MQGram.silentMessages") {
+                    flags |= Int32(1 << 5)
                 }
                 
                 if case .forward = content.content {

@@ -22,6 +22,10 @@ public enum UpdateMessageReaction {
 }
 
 public func updateMessageReactionsInteractively(account: Account, messageIds: [MessageId], reactions: [UpdateMessageReaction], isLarge: Bool, storeAsRecentlyUsed: Bool, add: Bool = false) -> Signal<Never, NoError> {
+    // MARK: MQGram - Ghost Reactions
+    if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostReactions") {
+        return .complete()
+    }
     return account.postbox.transaction { transaction -> Void in
         guard let chatPeerId = messageIds.first?.peerId else {
             return
