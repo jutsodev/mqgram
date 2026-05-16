@@ -229,12 +229,17 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
         }
     }
     
-    items[.shortcuts]!.append(PeerInfoScreenDisclosureItem(id: 1, text: presentationData.strings.Settings_SavedMessages, icon: PresentationResourcesSettings.savedMessages, action: {
-        interaction.openSettings(.savedMessages)
-    }))
-    items[.shortcuts]!.append(PeerInfoScreenDisclosureItem(id: 2, text: presentationData.strings.CallSettings_RecentCalls, icon: PresentationResourcesSettings.recentCalls, action: {
-        interaction.openSettings(.recentCalls)
-    }))
+    // MARK: MQGram - Hide Buttons (shortcuts section)
+    if !UserDefaults.standard.bool(forKey: "MQGram.hideSavedMessages") {
+        items[.shortcuts]!.append(PeerInfoScreenDisclosureItem(id: 1, text: presentationData.strings.Settings_SavedMessages, icon: PresentationResourcesSettings.savedMessages, action: {
+            interaction.openSettings(.savedMessages)
+        }))
+    }
+    if !UserDefaults.standard.bool(forKey: "MQGram.hideRecentCalls") {
+        items[.shortcuts]!.append(PeerInfoScreenDisclosureItem(id: 2, text: presentationData.strings.CallSettings_RecentCalls, icon: PresentationResourcesSettings.recentCalls, action: {
+            interaction.openSettings(.recentCalls)
+        }))
+    }
     
     let devicesLabel: String
     if let settings = data.globalSettings, let otherSessionsCount = settings.otherSessionsCount {
@@ -247,12 +252,16 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
         devicesLabel = ""
     }
     
-    items[.shortcuts]!.append(PeerInfoScreenDisclosureItem(id: 3, label: .text(devicesLabel), text: presentationData.strings.Settings_Devices, icon: PresentationResourcesSettings.devices, action: {
-        interaction.openSettings(.devices)
-    }))
-    items[.shortcuts]!.append(PeerInfoScreenDisclosureItem(id: 4, text: presentationData.strings.Settings_ChatFolders, icon: PresentationResourcesSettings.chatFolders, action: {
-        interaction.openSettings(.chatFolders)
-    }))
+    if !UserDefaults.standard.bool(forKey: "MQGram.hideDevices") {
+        items[.shortcuts]!.append(PeerInfoScreenDisclosureItem(id: 3, label: .text(devicesLabel), text: presentationData.strings.Settings_Devices, icon: PresentationResourcesSettings.devices, action: {
+            interaction.openSettings(.devices)
+        }))
+    }
+    if !UserDefaults.standard.bool(forKey: "MQGram.hideChatFolders") {
+        items[.shortcuts]!.append(PeerInfoScreenDisclosureItem(id: 4, text: presentationData.strings.Settings_ChatFolders, icon: PresentationResourcesSettings.chatFolders, action: {
+            interaction.openSettings(.chatFolders)
+        }))
+    }
     
     let notificationsWarning: Bool
     if let settings = data.globalSettings {
@@ -260,27 +269,40 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
     } else {
         notificationsWarning = false
     }
-    items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 0, label: notificationsWarning ? .badge("!", presentationData.theme.list.itemDestructiveColor) : .none, text: presentationData.strings.Settings_NotificationsAndSounds, icon: PresentationResourcesSettings.notifications, action: {
-        interaction.openSettings(.notificationsAndSounds)
-    }))
-    items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 1, text: presentationData.strings.Settings_PrivacySettings, icon: PresentationResourcesSettings.security, action: {
-        interaction.openSettings(.privacyAndSecurity)
-    }))
-    items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 2, text: presentationData.strings.Settings_ChatSettings, icon: PresentationResourcesSettings.dataAndStorage, action: {
-        interaction.openSettings(.dataAndStorage)
-    }))
-    items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 3, text: presentationData.strings.Settings_Appearance, icon: PresentationResourcesSettings.appearance, action: {
-        interaction.openSettings(.appearance)
-    }))
+    // MARK: MQGram - Hide Buttons (advanced section)
+    if !UserDefaults.standard.bool(forKey: "MQGram.hideNotifications") {
+        items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 0, label: notificationsWarning ? .badge("!", presentationData.theme.list.itemDestructiveColor) : .none, text: presentationData.strings.Settings_NotificationsAndSounds, icon: PresentationResourcesSettings.notifications, action: {
+            interaction.openSettings(.notificationsAndSounds)
+        }))
+    }
+    if !UserDefaults.standard.bool(forKey: "MQGram.hidePrivacy") {
+        items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 1, text: presentationData.strings.Settings_PrivacySettings, icon: PresentationResourcesSettings.security, action: {
+            interaction.openSettings(.privacyAndSecurity)
+        }))
+    }
+    if !UserDefaults.standard.bool(forKey: "MQGram.hideDataStorage") {
+        items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 2, text: presentationData.strings.Settings_ChatSettings, icon: PresentationResourcesSettings.dataAndStorage, action: {
+            interaction.openSettings(.dataAndStorage)
+        }))
+    }
+    if !UserDefaults.standard.bool(forKey: "MQGram.hideAppearance") {
+        items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 3, text: presentationData.strings.Settings_Appearance, icon: PresentationResourcesSettings.appearance, action: {
+            interaction.openSettings(.appearance)
+        }))
+    }
     
-    items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 6, label: .text(data.isPowerSavingEnabled == true ? presentationData.strings.Settings_PowerSavingOn : presentationData.strings.Settings_PowerSavingOff), text: presentationData.strings.Settings_PowerSaving, icon: PresentationResourcesSettings.powerSaving, action: {
-        interaction.openSettings(.powerSaving)
-    }))
+    if !UserDefaults.standard.bool(forKey: "MQGram.hidePowerSaving") {
+        items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 6, label: .text(data.isPowerSavingEnabled == true ? presentationData.strings.Settings_PowerSavingOn : presentationData.strings.Settings_PowerSavingOff), text: presentationData.strings.Settings_PowerSaving, icon: PresentationResourcesSettings.powerSaving, action: {
+            interaction.openSettings(.powerSaving)
+        }))
+    }
     
-    let languageName = presentationData.strings.primaryComponent.localizedName
-    items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 4, label: .text(languageName.isEmpty ? presentationData.strings.Localization_LanguageName : languageName), text: presentationData.strings.Settings_AppLanguage, icon: PresentationResourcesSettings.language, action: {
-        interaction.openSettings(.language)
-    }))
+    if !UserDefaults.standard.bool(forKey: "MQGram.hideLanguage") {
+        let languageName = presentationData.strings.primaryComponent.localizedName
+        items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 4, label: .text(languageName.isEmpty ? presentationData.strings.Localization_LanguageName : languageName), text: presentationData.strings.Settings_AppLanguage, icon: PresentationResourcesSettings.language, action: {
+            interaction.openSettings(.language)
+        }))
+    }
     
     let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
     let isPremiumDisabled = premiumConfiguration.isPremiumDisabled
@@ -325,11 +347,12 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
             }))
         }
     }
-    if !isPremiumDisabled || context.isPremium {
+    if !isPremiumDisabled || context.isPremium || UserDefaults.standard.bool(forKey: "MQGram.localPremium") {
         items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 104, label: .text(""), additionalBadgeLabel: nil, text: presentationData.strings.Settings_Business, icon: PresentationResourcesSettings.business, action: {
             interaction.openSettings(.businessSetup)
         }))
     }
+    let sgWebSettings = context.currentAppConfiguration.with { $0 }.sgWebSettings
     if let starsState = data.starsState {
         if (!isPremiumDisabled || starsState.balance > StarsAmount.zero) && sgWebSettings.global.canGrant {
             items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 105, label: .text(""), text: "Telegram Gifts", icon: PresentationResourcesSettings.premiumGift, action: {
@@ -337,6 +360,12 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
             }))
         }
     }
+    
+    // MARK: MQGram - StivenVPN item
+    items[.extra]!.append(PeerInfoScreenDisclosureItem(id: 50, text: "StivenVPN", icon: PresentationResourcesSettings.proxy, action: {
+        let url = "https://t.me/stivenvpnbot"
+        context.sharedContext.openExternalUrl(context: context, urlContext: .generic, url: url, forceExternal: false, presentationData: presentationData, navigationController: interaction.getController()?.navigationController as? NavigationController, dismissInput: {})
+    }))
     
     if let settings = data.globalSettings {
         if settings.hasPassport {

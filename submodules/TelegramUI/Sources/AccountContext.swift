@@ -450,7 +450,12 @@ public final class AccountContextImpl: AccountContext {
             guard let self = self else {
                 return
             }
-            self.isPremium = isPremium
+            // MARK: MQGram - Local Premium override
+            if UserDefaults.standard.bool(forKey: "MQGram.localPremium") {
+                self.isPremium = true
+            } else {
+                self.isPremium = isPremium
+            }
             self.userLimits = userLimits
         })
         

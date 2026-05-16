@@ -23,6 +23,20 @@ public final class MQGramSettings {
         case contentProtectionBypass
         case antiEdit
         case disableAds
+        case readAfterAction
+        case localPremium
+        case hideSavedMessages
+        case hideRecentCalls
+        case hideDevices
+        case hideChatFolders
+        case hideNotifications
+        case hidePrivacy
+        case hideDataStorage
+        case hideAppearance
+        case hideLanguage
+        case hidePowerSaving
+        case hideContacts
+        case hideCalls
     }
 
     private let defaults: UserDefaults
@@ -133,5 +147,75 @@ public final class MQGramSettings {
     public var disableAds: Bool {
         get { bool(for: .disableAds) }
         set { setBool(newValue, for: .disableAds) }
+    }
+
+    public var readAfterAction: Bool {
+        get { bool(for: .readAfterAction) }
+        set { setBool(newValue, for: .readAfterAction) }
+    }
+
+    public var localPremium: Bool {
+        get { bool(for: .localPremium) }
+        set { setBool(newValue, for: .localPremium) }
+    }
+
+    public var hideSavedMessages: Bool {
+        get { bool(for: .hideSavedMessages) }
+        set { setBool(newValue, for: .hideSavedMessages) }
+    }
+
+    public var hideRecentCalls: Bool {
+        get { bool(for: .hideRecentCalls) }
+        set { setBool(newValue, for: .hideRecentCalls) }
+    }
+
+    public var hideDevices: Bool {
+        get { bool(for: .hideDevices) }
+        set { setBool(newValue, for: .hideDevices) }
+    }
+
+    public var hideChatFolders: Bool {
+        get { bool(for: .hideChatFolders) }
+        set { setBool(newValue, for: .hideChatFolders) }
+    }
+
+    public var hideNotifications: Bool {
+        get { bool(for: .hideNotifications) }
+        set { setBool(newValue, for: .hideNotifications) }
+    }
+
+    public var hidePrivacy: Bool {
+        get { bool(for: .hidePrivacy) }
+        set { setBool(newValue, for: .hidePrivacy) }
+    }
+
+    public var hideDataStorage: Bool {
+        get { bool(for: .hideDataStorage) }
+        set { setBool(newValue, for: .hideDataStorage) }
+    }
+
+    public var hideAppearance: Bool {
+        get { bool(for: .hideAppearance) }
+        set { setBool(newValue, for: .hideAppearance) }
+    }
+
+    public var hideLanguage: Bool {
+        get { bool(for: .hideLanguage) }
+        set { setBool(newValue, for: .hideLanguage) }
+    }
+
+    public var hidePowerSaving: Bool {
+        get { bool(for: .hidePowerSaving) }
+        set { setBool(newValue, for: .hidePowerSaving) }
+    }
+
+    public var hideContacts: Bool {
+        get { bool(for: .hideContacts) }
+        set { setBool(newValue, for: .hideContacts) }
+    }
+
+    public var hideCalls: Bool {
+        get { bool(for: .hideCalls) }
+        set { setBool(newValue, for: .hideCalls) }
     }
 }
