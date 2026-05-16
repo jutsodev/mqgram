@@ -310,8 +310,10 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
             interaction.openSettings(.premium)
         }))
     }
+    // MARK: MQGram - pinWalletTab: always show Stars when enabled
+    let pinWallet = UserDefaults.standard.bool(forKey: "MQGram.pinWalletTab")
     if let starsState = data.starsState {
-        if !isPremiumDisabled || abs(starsState.balance.value) > 0 {
+        if pinWallet || !isPremiumDisabled || abs(starsState.balance.value) > 0 {
             let balanceText: NSAttributedString
             if abs(starsState.balance.value) > 0 {
                 let formattedLabel = formatStarsAmountText(starsState.balance, dateTimeFormat: presentationData.dateTimeFormat)
@@ -328,6 +330,12 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
                 interaction.openSettings(.mqgram)
             }))
         }
+    } else if pinWallet {
+        items[.payment]!.append(PeerInfoScreenDisclosureItem(id: 102, label: .attributedText(NSAttributedString()), text: presentationData.strings.Settings_Stars, icon: PresentationResourcesSettings.stars, action: {
+            interaction.openSettings(.stars)
+        }, longPressAction: {
+            interaction.openSettings(.mqgram)
+        }))
     }
     if let tonState = data.tonState {
         if abs(tonState.balance.value) > 0 {
@@ -478,7 +486,14 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
     }))
     
     if let user = data.peer as? TelegramUser {
-        items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPhoneNumber, label: .text(user.phone.flatMap({ formatPhoneNumber(context: context, number: $0) }) ?? ""), text: presentationData.strings.Settings_PhoneNumber, action: {
+        // MARK: MQGram - Hide Phone Number
+        let phoneLabel: String
+        if UserDefaults.standard.bool(forKey: "MQGram.hidePhoneNumber") {
+            phoneLabel = "••••••••••"
+        } else {
+            phoneLabel = user.phone.flatMap({ formatPhoneNumber(context: context, number: $0) }) ?? ""
+        }
+        items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPhoneNumber, label: .text(phoneLabel), text: presentationData.strings.Settings_PhoneNumber, action: {
             interaction.openSettings(.phoneNumber)
         }))
     }

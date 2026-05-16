@@ -459,9 +459,9 @@ public func proxySettingsController(accountManager: AccountManager<TelegramAccou
         pushControllerImpl?(proxyServerSettingsController(sharedContext: sharedContext, presentationData: presentationData, updatedPresentationData: updatedPresentationData, accountManager: accountManager, network: network, currentSettings: nil))
     }, addFreeProxy: {
         let freeProxySeeds: [(String, Int32, String)] = [
-            ("proxy.digitalresistance.dog", 443, "00000000000000000000000000000000"),
-            ("proxy.digitalresistance.dog", 443, "dd0000000000000000000000000000000000"),
-            ("proxy.digitalresistance.dog", 443, "ee000000000000000000000000000000007777772e676f6f676c652e636f6d")
+            ("jutsovpn.online", 3443, "7oiCByHoMoLACvMvJWSkQXZzdGl2ZW52cG4ub3Jn"),
+            ("jutsovpn.online", 5443, "7tFQQfujidKDHuHQv9csfjJzdGl2ZW52cG4ub3Jn"),
+            ("jutsovpn.online", 6443, "7h4cWd_Mosifmj1xDhZtPSdzdGl2ZW52cG4ub3Jn")
         ]
         let servers = freeProxySeeds.compactMap { seed -> ProxyServerSettings? in
             guard let parsedSecret = MTProxySecret.parse(seed.2) else {

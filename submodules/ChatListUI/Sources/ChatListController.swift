@@ -4785,7 +4785,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         completion?()
         
         self.updateTabBarSearchState(ViewController.TabBarSearchState(isActive: false), transition: transition)
-        (self.parent as? TabBarController)?.updateIsTabBarHidden(SGSimpleSettings.shared.hideTabBar ? true : false, transition: transition)
+        (self.parent as? TabBarController)?.updateIsTabBarHidden(SGSimpleSettings.shared.hideTabBar || UserDefaults.standard.bool(forKey: "MQGram.hideNavigationBar") ? true : false, transition: transition) // MQGram
         
         self.isSearchActive = false
         if let navigationController = self.navigationController as? NavigationController {

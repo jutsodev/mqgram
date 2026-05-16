@@ -8329,7 +8329,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     }
             
     func transformEnqueueMessages(_ messages: [EnqueueMessage], postpone: Bool = false) -> [EnqueueMessage] {
-        let silentPosting = self.presentationInterfaceState.interfaceState.silentPosting
+        // MARK: MQGram - Silent Messages
+        let silentPosting = self.presentationInterfaceState.interfaceState.silentPosting || UserDefaults.standard.bool(forKey: "MQGram.silentMessages")
         return transformEnqueueMessages(messages, silentPosting: silentPosting, postpone: postpone)
     }
     
