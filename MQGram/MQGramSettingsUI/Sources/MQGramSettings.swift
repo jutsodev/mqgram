@@ -19,15 +19,33 @@ public final class MQGramSettings {
         case ghostStickerActivity
         case ghostOnlineStatus
         case ghostTypingActions
+        case readAfterActions
         case customIndicators
         case contentProtectionBypass
         case antiEdit
         case disableAds
+        case businessFeatures
         case localPremium
         case unlimitedAccounts
         case hidePhoneNumber
         case confirmCalls
         case silentMessages
+        // Hide UI elements
+        case hideNavigationBar
+        case hideFavoriteChats
+        case hideRecentCalls
+        case hideDevices
+        case hideChatFolders
+        case hideNotificationsSettings
+        case hidePrivacySettings
+        case hideDataSettings
+        case hideAppearanceSettings
+        case hideLanguageSettings
+        case hideStickersSettings
+        case hidePowerSaving
+        // Wallet tab options
+        case pinWalletTab
+        case redDeleteIcon
     }
 
     private let defaults: UserDefaults
@@ -120,6 +138,11 @@ public final class MQGramSettings {
         set { setBool(newValue, for: .ghostTypingActions) }
     }
 
+    public var readAfterActions: Bool {
+        get { bool(for: .readAfterActions) }
+        set { setBool(newValue, for: .readAfterActions) }
+    }
+
     public var customIndicators: Bool {
         get { bool(for: .customIndicators) }
         set { setBool(newValue, for: .customIndicators) }
@@ -138,6 +161,11 @@ public final class MQGramSettings {
     public var disableAds: Bool {
         get { bool(for: .disableAds) }
         set { setBool(newValue, for: .disableAds) }
+    }
+
+    public var businessFeatures: Bool {
+        get { bool(for: .businessFeatures) }
+        set { setBool(newValue, for: .businessFeatures) }
     }
 
     public var localPremium: Bool {
@@ -163,5 +191,75 @@ public final class MQGramSettings {
     public var silentMessages: Bool {
         get { bool(for: .silentMessages) }
         set { setBool(newValue, for: .silentMessages) }
+    }
+
+    public var hideNavigationBar: Bool {
+        get { bool(for: .hideNavigationBar) }
+        set { setBool(newValue, for: .hideNavigationBar) }
+    }
+
+    public var hideFavoriteChats: Bool {
+        get { bool(for: .hideFavoriteChats) }
+        set { setBool(newValue, for: .hideFavoriteChats) }
+    }
+
+    public var hideRecentCalls: Bool {
+        get { bool(for: .hideRecentCalls) }
+        set { setBool(newValue, for: .hideRecentCalls) }
+    }
+
+    public var hideDevices: Bool {
+        get { bool(for: .hideDevices) }
+        set { setBool(newValue, for: .hideDevices) }
+    }
+
+    public var hideChatFolders: Bool {
+        get { bool(for: .hideChatFolders) }
+        set { setBool(newValue, for: .hideChatFolders) }
+    }
+
+    public var hideNotificationsSettings: Bool {
+        get { bool(for: .hideNotificationsSettings) }
+        set { setBool(newValue, for: .hideNotificationsSettings) }
+    }
+
+    public var hidePrivacySettings: Bool {
+        get { bool(for: .hidePrivacySettings) }
+        set { setBool(newValue, for: .hidePrivacySettings) }
+    }
+
+    public var hideDataSettings: Bool {
+        get { bool(for: .hideDataSettings) }
+        set { setBool(newValue, for: .hideDataSettings) }
+    }
+
+    public var hideAppearanceSettings: Bool {
+        get { bool(for: .hideAppearanceSettings) }
+        set { setBool(newValue, for: .hideAppearanceSettings) }
+    }
+
+    public var hideLanguageSettings: Bool {
+        get { bool(for: .hideLanguageSettings) }
+        set { setBool(newValue, for: .hideLanguageSettings) }
+    }
+
+    public var hideStickersSettings: Bool {
+        get { bool(for: .hideStickersSettings) }
+        set { setBool(newValue, for: .hideStickersSettings) }
+    }
+
+    public var hidePowerSaving: Bool {
+        get { bool(for: .hidePowerSaving) }
+        set { setBool(newValue, for: .hidePowerSaving) }
+    }
+
+    public var pinWalletTab: Bool {
+        get { bool(for: .pinWalletTab) }
+        set { setBool(newValue, for: .pinWalletTab) }
+    }
+
+    public var redDeleteIcon: Bool {
+        get { bool(for: .redDeleteIcon) }
+        set { setBool(newValue, for: .redDeleteIcon) }
     }
 }

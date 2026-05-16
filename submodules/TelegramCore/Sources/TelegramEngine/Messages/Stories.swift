@@ -3075,7 +3075,12 @@ func _internal_setStoryReaction(account: Account, peerId: EnginePeer.Id, id: Int
             account.stateManager.injectStoryUpdates(updates: [InternalStoryUpdate.added(peerId: peerId, item: storyItem)])
         }
         account.stateManager.injectStoryUpdates(updates: [InternalStoryUpdate.updateMyReaction(peerId: peerId, id: id, reaction: reaction)])
-        
+
+        // MARK: MQGram - Ghost Reactions on stories
+        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostReactions") {
+            return .complete()
+        }
+
         return account.network.request(Api.functions.stories.sendReaction(flags: 0, peer: inputPeer, storyId: id, reaction: reaction?.apiReaction ?? .reactionEmpty))
         |> map(Optional.init)
         |> `catch` { _ -> Signal<Api.Updates?, NoError> in

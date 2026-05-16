@@ -79,3 +79,43 @@
 - Расширен cache workflow: теперь сохраняется не только `~/telegram-bazel-cache`, но и стабильный Bazel user root `~/.cache/mqgram-bazel-user-root`.
 - `BAZEL_USER_ROOT` перенесён из временного `/private/var/tmp` в кэшируемую домашнюю папку runner-а.
 - Ключ кэша учитывает Bazel/Xcode metadata (`WORKSPACE`, `MODULE.bazel`, lock-файл, `variables.bzl`, `versions.json`) и имеет широкий restore-key для повторного использования.
+
+## Обновление: новые функции и реорганизация вкладок MQGram
+
+### Новые ключи в `MQGramSettings.swift`
+- `readAfterActions` — отмечает сообщения прочитанными только после действий пользователя.
+- `businessFeatures` — активирует Telegram для бизнеса локально.
+- `pinWalletTab` — фиксатор вкладки Кошелёк.
+- `redDeleteIcon` — красная иконка корзины при удалении сообщений.
+- Скрытие интерфейса: `hideNavigationBar`, `hideFavoriteChats`, `hideRecentCalls`, `hideDevices`, `hideChatFolders`, `hideNotificationsSettings`, `hidePrivacySettings`, `hideDataSettings`, `hideAppearanceSettings`, `hideLanguageSettings`, `hideStickersSettings`, `hidePowerSaving`.
+
+### Новая структура вкладок MQGram
+1. **Призрак / Ghost** — все ghost-функции + `Читать после действий`.
+2. **Основные / Core** — `Анти-самоуничтожение`, `Анти-удаление`, `Свои индикаторы`, `Красная корзина`.
+3. **Бета / Beta** — `Обход защиты контента`, `Анти-редактирование`, `Отключить рекламу`, `Telegram для бизнеса`.
+4. **Прочее / Other** — `Локальный Премиум`, `Безлимитные аккаунты`, `Скрыть номер`, `Подтверждение звонков`, `Тихие сообщения`, `Фиксатор Кошелька`.
+5. **Скрыть / Hide** — 12 переключателей для скрытия элементов настроек.
+6. **Dev** — GitHub (в браузере), Разраб, Канал StivenVPN, Бот StivenVPN (все в Telegram).
+
+### Реальные hooks
+- `readAfterActions` → `InstallInteractiveReadMessagesAction.swift` (проверка времени действия пользователя).
+- `ghostReactions` → `MessageReactions.swift` (блокировка `messages.sendReaction`) и `Stories.swift` (блокировка `stories.sendReaction`).
+- `ghostStickerActivity` → `ManagedSynchronizeRecentlyUsedMediaOperations.swift` (блокировка `saveRecentSticker`).
+- `localPremium` → `PeerUtils.swift` (Peer.isPremium возвращает true для своего аккаунта); own peer ID сохраняется в `AccountContext.swift`.
+- Скрытие настроек → `PeerInfoSettingsItems.swift` (условные `items.append`).
+- `redDeleteIcon` → `ChatMessageSelectionInputPanelNode.swift` (кастомный tint color иконки корзины).
+
+### Открытие ссылок в Dev вкладке
+- Используется `openExternalUrl`, который автоматически открывает `t.me/*` внутри Telegram, а GitHub — во встроенном браузере.
+
+### Файлы, которые менялись
+- `MQGram/MQGramSettingsUI/Sources/MQGramSettings.swift`
+- `MQGram/MQGramSettingsUI/Sources/MQGramSettingsController.swift`
+- `submodules/TelegramCore/Sources/State/MessageReactions.swift`
+- `submodules/TelegramCore/Sources/State/ManagedSynchronizeRecentlyUsedMediaOperations.swift`
+- `submodules/TelegramCore/Sources/TelegramEngine/Messages/InstallInteractiveReadMessagesAction.swift`
+- `submodules/TelegramCore/Sources/TelegramEngine/Messages/Stories.swift`
+- `submodules/TelegramCore/Sources/Utils/PeerUtils.swift`
+- `submodules/TelegramUI/Sources/AccountContext.swift`
+- `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoSettingsItems.swift`
+- `submodules/TelegramUI/Components/Chat/ChatMessageSelectionInputPanelNode/Sources/ChatMessageSelectionInputPanelNode.swift`

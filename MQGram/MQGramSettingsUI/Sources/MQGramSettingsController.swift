@@ -12,9 +12,9 @@ import AccountContext
 
 private final class MQGramArguments {
     let toggleSetting: (MQGramSettings.Key, Bool) -> Void
-    let openUrl: (String) -> Void
+    let openUrl: (String, Bool) -> Void
 
-    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openUrl: @escaping (String) -> Void) {
+    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openUrl: @escaping (String, Bool) -> Void) {
         self.toggleSetting = toggleSetting
         self.openUrl = openUrl
     }
@@ -25,7 +25,7 @@ private final class MQGramArguments {
 private enum MQGramEntry: ItemListNodeEntry {
     case info(Int32, String)
     case toggle(Int32, MQGramSettings.Key, String, String?, Bool)
-    case link(Int32, String, String, UIImage?)
+    case link(Int32, String, String, Bool, UIImage?)
     case footer(Int32, String)
 
     var section: ItemListSectionId {
@@ -43,7 +43,7 @@ private enum MQGramEntry: ItemListNodeEntry {
             return id
         case let .toggle(id, _, _, _, _):
             return id
-        case let .link(id, _, _, _):
+        case let .link(id, _, _, _, _):
             return id
         case let .footer(id, _):
             return id
@@ -57,8 +57,8 @@ private enum MQGramEntry: ItemListNodeEntry {
         case let .toggle(lId, lKey, lTitle, lText, lValue):
             if case let .toggle(rId, rKey, rTitle, rText, rValue) = rhs,
                lId == rId, lKey == rKey, lTitle == rTitle, lText == rText, lValue == rValue { return true } else { return false }
-        case let .link(lId, lTitle, lUrl, _):
-            if case let .link(rId, rTitle, rUrl, _) = rhs, lId == rId, lTitle == rTitle, lUrl == rUrl { return true } else { return false }
+        case let .link(lId, lTitle, lUrl, lInTg, _):
+            if case let .link(rId, rTitle, rUrl, rInTg, _) = rhs, lId == rId, lTitle == rTitle, lUrl == rUrl, lInTg == rInTg { return true } else { return false }
         case let .footer(lId, lText):
             if case let .footer(rId, rText) = rhs, lId == rId, lText == rText { return true } else { return false }
         }
@@ -86,7 +86,7 @@ private enum MQGramEntry: ItemListNodeEntry {
                     args.toggleSetting(key, newValue)
                 }
             )
-        case let .link(_, title, url, icon):
+        case let .link(_, title, url, inTelegram, icon):
             return ItemListDisclosureItem(
                 presentationData: presentationData,
                 icon: icon,
@@ -96,7 +96,7 @@ private enum MQGramEntry: ItemListNodeEntry {
                 style: .blocks,
                 disclosureStyle: .arrow,
                 action: {
-                    args.openUrl(url)
+                    args.openUrl(url, inTelegram)
                 }
             )
         case let .footer(_, text):
@@ -133,6 +133,8 @@ private struct MQGramText {
     let ghostOnlineStatusText: String
     let ghostTypingActionsTitle: String
     let ghostTypingActionsText: String
+    let readAfterActionsTitle: String
+    let readAfterActionsText: String
     let stableInfo: String
     let antiSelfDestructTitle: String
     let antiSelfDestructText: String
@@ -140,6 +142,8 @@ private struct MQGramText {
     let antiRevokeText: String
     let customIndicatorsTitle: String
     let customIndicatorsText: String
+    let redDeleteIconTitle: String
+    let redDeleteIconText: String
     let betaInfo: String
     let contentProtectionTitle: String
     let contentProtectionText: String
@@ -147,6 +151,8 @@ private struct MQGramText {
     let antiEditText: String
     let disableAdsTitle: String
     let disableAdsText: String
+    let businessFeaturesTitle: String
+    let businessFeaturesText: String
     let otherInfo: String
     let localPremiumTitle: String
     let localPremiumText: String
@@ -158,6 +164,33 @@ private struct MQGramText {
     let confirmCallsText: String
     let silentMessagesTitle: String
     let silentMessagesText: String
+    let pinWalletTabTitle: String
+    let pinWalletTabText: String
+    let hideInfo: String
+    let hideNavigationBarTitle: String
+    let hideNavigationBarText: String
+    let hideFavoriteChatsTitle: String
+    let hideFavoriteChatsText: String
+    let hideRecentCallsTitle: String
+    let hideRecentCallsText: String
+    let hideDevicesTitle: String
+    let hideDevicesText: String
+    let hideChatFoldersTitle: String
+    let hideChatFoldersText: String
+    let hideNotificationsTitle: String
+    let hideNotificationsText: String
+    let hidePrivacyTitle: String
+    let hidePrivacyText: String
+    let hideDataTitle: String
+    let hideDataText: String
+    let hideAppearanceTitle: String
+    let hideAppearanceText: String
+    let hideLanguageTitle: String
+    let hideLanguageText: String
+    let hideStickersTitle: String
+    let hideStickersText: String
+    let hidePowerSavingTitle: String
+    let hidePowerSavingText: String
     let devInfo: String
     let devDeveloper: String
     let devChannel: String
@@ -193,6 +226,8 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             ghostOnlineStatusText: "Не отправляет статус онлайн, пока включён призрак.",
             ghostTypingActionsTitle: "Скрывать действия",
             ghostTypingActionsText: "Скрывает набор текста, запись голоса, загрузку фото/видео.",
+            readAfterActionsTitle: "Читать после действий",
+            readAfterActionsText: "Отмечает сообщения прочитанными только после твоих действий в чате.",
             stableInfo: "Базовая защита сообщений и медиа без лишнего визуального шума.",
             antiSelfDestructTitle: "Анти-самоуничтожение",
             antiSelfDestructText: "Сохраняет исчезающие фото/видео и убирает таймеры.",
@@ -200,6 +235,8 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             antiRevokeText: "Сообщения не удаляются у тебя, а удалённые помечаются значком.",
             customIndicatorsTitle: "Свои индикаторы",
             customIndicatorsText: "Добавляет метки к перехваченному исчезающему контенту.",
+            redDeleteIconTitle: "Красная корзина",
+            redDeleteIconText: "Показывает красную иконку корзины рядом с сообщениями при удалении.",
             betaInfo: "Функции с глубокими hooks. Если что-то ведёт себя странно — отключи конкретный переключатель.",
             contentProtectionTitle: "Обход защиты контента",
             contentProtectionText: "Пересылка и сохранение медиа из защищённых каналов и чатов.",
@@ -207,6 +244,8 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             antiEditText: "Показывает оригинальный текст отредактированных сообщений.",
             disableAdsTitle: "Отключить рекламу",
             disableAdsText: "Убирает спонсорские сообщения и рекламу из каналов.",
+            businessFeaturesTitle: "Telegram для бизнеса",
+            businessFeaturesText: "Активирует бизнес-функции профиля локально.",
             otherInfo: "Дополнительные функции для расширенного управления приложением.",
             localPremiumTitle: "Локальный Премиум",
             localPremiumText: "Активирует премиум-функции интерфейса локально без подписки.",
@@ -218,6 +257,33 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             confirmCallsText: "Запрашивает подтверждение перед началом голосового или видеозвонка.",
             silentMessagesTitle: "Тихие сообщения",
             silentMessagesText: "Отправляет сообщения без звукового уведомления по умолчанию.",
+            pinWalletTabTitle: "Фиксатор вкладки Кошелёк",
+            pinWalletTabText: "Закрепляет вкладку Кошелёк рядом с настройками.",
+            hideInfo: "Скрывай элементы интерфейса, которыми не пользуешься.",
+            hideNavigationBarTitle: "Скрыть бар навигации",
+            hideNavigationBarText: "Прячет нижнюю панель (Контакты, Чаты, Настройки, Поиск).",
+            hideFavoriteChatsTitle: "Скрыть Избранное",
+            hideFavoriteChatsText: "Прячет пункт Избранное в настройках.",
+            hideRecentCallsTitle: "Скрыть Недавние звонки",
+            hideRecentCallsText: "Прячет пункт Недавние звонки в настройках.",
+            hideDevicesTitle: "Скрыть Устройства",
+            hideDevicesText: "Прячет пункт Устройства в настройках.",
+            hideChatFoldersTitle: "Скрыть Папки с чатами",
+            hideChatFoldersText: "Прячет пункт Папки с чатами в настройках.",
+            hideNotificationsTitle: "Скрыть Уведомления и звуки",
+            hideNotificationsText: "Прячет пункт Уведомления и звуки в настройках.",
+            hidePrivacyTitle: "Скрыть Конфиденциальность",
+            hidePrivacyText: "Прячет пункт Конфиденциальность в настройках.",
+            hideDataTitle: "Скрыть Данные и хранилище",
+            hideDataText: "Прячет пункт Данные и хранилище в настройках.",
+            hideAppearanceTitle: "Скрыть Оформление",
+            hideAppearanceText: "Прячет пункт Оформление в настройках.",
+            hideLanguageTitle: "Скрыть Язык",
+            hideLanguageText: "Прячет пункт Язык в настройках.",
+            hideStickersTitle: "Скрыть Стикеры и emoji",
+            hideStickersText: "Прячет пункт Стикеры и emoji в настройках.",
+            hidePowerSavingTitle: "Скрыть Энергосбережение",
+            hidePowerSavingText: "Прячет пункт Энергосбережение в настройках.",
             devInfo: "Информация о разработчике и полезные ссылки.",
             devDeveloper: "Разработчик",
             devChannel: "Канал StivenVPN",
@@ -251,6 +317,8 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         ghostOnlineStatusText: "Do not send online presence while ghost is enabled.",
         ghostTypingActionsTitle: "Hide Typing Actions",
         ghostTypingActionsText: "Hides typing, voice recording, photo/video uploads.",
+        readAfterActionsTitle: "Read After Actions",
+        readAfterActionsText: "Mark messages as read only after you take action in chat.",
         stableInfo: "Base message and media protection without extra visual noise.",
         antiSelfDestructTitle: "Anti-Self-Destruct",
         antiSelfDestructText: "Save disappearing photos/videos and remove timers.",
@@ -258,6 +326,8 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         antiRevokeText: "Messages are never deleted for you. Deleted messages are marked.",
         customIndicatorsTitle: "Custom Indicators",
         customIndicatorsText: "Adds labels to intercepted disappearing content.",
+        redDeleteIconTitle: "Red Delete Icon",
+        redDeleteIconText: "Shows a red trash icon next to messages when deleting.",
         betaInfo: "Deep-hook features. If something behaves oddly, disable only that switch.",
         contentProtectionTitle: "Content Protection Bypass",
         contentProtectionText: "Forward and save media from restricted channels and chats.",
@@ -265,6 +335,8 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         antiEditText: "See original content of edited messages.",
         disableAdsTitle: "Disable Ads",
         disableAdsText: "Remove sponsored messages and ads from channels.",
+        businessFeaturesTitle: "Telegram for Business",
+        businessFeaturesText: "Enable Business profile features locally.",
         otherInfo: "Extra features for extended app control.",
         localPremiumTitle: "Local Premium",
         localPremiumText: "Activates premium UI features locally without a subscription.",
@@ -276,6 +348,33 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         confirmCallsText: "Ask for confirmation before starting a voice or video call.",
         silentMessagesTitle: "Silent Messages",
         silentMessagesText: "Send messages without sound notification by default.",
+        pinWalletTabTitle: "Pin Wallet Tab",
+        pinWalletTabText: "Pin the Wallet tab next to Settings.",
+        hideInfo: "Hide UI elements you don't use.",
+        hideNavigationBarTitle: "Hide Navigation Bar",
+        hideNavigationBarText: "Hides the bottom bar (Contacts, Chats, Settings, Search).",
+        hideFavoriteChatsTitle: "Hide Saved Messages",
+        hideFavoriteChatsText: "Hides the Saved Messages entry in settings.",
+        hideRecentCallsTitle: "Hide Recent Calls",
+        hideRecentCallsText: "Hides the Recent Calls entry in settings.",
+        hideDevicesTitle: "Hide Devices",
+        hideDevicesText: "Hides the Devices entry in settings.",
+        hideChatFoldersTitle: "Hide Chat Folders",
+        hideChatFoldersText: "Hides the Chat Folders entry in settings.",
+        hideNotificationsTitle: "Hide Notifications and Sounds",
+        hideNotificationsText: "Hides the Notifications and Sounds entry in settings.",
+        hidePrivacyTitle: "Hide Privacy",
+        hidePrivacyText: "Hides the Privacy entry in settings.",
+        hideDataTitle: "Hide Data and Storage",
+        hideDataText: "Hides the Data and Storage entry in settings.",
+        hideAppearanceTitle: "Hide Appearance",
+        hideAppearanceText: "Hides the Appearance entry in settings.",
+        hideLanguageTitle: "Hide Language",
+        hideLanguageText: "Hides the Language entry in settings.",
+        hideStickersTitle: "Hide Stickers and Emoji",
+        hideStickersText: "Hides the Stickers and Emoji entry in settings.",
+        hidePowerSavingTitle: "Hide Power Saving",
+        hidePowerSavingText: "Hides the Power Saving entry in settings.",
         devInfo: "Developer info and useful links.",
         devDeveloper: "Developer",
         devChannel: "StivenVPN Channel",
@@ -338,15 +437,15 @@ private func makeTelegramIcon() -> UIImage {
         UIColor(red: 0.0, green: 0.53, blue: 0.80, alpha: 1.0).setFill()
         let inner = UIBezierPath()
         inner.move(to: CGPoint(x: cx - 1, y: cy + 1))
-        inner.addLine(to: CGPoint(x: cx + 2, y: cy + 6))
-        inner.addLine(to: CGPoint(x: cx + 1, y: cy - 1))
+        inner.addLine(to: CGPoint(x: cx + 4, y: cy - 3))
+        inner.addLine(to: CGPoint(x: cx, y: cy + 4))
         inner.close()
         inner.fill()
     }
 }
 
 private func makeChannelIcon() -> UIImage {
-    return makeRoundedIcon(backgroundColor: UIColor(red: 1.0, green: 0.58, blue: 0.0, alpha: 1.0)) { _, rect in
+    return makeRoundedIcon(backgroundColor: UIColor(red: 0.95, green: 0.45, blue: 0.20, alpha: 1.0)) { _, rect in
         let cx = rect.midX
         let cy = rect.midY
         UIColor.white.setFill()
@@ -400,10 +499,11 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
     var id: Int32 = 10
 
     switch tab {
-    case 0:
+    case 0: // Ghost
         entries.append(.info(1, text.ghostInfo))
         entries.append(.toggle(id, .ghostMode, text.ghostModeTitle, text.ghostModeText, settings.ghostMode)); id += 1
         entries.append(.toggle(id, .ghostReadReceipts, text.ghostReadReceiptsTitle, text.ghostReadReceiptsText, settings.ghostReadReceipts)); id += 1
+        entries.append(.toggle(id, .readAfterActions, text.readAfterActionsTitle, text.readAfterActionsText, settings.readAfterActions)); id += 1
         entries.append(.toggle(id, .ghostStories, text.ghostStoriesTitle, text.ghostStoriesText, settings.ghostStories)); id += 1
         entries.append(.toggle(id, .ghostContentReads, text.ghostContentReadsTitle, text.ghostContentReadsText, settings.ghostContentReads)); id += 1
         entries.append(.toggle(id, .ghostPersonalActions, text.ghostPersonalActionsTitle, text.ghostPersonalActionsText, settings.ghostPersonalActions)); id += 1
@@ -415,32 +515,52 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .ghostOnlineStatus, text.ghostOnlineStatusTitle, text.ghostOnlineStatusText, settings.ghostOnlineStatus)); id += 1
         entries.append(.toggle(id, .ghostTypingActions, text.ghostTypingActionsTitle, text.ghostTypingActionsText, settings.ghostTypingActions))
 
-    case 1:
+    case 1: // Core
         entries.append(.info(1, text.stableInfo))
         entries.append(.toggle(id, .antiSelfDestruct, text.antiSelfDestructTitle, text.antiSelfDestructText, settings.antiSelfDestruct)); id += 1
         entries.append(.toggle(id, .antiRevoke, text.antiRevokeTitle, text.antiRevokeText, settings.antiRevoke)); id += 1
-        entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators))
+        entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators)); id += 1
+        entries.append(.toggle(id, .redDeleteIcon, text.redDeleteIconTitle, text.redDeleteIconText, settings.redDeleteIcon))
 
-    case 2:
+    case 2: // Beta
         entries.append(.info(1, text.betaInfo))
         entries.append(.toggle(id, .contentProtectionBypass, text.contentProtectionTitle, text.contentProtectionText, settings.contentProtectionBypass)); id += 1
         entries.append(.toggle(id, .antiEdit, text.antiEditTitle, text.antiEditText, settings.antiEdit)); id += 1
-        entries.append(.toggle(id, .disableAds, text.disableAdsTitle, text.disableAdsText, settings.disableAds))
+        entries.append(.toggle(id, .disableAds, text.disableAdsTitle, text.disableAdsText, settings.disableAds)); id += 1
+        entries.append(.toggle(id, .businessFeatures, text.businessFeaturesTitle, text.businessFeaturesText, settings.businessFeatures))
 
-    case 3:
+    case 3: // Other
         entries.append(.info(1, text.otherInfo))
         entries.append(.toggle(id, .localPremium, text.localPremiumTitle, text.localPremiumText, settings.localPremium)); id += 1
         entries.append(.toggle(id, .unlimitedAccounts, text.unlimitedAccountsTitle, text.unlimitedAccountsText, settings.unlimitedAccounts)); id += 1
         entries.append(.toggle(id, .hidePhoneNumber, text.hidePhoneNumberTitle, text.hidePhoneNumberText, settings.hidePhoneNumber)); id += 1
         entries.append(.toggle(id, .confirmCalls, text.confirmCallsTitle, text.confirmCallsText, settings.confirmCalls)); id += 1
-        entries.append(.toggle(id, .silentMessages, text.silentMessagesTitle, text.silentMessagesText, settings.silentMessages))
+        entries.append(.toggle(id, .silentMessages, text.silentMessagesTitle, text.silentMessagesText, settings.silentMessages)); id += 1
+        entries.append(.toggle(id, .pinWalletTab, text.pinWalletTabTitle, text.pinWalletTabText, settings.pinWalletTab))
 
-    case 4:
+    case 4: // Hide
+        entries.append(.info(1, text.hideInfo))
+        entries.append(.toggle(id, .hideNavigationBar, text.hideNavigationBarTitle, text.hideNavigationBarText, settings.hideNavigationBar)); id += 1
+        entries.append(.toggle(id, .hideFavoriteChats, text.hideFavoriteChatsTitle, text.hideFavoriteChatsText, settings.hideFavoriteChats)); id += 1
+        entries.append(.toggle(id, .hideRecentCalls, text.hideRecentCallsTitle, text.hideRecentCallsText, settings.hideRecentCalls)); id += 1
+        entries.append(.toggle(id, .hideDevices, text.hideDevicesTitle, text.hideDevicesText, settings.hideDevices)); id += 1
+        entries.append(.toggle(id, .hideChatFolders, text.hideChatFoldersTitle, text.hideChatFoldersText, settings.hideChatFolders)); id += 1
+        entries.append(.toggle(id, .hideNotificationsSettings, text.hideNotificationsTitle, text.hideNotificationsText, settings.hideNotificationsSettings)); id += 1
+        entries.append(.toggle(id, .hidePrivacySettings, text.hidePrivacyTitle, text.hidePrivacyText, settings.hidePrivacySettings)); id += 1
+        entries.append(.toggle(id, .hideDataSettings, text.hideDataTitle, text.hideDataText, settings.hideDataSettings)); id += 1
+        entries.append(.toggle(id, .hideAppearanceSettings, text.hideAppearanceTitle, text.hideAppearanceText, settings.hideAppearanceSettings)); id += 1
+        entries.append(.toggle(id, .hideLanguageSettings, text.hideLanguageTitle, text.hideLanguageText, settings.hideLanguageSettings)); id += 1
+        entries.append(.toggle(id, .hideStickersSettings, text.hideStickersTitle, text.hideStickersText, settings.hideStickersSettings)); id += 1
+        entries.append(.toggle(id, .hidePowerSaving, text.hidePowerSavingTitle, text.hidePowerSavingText, settings.hidePowerSaving))
+
+    case 5: // Developer
         entries.append(.info(1, text.devInfo))
-        entries.append(.link(id, "GitHub", "https://github.com/jutsodev", makeGitHubIcon())); id += 1
-        entries.append(.link(id, text.devDeveloper, "https://t.me/jutsodev", makeTelegramIcon())); id += 1
-        entries.append(.link(id, text.devChannel, "https://t.me/Stivenvpn", makeChannelIcon())); id += 1
-        entries.append(.link(id, text.devBot, "https://t.me/Stivenvpnbot", makeBotIcon()))
+        // GitHub - in built-in browser (inTelegram: false)
+        entries.append(.link(id, "GitHub", "https://github.com/jutsodev", false, makeGitHubIcon())); id += 1
+        // All Telegram links - open inside Telegram (inTelegram: true)
+        entries.append(.link(id, text.devDeveloper, "https://t.me/jutsodev", true, makeTelegramIcon())); id += 1
+        entries.append(.link(id, text.devChannel, "https://t.me/Stivenvpn", true, makeChannelIcon())); id += 1
+        entries.append(.link(id, text.devBot, "https://t.me/Stivenvpnbot", true, makeBotIcon()))
 
     default:
         break
@@ -456,20 +576,26 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
     let updatePromise = ValuePromise<Bool>(true, ignoreRepeated: false)
     let tabIndexPromise = ValuePromise<Int>(0, ignoreRepeated: false)
 
+    var openUrlImpl: ((String, Bool) -> Void)?
+
     let arguments = MQGramArguments(
         toggleSetting: { key, value in
             MQGramSettings.shared.setBool(value, for: key)
             updatePromise.set(true)
         },
-        openUrl: { url in
-            context.sharedContext.applicationBindings.openUrl(url)
+        openUrl: { url, inTelegram in
+            openUrlImpl?(url, inTelegram)
         }
     )
 
-    let tabNames: [String] = ["Призрак", "Основные", "Бета", "Прочее", "Dev"]
+    let tabNamesRu: [String] = ["Призрак", "Основные", "Бета", "Прочее", "Скрыть", "Dev"]
+    let tabNamesEn: [String] = ["Ghost", "Core", "Beta", "Other", "Hide", "Dev"]
 
     let signal = combineLatest(context.sharedContext.presentationData, updatePromise.get(), tabIndexPromise.get())
     |> map { presentationData, _, tabIndex -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        let isRu = presentationData.strings.baseLanguageCode.lowercased().hasPrefix("ru")
+        let tabNames = isRu ? tabNamesRu : tabNamesEn
+
         let controllerState = ItemListControllerState(
             presentationData: ItemListPresentationData(presentationData),
             title: .sectionControl(tabNames, tabIndex),
@@ -493,5 +619,22 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
     controller.titleControlValueChanged = { index in
         tabIndexPromise.set(index)
     }
+
+    openUrlImpl = { [weak controller] url, _ in
+        guard let controller else { return }
+        let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+        let navigationController = controller.navigationController as? NavigationController
+        // openExternalUrl correctly routes t.me links to Telegram and other URLs to built-in browser
+        context.sharedContext.openExternalUrl(
+            context: context,
+            urlContext: .generic,
+            url: url,
+            forceExternal: false,
+            presentationData: presentationData,
+            navigationController: navigationController,
+            dismissInput: {}
+        )
+    }
+
     return controller
 }

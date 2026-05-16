@@ -369,7 +369,12 @@ private func requestUpdateMessageReaction(postbox: Postbox, network: Network, st
                 flags |= 1 << 2
             }
         }
-        
+
+        // MARK: MQGram - Ghost Reactions
+        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostReactions") {
+            return .complete()
+        }
+
         let signal: Signal<Never, RequestUpdateMessageReactionError> = network.request(Api.functions.messages.sendReaction(flags: flags, peer: inputPeer, msgId: messageId.id, reaction: reactions?.map(\.apiReaction)))
         |> mapError { _ -> RequestUpdateMessageReactionError in
             return .generic

@@ -217,6 +217,14 @@ public extension Peer {
     var isPremium: Bool {
         switch self {
         case let user as TelegramUser:
+            // MARK: MQGram - Local Premium: fake premium status for own account only
+            if UserDefaults.standard.bool(forKey: "MQGram.localPremium") {
+                // Only return true for own account when local premium is enabled
+                let ownIdString = UserDefaults.standard.string(forKey: "MQGram.ownAccountPeerId") ?? ""
+                if !ownIdString.isEmpty, let ownId = Int64(ownIdString), user.id.id._internalGetInt64Value() == ownId {
+                    return true
+                }
+            }
             return user.flags.contains(.isPremium)
         default:
             return false

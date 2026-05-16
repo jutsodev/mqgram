@@ -168,10 +168,19 @@ private final class GlassButtonView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    // MARK: MQGram - allow custom tint color override (e.g., red trash icon)
+    var customTintColor: UIColor? = nil {
+        didSet {
+            if let params = self.params {
+                self.iconView.tintColor = customTintColor ?? params.theme.chat.inputPanel.panelControlColor
+            }
+        }
+    }
+
     func update(theme: PresentationTheme, preferClearGlass: Bool, size: CGSize, transition: ComponentTransition) {
         let params = Params(theme: theme, preferClearGlass: preferClearGlass, size: size)
         if self.params != params {
-            self.iconView.tintColor = params.theme.chat.inputPanel.panelControlColor
+            self.iconView.tintColor = customTintColor ?? params.theme.chat.inputPanel.panelControlColor
             self.params = params
             self.updateImpl(params: params, transition: transition)
         }
@@ -243,6 +252,11 @@ public final class ChatMessageSelectionInputPanelNode: ChatInputPanelNode {
         self.deleteButton.isEnabled = false
         self.deleteButton.isAccessibilityElement = true
         self.deleteButton.accessibilityLabel = strings.VoiceOver_MessageContextDelete
+
+        // MARK: MQGram - Red Delete Icon
+        if UserDefaults.standard.bool(forKey: "MQGram.redDeleteIcon") {
+            self.deleteButton.customTintColor = UIColor(red: 0.95, green: 0.20, blue: 0.20, alpha: 1.0)
+        }
         
         self.reportButton = GlassButtonView()
         self.reportButton.icon = "Chat/Input/Accessory Panels/MessageSelectionReport"

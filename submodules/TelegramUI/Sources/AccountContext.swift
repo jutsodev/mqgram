@@ -438,6 +438,9 @@ public final class AccountContextImpl: AccountContext {
             strongSelf.animatedEmojiStickersPromise.set(.single(stickers))
         })
         
+        // MARK: MQGram - store own account peer ID for Local Premium check
+        UserDefaults.standard.set(String(account.peerId.id._internalGetInt64Value()), forKey: "MQGram.ownAccountPeerId")
+
         self.userLimitsConfigurationDisposable = (self.engine.data.subscribe(TelegramEngine.EngineData.Item.Peer.Peer(id: account.peerId))
         |> mapToSignal { peer -> Signal<(Bool, EngineConfiguration.UserLimits), NoError> in
             let isPremium = peer?.isPremium ?? false
