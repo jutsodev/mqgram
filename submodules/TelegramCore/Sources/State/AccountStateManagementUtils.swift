@@ -5,6 +5,35 @@ import TelegramApi
 import MtProtoKit
 import EncryptionProvider
 
+// MARK: MQGram - Track revoked (deletion-blocked) message IDs for red trash icon
+public final class MQGramRevokedMessages {
+    public static let shared = MQGramRevokedMessages()
+
+    private var revokedIds: Set<MessageId> = []
+    private let lock = NSLock()
+
+    public func addRevoked(_ ids: [MessageId]) {
+        lock.lock()
+        for id in ids {
+            revokedIds.insert(id)
+        }
+        lock.unlock()
+    }
+
+    public func isRevoked(_ id: MessageId) -> Bool {
+        lock.lock()
+        let result = revokedIds.contains(id)
+        lock.unlock()
+        return result
+    }
+
+    public func removeRevoked(_ id: MessageId) {
+        lock.lock()
+        revokedIds.remove(id)
+        lock.unlock()
+    }
+}
+
 private func reactionGeneratedEvent(_ previousReactions: ReactionsMessageAttribute?, _ updatedReactions: ReactionsMessageAttribute?, message: Message, transaction: Transaction) -> (reactionAuthor: Peer, reaction: MessageReaction.Reaction, message: Message, timestamp: Int32)? {
     if let updatedReactions = updatedReactions, !message.flags.contains(.Incoming), message.id.peerId.namespace == Namespaces.Peer.CloudUser {
         let prev = previousReactions?.reactions ?? []
@@ -954,6 +983,9 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                     } else if previousState.pts + ptsCount == pts {
                         if !UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") { /* MQGram Anti-Revoke */
                             updatedState.deleteMessages(messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
+                        } else {
+                            // MARK: MQGram - Track revoked message IDs for red trash icon
+                            MQGramRevokedMessages.shared.addRevoked(messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
                         }
                         updatedState.updateChannelState(peerId, pts: pts)
                     } else {
@@ -1047,7 +1079,7 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                 updatedState.updateMinAvailableMessage(MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: minId))
             case let .updateDeleteMessages(updateDeleteMessagesData):
                 if !UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") { /* MQGram Anti-Revoke */
-                updatedState.deleteMessagesWithGlobalIds(updateDeleteMessagesData.messages)
+                    updatedState.deleteMessagesWithGlobalIds(updateDeleteMessagesData.messages)
                 }
             case let .updatePinnedMessages(updatePinnedMessagesData):
                 let (flags, peer, messages) = (updatePinnedMessagesData.flags, updatePinnedMessagesData.peer, updatePinnedMessagesData.messages)
@@ -3510,6 +3542,8 @@ private func pollChannel(accountPeerId: PeerId, postbox: Postbox, network: Netwo
                         let peerId = peer.id
                         if !UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") { /* MQGram Anti-Revoke */
                             updatedState.deleteMessages(updateDeleteChannelMessagesData.messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
+                        } else {
+                            MQGramRevokedMessages.shared.addRevoked(updateDeleteChannelMessagesData.messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
                         }
                     case let .updateEditChannelMessage(updateEditChannelMessageData):
                         let apiMessage = updateEditChannelMessageData.message

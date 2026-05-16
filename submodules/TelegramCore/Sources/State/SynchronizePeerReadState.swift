@@ -4,6 +4,44 @@ import TelegramApi
 import SwiftSignalKit
 
 
+// MARK: MQGram - Pending Read State for "Read After Action"
+final class MQGramPendingReadState {
+    static let shared = MQGramPendingReadState()
+
+    private var pendingPeers: Set<PeerId> = []
+    private var flushingPeers: Set<PeerId> = []
+    private let lock = NSLock()
+
+    func addPending(peerId: PeerId) {
+        lock.lock()
+        pendingPeers.insert(peerId)
+        lock.unlock()
+    }
+
+    func isFlushing(peerId: PeerId) -> Bool {
+        lock.lock()
+        let result = flushingPeers.contains(peerId)
+        lock.unlock()
+        return result
+    }
+
+    func startFlushing(peerId: PeerId) -> Bool {
+        lock.lock()
+        let wasPending = pendingPeers.remove(peerId) != nil
+        if wasPending {
+            flushingPeers.insert(peerId)
+        }
+        lock.unlock()
+        return wasPending
+    }
+
+    func finishFlushing(peerId: PeerId) {
+        lock.lock()
+        flushingPeers.remove(peerId)
+        lock.unlock()
+    }
+}
+
 private enum PeerReadStateMarker: Equatable {
     case Global(Int32)
     case Channel(Int32)
@@ -227,6 +265,11 @@ private func validatePeerReadState(network: Network, postbox: Postbox, stateMana
 private func pushPeerReadState(network: Network, postbox: Postbox, stateManager: AccountStateManager, peerId: PeerId, readState: PeerReadState) -> Signal<PeerReadState, PeerReadStateValidationError> {
     // MARK: MQGram - Ghost Mode (skip server-side read receipts)
     if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostReadReceipts") {
+        return .single(readState)
+    }
+    // MARK: MQGram - Read After Action (defer read receipts until user replies)
+    if UserDefaults.standard.bool(forKey: "MQGram.readAfterAction") && !MQGramPendingReadState.shared.isFlushing(peerId: peerId) {
+        MQGramPendingReadState.shared.addPending(peerId: peerId)
         return .single(readState)
     }
     if peerId.namespace == Namespaces.Peer.SecretChat {

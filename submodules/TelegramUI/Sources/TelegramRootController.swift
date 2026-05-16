@@ -216,11 +216,14 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
             self?.openChatsController(activateSearch: false)
         }
         // MARK: Swiftgram
-        if showContactsTab {
+        // MARK: MQGram - Hide Buttons (tab bar)
+        let mqShowContacts = showContactsTab && !UserDefaults.standard.bool(forKey: "MQGram.hideContacts")
+        let mqShowCalls = showCallsTab && !UserDefaults.standard.bool(forKey: "MQGram.hideCalls")
+        if mqShowContacts {
             controllers.append(contactsController)
         }
         
-        if showCallsTab {
+        if mqShowCalls {
             controllers.append(callListController)
         }
         controllers.append(chatListController)
@@ -259,10 +262,13 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
             return
         }
         var controllers: [ViewController] = []
-        if showContactsTab {
+        // MARK: MQGram - Hide Buttons (tab bar)
+        let mqShowContacts = showContactsTab && !UserDefaults.standard.bool(forKey: "MQGram.hideContacts")
+        let mqShowCalls = showCallsTab && !UserDefaults.standard.bool(forKey: "MQGram.hideCalls")
+        if mqShowContacts {
             controllers.append(self.contactsController!)
         }
-        if showCallsTab {
+        if mqShowCalls {
             controllers.append(self.callListController!)
         }
         controllers.append(self.chatListController!)

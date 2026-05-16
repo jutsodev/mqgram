@@ -406,6 +406,16 @@ public func enqueueMessages(account: Account, peerId: PeerId, messages: [Enqueue
             return enqueueMessages(transaction: transaction, account: account, peerId: peerId, messages: messages)
         }
     }
+    |> afterNext { _ in
+        // MARK: MQGram - Read After Action: flush pending read receipts when user sends a message
+        if MQGramPendingReadState.shared.startFlushing(peerId: peerId) {
+            let _ = synchronizePeerReadState(network: account.network, postbox: account.postbox, stateManager: account.stateManager, peerId: peerId, push: true, validate: false).start(error: { _ in
+                MQGramPendingReadState.shared.finishFlushing(peerId: peerId)
+            }, completed: {
+                MQGramPendingReadState.shared.finishFlushing(peerId: peerId)
+            })
+        }
+    }
 }
 
 public func enqueueMessagesToMultiplePeers(account: Account, peerIds: [PeerId], threadIds: [PeerId: Int64], messages: [EnqueueMessage]) -> Signal<[MessageId], NoError> {

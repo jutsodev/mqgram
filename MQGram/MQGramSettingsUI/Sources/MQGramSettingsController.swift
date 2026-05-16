@@ -21,6 +21,7 @@ private enum MQGramSection: Int32 {
     case stable
     case ghost
     case beta
+    case hideButtons
     case footer
 }
 
@@ -147,6 +148,36 @@ private struct MQGramText {
     let antiEditText: String
     let disableAdsTitle: String
     let disableAdsText: String
+    let readAfterActionTitle: String
+    let readAfterActionText: String
+    let localPremiumTitle: String
+    let localPremiumText: String
+    let hideButtonsSection: String
+    let hideButtonsInfo: String
+    let hideContactsTitle: String
+    let hideContactsText: String
+    let hideCallsTitle: String
+    let hideCallsText: String
+    let hideSavedMessagesTitle: String
+    let hideSavedMessagesText: String
+    let hideRecentCallsTitle: String
+    let hideRecentCallsText: String
+    let hideDevicesTitle: String
+    let hideDevicesText: String
+    let hideChatFoldersTitle: String
+    let hideChatFoldersText: String
+    let hideNotificationsTitle: String
+    let hideNotificationsText: String
+    let hidePrivacyTitle: String
+    let hidePrivacyText: String
+    let hideDataStorageTitle: String
+    let hideDataStorageText: String
+    let hideAppearanceTitle: String
+    let hideAppearanceText: String
+    let hideLanguageTitle: String
+    let hideLanguageText: String
+    let hidePowerSavingTitle: String
+    let hidePowerSavingText: String
     let footer: String
 }
 
@@ -196,6 +227,36 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             antiEditText: "Показывает оригинальный текст отредактированных сообщений.",
             disableAdsTitle: "Отключить рекламу",
             disableAdsText: "Убирает спонсорские сообщения и рекламу из каналов.",
+            readAfterActionTitle: "Прочитать после действий",
+            readAfterActionText: "Не отправляет прочитано (2 галочки) на сервер, пока ты не ответишь в чате.",
+            localPremiumTitle: "Локальный премиум",
+            localPremiumText: "Показывает премиум-статус локально без покупки подписки.",
+            hideButtonsSection: "СКРЫТЬ КНОПКИ",
+            hideButtonsInfo: "Скрывай ненужные вкладки и пункты в настройках.",
+            hideContactsTitle: "Скрыть контакты",
+            hideContactsText: "Убирает вкладку контактов из панели навигации.",
+            hideCallsTitle: "Скрыть звонки (вкладка)",
+            hideCallsText: "Убирает вкладку звонков из панели навигации.",
+            hideSavedMessagesTitle: "Скрыть избранное",
+            hideSavedMessagesText: "Убирает пункт Избранное из настроек.",
+            hideRecentCallsTitle: "Скрыть недавние звонки",
+            hideRecentCallsText: "Убирает пункт Недавние звонки из настроек.",
+            hideDevicesTitle: "Скрыть устройства",
+            hideDevicesText: "Убирает пункт Устройства из настроек.",
+            hideChatFoldersTitle: "Скрыть папки с чатами",
+            hideChatFoldersText: "Убирает пункт Папки с чатами из настроек.",
+            hideNotificationsTitle: "Скрыть уведомления и звуки",
+            hideNotificationsText: "Убирает пункт Уведомления и звуки из настроек.",
+            hidePrivacyTitle: "Скрыть конфиденциальность",
+            hidePrivacyText: "Убирает пункт Конфиденциальность из настроек.",
+            hideDataStorageTitle: "Скрыть данные и память",
+            hideDataStorageText: "Убирает пункт Данные и память из настроек.",
+            hideAppearanceTitle: "Скрыть оформление",
+            hideAppearanceText: "Убирает пункт Оформление из настроек.",
+            hideLanguageTitle: "Скрыть язык",
+            hideLanguageText: "Убирает пункт Язык из настроек.",
+            hidePowerSavingTitle: "Скрыть энергосбережение",
+            hidePowerSavingText: "Убирает пункт Энергосбережение из настроек.",
             footer: "Функции MQGram. Для части изменений перезапусти приложение."
         )
     }
@@ -243,6 +304,36 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         antiEditText: "See original content of edited messages.",
         disableAdsTitle: "Disable Ads",
         disableAdsText: "Remove sponsored messages and ads from channels.",
+        readAfterActionTitle: "Read After Actions",
+        readAfterActionText: "Do not send read receipts (2 checkmarks) to server until you reply in the chat.",
+        localPremiumTitle: "Local Premium",
+        localPremiumText: "Shows premium status locally without purchasing a subscription.",
+        hideButtonsSection: "HIDE BUTTONS",
+        hideButtonsInfo: "Hide unwanted tabs and settings menu items.",
+        hideContactsTitle: "Hide Contacts",
+        hideContactsText: "Removes the Contacts tab from the navigation bar.",
+        hideCallsTitle: "Hide Calls (tab)",
+        hideCallsText: "Removes the Calls tab from the navigation bar.",
+        hideSavedMessagesTitle: "Hide Saved Messages",
+        hideSavedMessagesText: "Removes Saved Messages from settings.",
+        hideRecentCallsTitle: "Hide Recent Calls",
+        hideRecentCallsText: "Removes Recent Calls from settings.",
+        hideDevicesTitle: "Hide Devices",
+        hideDevicesText: "Removes Devices from settings.",
+        hideChatFoldersTitle: "Hide Chat Folders",
+        hideChatFoldersText: "Removes Chat Folders from settings.",
+        hideNotificationsTitle: "Hide Notifications & Sounds",
+        hideNotificationsText: "Removes Notifications & Sounds from settings.",
+        hidePrivacyTitle: "Hide Privacy",
+        hidePrivacyText: "Removes Privacy & Security from settings.",
+        hideDataStorageTitle: "Hide Data & Storage",
+        hideDataStorageText: "Removes Data & Storage from settings.",
+        hideAppearanceTitle: "Hide Appearance",
+        hideAppearanceText: "Removes Appearance from settings.",
+        hideLanguageTitle: "Hide Language",
+        hideLanguageText: "Removes Language from settings.",
+        hidePowerSavingTitle: "Hide Power Saving",
+        hidePowerSavingText: "Removes Power Saving from settings.",
         footer: "MQGram features. Restart the app to apply some changes."
     )
 }
@@ -297,6 +388,37 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
     entries.append(.toggle(id, .beta, .antiEdit, text.antiEditTitle, text.antiEditText, settings.antiEdit))
     id += 1
     entries.append(.toggle(id, .beta, .disableAds, text.disableAdsTitle, text.disableAdsText, settings.disableAds))
+    id += 1
+    entries.append(.toggle(id, .beta, .readAfterAction, text.readAfterActionTitle, text.readAfterActionText, settings.readAfterAction))
+    id += 1
+    entries.append(.toggle(id, .beta, .localPremium, text.localPremiumTitle, text.localPremiumText, settings.localPremium))
+
+    entries.append(.header(MQGramSection.hideButtons.rawValue, text.hideButtonsSection))
+    entries.append(.info(MQGramSection.hideButtons.rawValue, 1, text.hideButtonsInfo))
+    id = 2001
+    entries.append(.toggle(id, .hideButtons, .hideContacts, text.hideContactsTitle, text.hideContactsText, settings.hideContacts))
+    id += 1
+    entries.append(.toggle(id, .hideButtons, .hideCalls, text.hideCallsTitle, text.hideCallsText, settings.hideCalls))
+    id += 1
+    entries.append(.toggle(id, .hideButtons, .hideSavedMessages, text.hideSavedMessagesTitle, text.hideSavedMessagesText, settings.hideSavedMessages))
+    id += 1
+    entries.append(.toggle(id, .hideButtons, .hideRecentCalls, text.hideRecentCallsTitle, text.hideRecentCallsText, settings.hideRecentCalls))
+    id += 1
+    entries.append(.toggle(id, .hideButtons, .hideDevices, text.hideDevicesTitle, text.hideDevicesText, settings.hideDevices))
+    id += 1
+    entries.append(.toggle(id, .hideButtons, .hideChatFolders, text.hideChatFoldersTitle, text.hideChatFoldersText, settings.hideChatFolders))
+    id += 1
+    entries.append(.toggle(id, .hideButtons, .hideNotifications, text.hideNotificationsTitle, text.hideNotificationsText, settings.hideNotifications))
+    id += 1
+    entries.append(.toggle(id, .hideButtons, .hidePrivacy, text.hidePrivacyTitle, text.hidePrivacyText, settings.hidePrivacy))
+    id += 1
+    entries.append(.toggle(id, .hideButtons, .hideDataStorage, text.hideDataStorageTitle, text.hideDataStorageText, settings.hideDataStorage))
+    id += 1
+    entries.append(.toggle(id, .hideButtons, .hideAppearance, text.hideAppearanceTitle, text.hideAppearanceText, settings.hideAppearance))
+    id += 1
+    entries.append(.toggle(id, .hideButtons, .hideLanguage, text.hideLanguageTitle, text.hideLanguageText, settings.hideLanguage))
+    id += 1
+    entries.append(.toggle(id, .hideButtons, .hidePowerSaving, text.hidePowerSavingTitle, text.hidePowerSavingText, settings.hidePowerSaving))
 
     entries.append(.footer(text.footer))
     return entries
