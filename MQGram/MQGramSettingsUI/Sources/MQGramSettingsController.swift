@@ -144,8 +144,6 @@ private struct MQGramText {
     let antiRevokeText: String
     let customIndicatorsTitle: String
     let customIndicatorsText: String
-    let redDeleteIconTitle: String
-    let redDeleteIconText: String
     let betaInfo: String
     let contentProtectionTitle: String
     let contentProtectionText: String
