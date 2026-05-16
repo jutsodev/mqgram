@@ -639,7 +639,7 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
 
         let controllerState = ItemListControllerState(
             presentationData: ItemListPresentationData(presentationData),
-            title: .textWithTabs("MQGram", tabNames, tabIndex),
+            title: .sectionControl(tabNames, tabIndex),
             leftNavigationButton: nil,
             rightNavigationButton: nil,
             backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back)
