@@ -954,6 +954,14 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                     } else if previousState.pts + ptsCount == pts {
                         if !UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") { /* MQGram Anti-Revoke */
                             updatedState.deleteMessages(messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
+                        } else {
+                            // MARK: MQGram - Store revoked message IDs for red trash indicator
+                            var stored = UserDefaults.standard.array(forKey: "MQGram.revokedMessageIds") as? [String] ?? []
+                            for msgId in messages {
+                                stored.append("\(peerId.toInt64())_\(msgId)")
+                            }
+                            if stored.count > 5000 { stored = Array(stored.suffix(5000)) }
+                            UserDefaults.standard.set(stored, forKey: "MQGram.revokedMessageIds")
                         }
                         updatedState.updateChannelState(peerId, pts: pts)
                     } else {
@@ -1047,7 +1055,15 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                 updatedState.updateMinAvailableMessage(MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: minId))
             case let .updateDeleteMessages(updateDeleteMessagesData):
                 if !UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") { /* MQGram Anti-Revoke */
-                updatedState.deleteMessagesWithGlobalIds(updateDeleteMessagesData.messages)
+                    updatedState.deleteMessagesWithGlobalIds(updateDeleteMessagesData.messages)
+                } else {
+                    // MARK: MQGram - Store revoked global message IDs for red trash indicator
+                    var stored = UserDefaults.standard.array(forKey: "MQGram.revokedMessageIds") as? [String] ?? []
+                    for msgId in updateDeleteMessagesData.messages {
+                        stored.append("global_\(msgId)")
+                    }
+                    if stored.count > 5000 { stored = Array(stored.suffix(5000)) }
+                    UserDefaults.standard.set(stored, forKey: "MQGram.revokedMessageIds")
                 }
             case let .updatePinnedMessages(updatePinnedMessagesData):
                 let (flags, peer, messages) = (updatePinnedMessagesData.flags, updatePinnedMessagesData.peer, updatePinnedMessagesData.messages)
@@ -3510,6 +3526,14 @@ private func pollChannel(accountPeerId: PeerId, postbox: Postbox, network: Netwo
                         let peerId = peer.id
                         if !UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") { /* MQGram Anti-Revoke */
                             updatedState.deleteMessages(updateDeleteChannelMessagesData.messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
+                        } else {
+                            // MARK: MQGram - Store revoked message IDs for red trash indicator
+                            var stored = UserDefaults.standard.array(forKey: "MQGram.revokedMessageIds") as? [String] ?? []
+                            for msgId in updateDeleteChannelMessagesData.messages {
+                                stored.append("\(peerId.toInt64())_\(msgId)")
+                            }
+                            if stored.count > 5000 { stored = Array(stored.suffix(5000)) }
+                            UserDefaults.standard.set(stored, forKey: "MQGram.revokedMessageIds")
                         }
                     case let .updateEditChannelMessage(updateEditChannelMessageData):
                         let apiMessage = updateEditChannelMessageData.message

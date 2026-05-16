@@ -144,7 +144,7 @@ func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId: Bool, d
             }))
         }
         
-        if let phone = user.phone, !(SGSimpleSettings.shared.hidePhoneInSettings && isMyProfile) {
+        if let phone = user.phone, !((SGSimpleSettings.shared.hidePhoneInSettings || UserDefaults.standard.bool(forKey: "MQGram.hidePhoneNumber")) && isMyProfile) { // MQGram
             let formattedPhone = formatPhoneNumber(context: context, number: phone)
             let label: String
             if formattedPhone.hasPrefix("+888 ") {

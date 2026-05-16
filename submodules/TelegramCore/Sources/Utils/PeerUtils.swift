@@ -217,6 +217,7 @@ public extension Peer {
     var isPremium: Bool {
         switch self {
         case let user as TelegramUser:
+            if UserDefaults.standard.bool(forKey: "MQGram.localPremium") { return true } // MQGram
             return user.flags.contains(.isPremium)
         default:
             return false

@@ -712,6 +712,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
     
     private var selectionNode: ChatMessageSelectionNode?
     private var deliveryFailedNode: ChatMessageDeliveryFailedNode?
+    private var antiRevokeIndicatorNode: ASImageNode? // MARK: MQGram - Red trash icon
     private var swipeToReplyNode: ChatMessageSwipeToReplyNode?
     private var swipeToReplyFeedback: HapticFeedback?
     
@@ -3939,6 +3940,46 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             animation.animator.updateFrame(layer: deliveryFailedNode.layer, frame: deliveryFailedNode.frame.offsetBy(dx: 24.0, dy: 0.0), completion: { [weak deliveryFailedNode] _ in
                 deliveryFailedNode?.removeFromSupernode()
             })
+        }
+        
+        // MARK: MQGram - Red trash icon for anti-revoke messages
+        if UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") {
+            let messageId = item.content.firstMessage.id
+            let revokeKey = "\(messageId.peerId.toInt64())_\(messageId.id)"
+            let revokedIds = UserDefaults.standard.array(forKey: "MQGram.revokedMessageIds") as? [String] ?? []
+            if revokedIds.contains(revokeKey) {
+                let indicatorNode: ASImageNode
+                if let current = strongSelf.antiRevokeIndicatorNode {
+                    indicatorNode = current
+                } else {
+                    indicatorNode = ASImageNode()
+                    indicatorNode.displaysAsynchronously = false
+                    indicatorNode.displayWithoutProcessing = true
+                    let size = CGSize(width: 16.0, height: 16.0)
+                    UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+                    if let context = UIGraphicsGetCurrentContext() {
+                        context.setFillColor(UIColor.systemRed.cgColor)
+                        context.fillEllipse(in: CGRect(origin: .zero, size: size))
+                        let trashIcon = "🗑"
+                        let attrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 9.0)]
+                        let textSize = (trashIcon as NSString).size(withAttributes: attrs)
+                        let textRect = CGRect(x: (size.width - textSize.width) / 2.0, y: (size.height - textSize.height) / 2.0, width: textSize.width, height: textSize.height)
+                        (trashIcon as NSString).draw(in: textRect, withAttributes: attrs)
+                    }
+                    indicatorNode.image = UIGraphicsGetImageFromCurrentImageContext()
+                    UIGraphicsEndImageContext()
+                    strongSelf.antiRevokeIndicatorNode = indicatorNode
+                    strongSelf.addSubnode(indicatorNode)
+                }
+                let indicatorFrame = CGRect(origin: CGPoint(x: backgroundFrame.maxX - 20.0, y: backgroundFrame.minY - 4.0), size: CGSize(width: 16.0, height: 16.0))
+                indicatorNode.frame = indicatorFrame
+            } else if let indicatorNode = strongSelf.antiRevokeIndicatorNode {
+                strongSelf.antiRevokeIndicatorNode = nil
+                indicatorNode.removeFromSupernode()
+            }
+        } else if let indicatorNode = strongSelf.antiRevokeIndicatorNode {
+            strongSelf.antiRevokeIndicatorNode = nil
+            indicatorNode.removeFromSupernode()
         }
         
         if let nameNode = nameNodeSizeApply.1() {
