@@ -8,68 +8,59 @@ import ItemListUI
 import PresentationDataUtils
 import AccountContext
 
+// MARK: - Arguments
+
 private final class MQGramArguments {
     let toggleSetting: (MQGramSettings.Key, Bool) -> Void
+    let openUrl: (String) -> Void
 
-    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void) {
+    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openUrl: @escaping (String) -> Void) {
         self.toggleSetting = toggleSetting
+        self.openUrl = openUrl
     }
 }
 
-private enum MQGramSection: Int32 {
-    case intro
-    case stable
-    case ghost
-    case beta
-    case footer
-}
+// MARK: - Entries
 
 private enum MQGramEntry: ItemListNodeEntry {
-    case header(Int32, String)
-    case info(Int32, Int32, String)
-    case toggle(Int32, MQGramSection, MQGramSettings.Key, String, String?, Bool)
-    case footer(String)
+    case info(Int32, String)
+    case toggle(Int32, MQGramSettings.Key, String, String?, Bool)
+    case link(Int32, String, String, UIImage?)
+    case footer(Int32, String)
 
     var section: ItemListSectionId {
         switch self {
-        case let .header(section, _):
-            return section
-        case let .info(section, _, _):
-            return section
         case .footer:
-            return MQGramSection.footer.rawValue
-        case let .toggle(_, section, _, _, _, _):
-            return section.rawValue
+            return 1
+        default:
+            return 0
         }
     }
 
     var stableId: Int32 {
         switch self {
-        case let .header(section, _):
-            return section * 1000
-        case let .info(section, id, _):
-            return section * 1000 + id
-        case let .toggle(id, section, _, _, _, _):
-            return section.rawValue * 1000 + 100 + id
-        case .footer:
-            return 9999
+        case let .info(id, _):
+            return id
+        case let .toggle(id, _, _, _, _):
+            return id
+        case let .link(id, _, _, _):
+            return id
+        case let .footer(id, _):
+            return id
         }
     }
 
     static func ==(lhs: MQGramEntry, rhs: MQGramEntry) -> Bool {
         switch lhs {
-        case let .header(lSection, lText):
-            if case let .header(rSection, rText) = rhs, lSection == rSection, lText == rText { return true } else { return false }
-        case let .info(lSection, lId, lText):
-            if case let .info(rSection, rId, rText) = rhs, lSection == rSection, lId == rId, lText == rText { return true } else { return false }
-        case let .footer(lText):
-            if case let .footer(rText) = rhs, lText == rText { return true } else { return false }
-        case let .toggle(lId, lSection, lKey, lTitle, lText, lValue):
-            if case let .toggle(rId, rSection, rKey, rTitle, rText, rValue) = rhs,
-               lId == rId, lSection == rSection, lKey == rKey, lTitle == rTitle, lText == rText, lValue == rValue {
-                return true
-            }
-            return false
+        case let .info(lId, lText):
+            if case let .info(rId, rText) = rhs, lId == rId, lText == rText { return true } else { return false }
+        case let .toggle(lId, lKey, lTitle, lText, lValue):
+            if case let .toggle(rId, rKey, rTitle, rText, rValue) = rhs,
+               lId == rId, lKey == rKey, lTitle == rTitle, lText == rText, lValue == rValue { return true } else { return false }
+        case let .link(lId, lTitle, lUrl, _):
+            if case let .link(rId, rTitle, rUrl, _) = rhs, lId == rId, lTitle == rTitle, lUrl == rUrl { return true } else { return false }
+        case let .footer(lId, lText):
+            if case let .footer(rId, rText) = rhs, lId == rId, lText == rText { return true } else { return false }
         }
     }
 
@@ -80,41 +71,44 @@ private enum MQGramEntry: ItemListNodeEntry {
     func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
         let args = arguments as! MQGramArguments
         switch self {
-        case let .header(section, text):
-            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: section)
-        case let .info(section, _, text):
-            return ItemListTextItem(presentationData: presentationData, text: .markdown(text), sectionId: section)
-        case let .footer(text):
-            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: MQGramSection.footer.rawValue)
-        case let .toggle(_, section, key, title, text, value):
+        case let .info(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .markdown(text), sectionId: self.section)
+        case let .toggle(_, key, title, text, value):
             return ItemListSwitchItem(
                 presentationData: presentationData,
                 systemStyle: .glass,
                 title: title,
                 text: text,
                 value: value,
-                sectionId: section.rawValue,
+                sectionId: self.section,
                 style: .blocks,
                 updated: { newValue in
                     args.toggleSetting(key, newValue)
                 }
             )
+        case let .link(_, title, url, icon):
+            return ItemListDisclosureItem(
+                presentationData: presentationData,
+                icon: icon,
+                title: title,
+                label: "",
+                sectionId: self.section,
+                style: .blocks,
+                disclosureStyle: .arrow,
+                action: {
+                    args.openUrl(url)
+                }
+            )
+        case let .footer(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         }
     }
 }
 
+// MARK: - Localized Text
+
 private struct MQGramText {
-    let hero: String
-    let stable: String
-    let stableInfo: String
-    let ghost: String
     let ghostInfo: String
-    let beta: String
-    let betaInfo: String
-    let antiSelfDestructTitle: String
-    let antiSelfDestructText: String
-    let antiRevokeTitle: String
-    let antiRevokeText: String
     let ghostModeTitle: String
     let ghostModeText: String
     let ghostReadReceiptsTitle: String
@@ -139,31 +133,42 @@ private struct MQGramText {
     let ghostOnlineStatusText: String
     let ghostTypingActionsTitle: String
     let ghostTypingActionsText: String
+    let stableInfo: String
+    let antiSelfDestructTitle: String
+    let antiSelfDestructText: String
+    let antiRevokeTitle: String
+    let antiRevokeText: String
     let customIndicatorsTitle: String
     let customIndicatorsText: String
+    let betaInfo: String
     let contentProtectionTitle: String
     let contentProtectionText: String
     let antiEditTitle: String
     let antiEditText: String
     let disableAdsTitle: String
     let disableAdsText: String
+    let otherInfo: String
+    let localPremiumTitle: String
+    let localPremiumText: String
+    let unlimitedAccountsTitle: String
+    let unlimitedAccountsText: String
+    let hidePhoneNumberTitle: String
+    let hidePhoneNumberText: String
+    let confirmCallsTitle: String
+    let confirmCallsText: String
+    let silentMessagesTitle: String
+    let silentMessagesText: String
+    let devInfo: String
+    let devDeveloper: String
+    let devChannel: String
+    let devBot: String
     let footer: String
 }
 
 private func mqgramText(_ languageCode: String) -> MQGramText {
     if languageCode.lowercased().hasPrefix("ru") {
         return MQGramText(
-            hero: "**MQGram Control Center**\n\nПлавные переключатели, разделы и защитные функции собраны в одном месте. Включай только то, что нужно — всё применяется через безопасные системные настройки Telegram.",
-            stable: "ОСНОВНЫЕ ФУНКЦИИ",
-            stableInfo: "Базовая защита сообщений и медиа без лишнего визуального шума.",
-            ghost: "ПРИЗРАК · НЕВИДИМОСТЬ",
             ghostInfo: "Тихий режим: чтение, истории, действия, онлайн, реакции и черновики без лишних следов.",
-            beta: "ЭКСПЕРИМЕНТЫ",
-            betaInfo: "Функции с глубокими hooks. Если что-то ведёт себя странно — отключи конкретный переключатель.",
-            antiSelfDestructTitle: "Анти-самоуничтожение",
-            antiSelfDestructText: "Сохраняет исчезающие фото/видео и убирает таймеры.",
-            antiRevokeTitle: "Анти-удаление",
-            antiRevokeText: "Сообщения не удаляются у тебя, а удалённые помечаются значком.",
             ghostModeTitle: "Режим призрака",
             ghostModeText: "Главный переключатель для скрытого чтения.",
             ghostReadReceiptsTitle: "Не отправлять прочитано",
@@ -188,29 +193,40 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             ghostOnlineStatusText: "Не отправляет статус онлайн, пока включён призрак.",
             ghostTypingActionsTitle: "Скрывать действия",
             ghostTypingActionsText: "Скрывает набор текста, запись голоса, загрузку фото/видео.",
+            stableInfo: "Базовая защита сообщений и медиа без лишнего визуального шума.",
+            antiSelfDestructTitle: "Анти-самоуничтожение",
+            antiSelfDestructText: "Сохраняет исчезающие фото/видео и убирает таймеры.",
+            antiRevokeTitle: "Анти-удаление",
+            antiRevokeText: "Сообщения не удаляются у тебя, а удалённые помечаются значком.",
             customIndicatorsTitle: "Свои индикаторы",
             customIndicatorsText: "Добавляет метки к перехваченному исчезающему контенту.",
+            betaInfo: "Функции с глубокими hooks. Если что-то ведёт себя странно — отключи конкретный переключатель.",
             contentProtectionTitle: "Обход защиты контента",
             contentProtectionText: "Пересылка и сохранение медиа из защищённых каналов и чатов.",
             antiEditTitle: "Анти-редактирование",
             antiEditText: "Показывает оригинальный текст отредактированных сообщений.",
             disableAdsTitle: "Отключить рекламу",
             disableAdsText: "Убирает спонсорские сообщения и рекламу из каналов.",
+            otherInfo: "Дополнительные функции для расширенного управления приложением.",
+            localPremiumTitle: "Локальный Премиум",
+            localPremiumText: "Активирует премиум-функции интерфейса локально без подписки.",
+            unlimitedAccountsTitle: "Безлимитные аккаунты",
+            unlimitedAccountsText: "Снимает ограничение на количество добавленных аккаунтов.",
+            hidePhoneNumberTitle: "Скрыть номер телефона",
+            hidePhoneNumberText: "Прячет твой номер телефона в профиле и настройках.",
+            confirmCallsTitle: "Подтверждение звонков",
+            confirmCallsText: "Запрашивает подтверждение перед началом голосового или видеозвонка.",
+            silentMessagesTitle: "Тихие сообщения",
+            silentMessagesText: "Отправляет сообщения без звукового уведомления по умолчанию.",
+            devInfo: "Информация о разработчике и полезные ссылки.",
+            devDeveloper: "Разработчик",
+            devChannel: "Канал StivenVPN",
+            devBot: "Бот StivenVPN",
             footer: "Функции MQGram. Для части изменений перезапусти приложение."
         )
     }
     return MQGramText(
-        hero: "**MQGram Control Center**\n\nSmooth switches, clear sections, and privacy controls in one place. Enable only what you need — everything is stored via Telegram-safe settings.",
-        stable: "CORE FEATURES",
-        stableInfo: "Base message and media protection without extra visual noise.",
-        ghost: "GHOST · INVISIBILITY",
         ghostInfo: "Quiet mode: reads, stories, actions, online, reactions, and drafts with fewer traces.",
-        beta: "EXPERIMENTS",
-        betaInfo: "Deep-hook features. If something behaves oddly, disable only that switch.",
-        antiSelfDestructTitle: "Anti-Self-Destruct",
-        antiSelfDestructText: "Save disappearing photos/videos and remove timers.",
-        antiRevokeTitle: "Anti-Revoke",
-        antiRevokeText: "Messages are never deleted for you. Deleted messages are marked.",
         ghostModeTitle: "Ghost Mode",
         ghostModeText: "Master switch for hidden reading.",
         ghostReadReceiptsTitle: "Hide Read Receipts",
@@ -235,92 +251,234 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         ghostOnlineStatusText: "Do not send online presence while ghost is enabled.",
         ghostTypingActionsTitle: "Hide Typing Actions",
         ghostTypingActionsText: "Hides typing, voice recording, photo/video uploads.",
+        stableInfo: "Base message and media protection without extra visual noise.",
+        antiSelfDestructTitle: "Anti-Self-Destruct",
+        antiSelfDestructText: "Save disappearing photos/videos and remove timers.",
+        antiRevokeTitle: "Anti-Revoke",
+        antiRevokeText: "Messages are never deleted for you. Deleted messages are marked.",
         customIndicatorsTitle: "Custom Indicators",
         customIndicatorsText: "Adds labels to intercepted disappearing content.",
+        betaInfo: "Deep-hook features. If something behaves oddly, disable only that switch.",
         contentProtectionTitle: "Content Protection Bypass",
         contentProtectionText: "Forward and save media from restricted channels and chats.",
         antiEditTitle: "Anti-Edit",
         antiEditText: "See original content of edited messages.",
         disableAdsTitle: "Disable Ads",
         disableAdsText: "Remove sponsored messages and ads from channels.",
+        otherInfo: "Extra features for extended app control.",
+        localPremiumTitle: "Local Premium",
+        localPremiumText: "Activates premium UI features locally without a subscription.",
+        unlimitedAccountsTitle: "Unlimited Accounts",
+        unlimitedAccountsText: "Removes the limit on the number of added accounts.",
+        hidePhoneNumberTitle: "Hide Phone Number",
+        hidePhoneNumberText: "Hides your phone number in profile and settings.",
+        confirmCallsTitle: "Confirm Calls",
+        confirmCallsText: "Ask for confirmation before starting a voice or video call.",
+        silentMessagesTitle: "Silent Messages",
+        silentMessagesText: "Send messages without sound notification by default.",
+        devInfo: "Developer info and useful links.",
+        devDeveloper: "Developer",
+        devChannel: "StivenVPN Channel",
+        devBot: "StivenVPN Bot",
         footer: "MQGram features. Restart the app to apply some changes."
     )
 }
 
-private func mqgramEntries(settings: MQGramSettings, strings: PresentationStrings) -> [MQGramEntry] {
+// MARK: - Icons
+
+private func makeRoundedIcon(backgroundColor: UIColor, drawSymbol: @escaping (CGContext, CGRect) -> Void) -> UIImage {
+    let size = CGSize(width: 29, height: 29)
+    return UIGraphicsImageRenderer(size: size).image { ctx in
+        let rect = CGRect(origin: .zero, size: size)
+        backgroundColor.setFill()
+        UIBezierPath(roundedRect: rect, cornerRadius: 7).fill()
+        drawSymbol(ctx.cgContext, rect)
+    }
+}
+
+private func makeGitHubIcon() -> UIImage {
+    return makeRoundedIcon(backgroundColor: UIColor(white: 0.15, alpha: 1.0)) { _, rect in
+        let cx = rect.midX
+        let cy = rect.midY
+        let r: CGFloat = 9.5
+        UIColor.white.setFill()
+        UIBezierPath(ovalIn: CGRect(x: cx - r, y: cy - r, width: r * 2, height: r * 2)).fill()
+        UIColor(white: 0.15, alpha: 1.0).setFill()
+        UIBezierPath(ovalIn: CGRect(x: cx - 5.5, y: cy - 5, width: 11, height: 9)).fill()
+        let body = UIBezierPath(roundedRect: CGRect(x: cx - 4, y: cy + 1.5, width: 8, height: 5), cornerRadius: 2)
+        body.fill()
+        let leftEar = UIBezierPath()
+        leftEar.move(to: CGPoint(x: cx - 5.5, y: cy - 1))
+        leftEar.addLine(to: CGPoint(x: cx - 8.5, y: cy - 8))
+        leftEar.addLine(to: CGPoint(x: cx - 1.5, y: cy - 4.5))
+        leftEar.close()
+        leftEar.fill()
+        let rightEar = UIBezierPath()
+        rightEar.move(to: CGPoint(x: cx + 5.5, y: cy - 1))
+        rightEar.addLine(to: CGPoint(x: cx + 8.5, y: cy - 8))
+        rightEar.addLine(to: CGPoint(x: cx + 1.5, y: cy - 4.5))
+        rightEar.close()
+        rightEar.fill()
+    }
+}
+
+private func makeTelegramIcon() -> UIImage {
+    return makeRoundedIcon(backgroundColor: UIColor(red: 0.0, green: 0.53, blue: 0.80, alpha: 1.0)) { _, rect in
+        let cx = rect.midX
+        let cy = rect.midY
+        UIColor.white.setFill()
+        let plane = UIBezierPath()
+        plane.move(to: CGPoint(x: cx - 8, y: cy))
+        plane.addLine(to: CGPoint(x: cx + 8, y: cy - 6))
+        plane.addLine(to: CGPoint(x: cx + 2, y: cy + 6))
+        plane.addLine(to: CGPoint(x: cx - 1, y: cy + 1))
+        plane.addLine(to: CGPoint(x: cx - 8, y: cy + 3))
+        plane.close()
+        plane.fill()
+        UIColor(red: 0.0, green: 0.53, blue: 0.80, alpha: 1.0).setFill()
+        let inner = UIBezierPath()
+        inner.move(to: CGPoint(x: cx - 1, y: cy + 1))
+        inner.addLine(to: CGPoint(x: cx + 2, y: cy + 6))
+        inner.addLine(to: CGPoint(x: cx + 1, y: cy - 1))
+        inner.close()
+        inner.fill()
+    }
+}
+
+private func makeChannelIcon() -> UIImage {
+    return makeRoundedIcon(backgroundColor: UIColor(red: 1.0, green: 0.58, blue: 0.0, alpha: 1.0)) { _, rect in
+        let cx = rect.midX
+        let cy = rect.midY
+        UIColor.white.setFill()
+        let horn = UIBezierPath()
+        horn.move(to: CGPoint(x: cx - 6, y: cy - 2))
+        horn.addLine(to: CGPoint(x: cx + 2, y: cy - 6))
+        horn.addLine(to: CGPoint(x: cx + 2, y: cy + 6))
+        horn.addLine(to: CGPoint(x: cx - 6, y: cy + 2))
+        horn.close()
+        horn.fill()
+        UIBezierPath(ovalIn: CGRect(x: cx - 8, y: cy - 3, width: 6, height: 6)).fill()
+        UIColor.white.setStroke()
+        let wave1 = UIBezierPath()
+        wave1.lineWidth = 1.5
+        wave1.lineCapStyle = .round
+        wave1.addArc(withCenter: CGPoint(x: cx + 2, y: cy), radius: 5, startAngle: -.pi / 3, endAngle: .pi / 3, clockwise: true)
+        wave1.stroke()
+        let wave2 = UIBezierPath()
+        wave2.lineWidth = 1.5
+        wave2.lineCapStyle = .round
+        wave2.addArc(withCenter: CGPoint(x: cx + 2, y: cy), radius: 8, startAngle: -.pi / 4, endAngle: .pi / 4, clockwise: true)
+        wave2.stroke()
+    }
+}
+
+private func makeBotIcon() -> UIImage {
+    return makeRoundedIcon(backgroundColor: UIColor(red: 0.69, green: 0.32, blue: 0.87, alpha: 1.0)) { _, rect in
+        let cx = rect.midX
+        let cy = rect.midY
+        UIColor.white.setFill()
+        UIBezierPath(roundedRect: CGRect(x: cx - 7, y: cy - 4, width: 14, height: 11), cornerRadius: 3).fill()
+        UIColor(red: 0.69, green: 0.32, blue: 0.87, alpha: 1.0).setFill()
+        UIBezierPath(ovalIn: CGRect(x: cx - 5, y: cy - 1, width: 4, height: 4)).fill()
+        UIBezierPath(ovalIn: CGRect(x: cx + 1, y: cy - 1, width: 4, height: 4)).fill()
+        UIColor.white.setFill()
+        UIColor.white.setStroke()
+        let antenna = UIBezierPath()
+        antenna.lineWidth = 1.5
+        antenna.move(to: CGPoint(x: cx, y: cy - 4))
+        antenna.addLine(to: CGPoint(x: cx, y: cy - 8))
+        antenna.stroke()
+        UIBezierPath(ovalIn: CGRect(x: cx - 2, y: cy - 10, width: 4, height: 4)).fill()
+    }
+}
+
+// MARK: - Entry Generation
+
+private func mqgramEntries(settings: MQGramSettings, strings: PresentationStrings, tab: Int) -> [MQGramEntry] {
     let text = mqgramText(strings.baseLanguageCode)
     var entries: [MQGramEntry] = []
-    var id: Int32 = 1
+    var id: Int32 = 10
 
-    entries.append(.info(MQGramSection.intro.rawValue, 1, text.hero))
+    switch tab {
+    case 0:
+        entries.append(.info(1, text.ghostInfo))
+        entries.append(.toggle(id, .ghostMode, text.ghostModeTitle, text.ghostModeText, settings.ghostMode)); id += 1
+        entries.append(.toggle(id, .ghostReadReceipts, text.ghostReadReceiptsTitle, text.ghostReadReceiptsText, settings.ghostReadReceipts)); id += 1
+        entries.append(.toggle(id, .ghostStories, text.ghostStoriesTitle, text.ghostStoriesText, settings.ghostStories)); id += 1
+        entries.append(.toggle(id, .ghostContentReads, text.ghostContentReadsTitle, text.ghostContentReadsText, settings.ghostContentReads)); id += 1
+        entries.append(.toggle(id, .ghostPersonalActions, text.ghostPersonalActionsTitle, text.ghostPersonalActionsText, settings.ghostPersonalActions)); id += 1
+        entries.append(.toggle(id, .ghostScreenshots, text.ghostScreenshotsTitle, text.ghostScreenshotsText, settings.ghostScreenshots)); id += 1
+        entries.append(.toggle(id, .ghostDrafts, text.ghostDraftsTitle, text.ghostDraftsText, settings.ghostDrafts)); id += 1
+        entries.append(.toggle(id, .ghostEmojiInteractions, text.ghostEmojiInteractionsTitle, text.ghostEmojiInteractionsText, settings.ghostEmojiInteractions)); id += 1
+        entries.append(.toggle(id, .ghostReactions, text.ghostReactionsTitle, text.ghostReactionsText, settings.ghostReactions)); id += 1
+        entries.append(.toggle(id, .ghostStickerActivity, text.ghostStickerActivityTitle, text.ghostStickerActivityText, settings.ghostStickerActivity)); id += 1
+        entries.append(.toggle(id, .ghostOnlineStatus, text.ghostOnlineStatusTitle, text.ghostOnlineStatusText, settings.ghostOnlineStatus)); id += 1
+        entries.append(.toggle(id, .ghostTypingActions, text.ghostTypingActionsTitle, text.ghostTypingActionsText, settings.ghostTypingActions))
 
-    entries.append(.header(MQGramSection.stable.rawValue, text.stable))
-    entries.append(.info(MQGramSection.stable.rawValue, 1, text.stableInfo))
-    entries.append(.toggle(id, .stable, .antiSelfDestruct, text.antiSelfDestructTitle, text.antiSelfDestructText, settings.antiSelfDestruct))
-    id += 1
-    entries.append(.toggle(id, .stable, .antiRevoke, text.antiRevokeTitle, text.antiRevokeText, settings.antiRevoke))
-    id += 1
-    entries.append(.toggle(id, .stable, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators))
+    case 1:
+        entries.append(.info(1, text.stableInfo))
+        entries.append(.toggle(id, .antiSelfDestruct, text.antiSelfDestructTitle, text.antiSelfDestructText, settings.antiSelfDestruct)); id += 1
+        entries.append(.toggle(id, .antiRevoke, text.antiRevokeTitle, text.antiRevokeText, settings.antiRevoke)); id += 1
+        entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators))
 
-    entries.append(.header(MQGramSection.ghost.rawValue, text.ghost))
-    entries.append(.info(MQGramSection.ghost.rawValue, 1, text.ghostInfo))
-    id = 101
-    entries.append(.toggle(id, .ghost, .ghostMode, text.ghostModeTitle, text.ghostModeText, settings.ghostMode))
-    id += 1
-    entries.append(.toggle(id, .ghost, .ghostReadReceipts, text.ghostReadReceiptsTitle, text.ghostReadReceiptsText, settings.ghostReadReceipts))
-    id += 1
-    entries.append(.toggle(id, .ghost, .ghostStories, text.ghostStoriesTitle, text.ghostStoriesText, settings.ghostStories))
-    id += 1
-    entries.append(.toggle(id, .ghost, .ghostContentReads, text.ghostContentReadsTitle, text.ghostContentReadsText, settings.ghostContentReads))
-    id += 1
-    entries.append(.toggle(id, .ghost, .ghostPersonalActions, text.ghostPersonalActionsTitle, text.ghostPersonalActionsText, settings.ghostPersonalActions))
-    id += 1
-    entries.append(.toggle(id, .ghost, .ghostScreenshots, text.ghostScreenshotsTitle, text.ghostScreenshotsText, settings.ghostScreenshots))
-    id += 1
-    entries.append(.toggle(id, .ghost, .ghostDrafts, text.ghostDraftsTitle, text.ghostDraftsText, settings.ghostDrafts))
-    id += 1
-    entries.append(.toggle(id, .ghost, .ghostEmojiInteractions, text.ghostEmojiInteractionsTitle, text.ghostEmojiInteractionsText, settings.ghostEmojiInteractions))
-    id += 1
-    entries.append(.toggle(id, .ghost, .ghostReactions, text.ghostReactionsTitle, text.ghostReactionsText, settings.ghostReactions))
-    id += 1
-    entries.append(.toggle(id, .ghost, .ghostStickerActivity, text.ghostStickerActivityTitle, text.ghostStickerActivityText, settings.ghostStickerActivity))
-    id += 1
-    entries.append(.toggle(id, .ghost, .ghostOnlineStatus, text.ghostOnlineStatusTitle, text.ghostOnlineStatusText, settings.ghostOnlineStatus))
-    id += 1
-    entries.append(.toggle(id, .ghost, .ghostTypingActions, text.ghostTypingActionsTitle, text.ghostTypingActionsText, settings.ghostTypingActions))
+    case 2:
+        entries.append(.info(1, text.betaInfo))
+        entries.append(.toggle(id, .contentProtectionBypass, text.contentProtectionTitle, text.contentProtectionText, settings.contentProtectionBypass)); id += 1
+        entries.append(.toggle(id, .antiEdit, text.antiEditTitle, text.antiEditText, settings.antiEdit)); id += 1
+        entries.append(.toggle(id, .disableAds, text.disableAdsTitle, text.disableAdsText, settings.disableAds))
 
-    entries.append(.header(MQGramSection.beta.rawValue, text.beta))
-    entries.append(.info(MQGramSection.beta.rawValue, 1, text.betaInfo))
-    id = 1001
-    entries.append(.toggle(id, .beta, .contentProtectionBypass, text.contentProtectionTitle, text.contentProtectionText, settings.contentProtectionBypass))
-    id += 1
-    entries.append(.toggle(id, .beta, .antiEdit, text.antiEditTitle, text.antiEditText, settings.antiEdit))
-    id += 1
-    entries.append(.toggle(id, .beta, .disableAds, text.disableAdsTitle, text.disableAdsText, settings.disableAds))
+    case 3:
+        entries.append(.info(1, text.otherInfo))
+        entries.append(.toggle(id, .localPremium, text.localPremiumTitle, text.localPremiumText, settings.localPremium)); id += 1
+        entries.append(.toggle(id, .unlimitedAccounts, text.unlimitedAccountsTitle, text.unlimitedAccountsText, settings.unlimitedAccounts)); id += 1
+        entries.append(.toggle(id, .hidePhoneNumber, text.hidePhoneNumberTitle, text.hidePhoneNumberText, settings.hidePhoneNumber)); id += 1
+        entries.append(.toggle(id, .confirmCalls, text.confirmCallsTitle, text.confirmCallsText, settings.confirmCalls)); id += 1
+        entries.append(.toggle(id, .silentMessages, text.silentMessagesTitle, text.silentMessagesText, settings.silentMessages))
 
-    entries.append(.footer(text.footer))
+    case 4:
+        entries.append(.info(1, text.devInfo))
+        entries.append(.link(id, "GitHub", "https://github.com/jutsodev", makeGitHubIcon())); id += 1
+        entries.append(.link(id, text.devDeveloper, "https://t.me/jutsodev", makeTelegramIcon())); id += 1
+        entries.append(.link(id, text.devChannel, "https://t.me/Stivenvpn", makeChannelIcon())); id += 1
+        entries.append(.link(id, text.devBot, "https://t.me/Stivenvpnbot", makeBotIcon()))
+
+    default:
+        break
+    }
+
+    entries.append(.footer(9999, text.footer))
     return entries
 }
 
+// MARK: - Controller
+
 public func mqgramSettingsController(context: AccountContext) -> ViewController {
     let updatePromise = ValuePromise<Bool>(true, ignoreRepeated: false)
+    let tabIndexPromise = ValuePromise<Int>(0, ignoreRepeated: false)
 
-    let arguments = MQGramArguments(toggleSetting: { key, value in
-        MQGramSettings.shared.setBool(value, for: key)
-        updatePromise.set(true)
-    })
+    let arguments = MQGramArguments(
+        toggleSetting: { key, value in
+            MQGramSettings.shared.setBool(value, for: key)
+            updatePromise.set(true)
+        },
+        openUrl: { url in
+            context.sharedContext.applicationBindings.openUrl(url)
+        }
+    )
 
-    let signal = combineLatest(context.sharedContext.presentationData, updatePromise.get())
-    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    let tabNames: [String] = ["Призрак", "Основные", "Бета", "Прочее", "Dev"]
+
+    let signal = combineLatest(context.sharedContext.presentationData, updatePromise.get(), tabIndexPromise.get())
+    |> map { presentationData, _, tabIndex -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let controllerState = ItemListControllerState(
             presentationData: ItemListPresentationData(presentationData),
-            title: .text("MQGram"),
+            title: .sectionControl(tabNames, tabIndex),
             leftNavigationButton: nil,
             rightNavigationButton: nil,
             backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back)
         )
 
-        let entries = mqgramEntries(settings: MQGramSettings.shared, strings: presentationData.strings)
+        let entries = mqgramEntries(settings: MQGramSettings.shared, strings: presentationData.strings, tab: tabIndex)
 
         let listState = ItemListNodeState(
             presentationData: ItemListPresentationData(presentationData),
@@ -332,5 +490,8 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
     }
 
     let controller = ItemListController(context: context, state: signal)
+    controller.titleControlValueChanged = { index in
+        tabIndexPromise.set(index)
+    }
     return controller
 }
