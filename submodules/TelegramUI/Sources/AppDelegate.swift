@@ -11,6 +11,7 @@ import SGAPIWebSettings
 import SGLogging
 import SGStrings
 import SGSimpleSettings
+import MQGramDatabase
 import UIKit
 import SwiftSignalKit
 import Display
@@ -343,6 +344,9 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         let _ = notificationTokenPromise.get().start(next: { token in
             self.regularDeviceToken.set(.single(token))
         })
+        
+        // MARK: MQGram - Log app launch
+        MQGramDatabase.shared.logAppLaunch()
         
         let launchStartTime = CFAbsoluteTimeGetCurrent()
         
@@ -1994,6 +1998,9 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
+        // MARK: MQGram - Log app background
+        MQGramDatabase.shared.logAppBackground()
+        
         let _ = (self.sharedContextPromise.get()
         |> take(1)
         |> deliverOnMainQueue).start(next: { sharedApplicationContext in
@@ -2083,6 +2090,9 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
+        // MARK: MQGram - Log app foreground
+        MQGramDatabase.shared.logAppForeground()
+        
         self.isInForegroundValue = true
         self.isInForegroundPromise.set(true)
         self.isActiveValue = true

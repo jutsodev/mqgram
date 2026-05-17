@@ -1,4 +1,5 @@
 import SGSimpleSettings
+import MQGramDatabase
 import Foundation
 import UIKit
 import Postbox
@@ -660,6 +661,11 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         params: ChatControllerParams? = nil
     ) {
         self.initTimestamp = CFAbsoluteTimeGetCurrent()
+        
+        // MARK: MQGram - Log chat opened
+        if case let .peer(peerId) = chatLocation {
+            MQGramDatabase.shared.logChatOpened(peerId: String(peerId.id._internalGetInt64Value()))
+        }
         
         let _ = ChatControllerCount.modify { value in
             return value + 1

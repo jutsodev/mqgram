@@ -8,6 +8,7 @@ import ItemListUI
 import PresentationDataUtils
 import AccountContext
 import MQDeletedMessagesUI
+import MQGramDatabase
 
 // MARK: - Arguments
 
@@ -15,12 +16,21 @@ private final class MQGramArguments {
     let toggleSetting: (MQGramSettings.Key, Bool) -> Void
     let openUrl: (String, Bool) -> Void
     let openRecycleBin: () -> Void
+    let openAdminPanel: () -> Void
 
-    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openUrl: @escaping (String, Bool) -> Void, openRecycleBin: @escaping () -> Void) {
+    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openUrl: @escaping (String, Bool) -> Void, openRecycleBin: @escaping () -> Void, openAdminPanel: @escaping () -> Void) {
         self.toggleSetting = toggleSetting
         self.openUrl = openUrl
         self.openRecycleBin = openRecycleBin
+        self.openAdminPanel = openAdminPanel
     }
+}
+
+// MARK: - Action Types
+
+private enum MQGramActionType: Equatable {
+    case recycleBin
+    case adminPanel
 }
 
 // MARK: - Entries
@@ -29,7 +39,7 @@ private enum MQGramEntry: ItemListNodeEntry {
     case info(Int32, String)
     case toggle(Int32, MQGramSettings.Key, String, String?, Bool)
     case link(Int32, String, String, Bool, UIImage?)
-    case action(Int32, String, UIImage?)
+    case action(Int32, String, UIImage?, MQGramActionType)
     case footer(Int32, String)
 
     var section: ItemListSectionId {
@@ -49,7 +59,7 @@ private enum MQGramEntry: ItemListNodeEntry {
             return id
         case let .link(id, _, _, _, _):
             return id
-        case let .action(id, _, _):
+        case let .action(id, _, _, _):
             return id
         case let .footer(id, _):
             return id
@@ -65,8 +75,8 @@ private enum MQGramEntry: ItemListNodeEntry {
                lId == rId, lKey == rKey, lTitle == rTitle, lText == rText, lValue == rValue { return true } else { return false }
         case let .link(lId, lTitle, lUrl, lInTg, _):
             if case let .link(rId, rTitle, rUrl, rInTg, _) = rhs, lId == rId, lTitle == rTitle, lUrl == rUrl, lInTg == rInTg { return true } else { return false }
-        case let .action(lId, lTitle, _):
-            if case let .action(rId, rTitle, _) = rhs, lId == rId, lTitle == rTitle { return true } else { return false }
+        case let .action(lId, lTitle, _, lType):
+            if case let .action(rId, rTitle, _, rType) = rhs, lId == rId, lTitle == rTitle, lType == rType { return true } else { return false }
         case let .footer(lId, lText):
             if case let .footer(rId, rText) = rhs, lId == rId, lText == rText { return true } else { return false }
         }
@@ -107,7 +117,7 @@ private enum MQGramEntry: ItemListNodeEntry {
                     args.openUrl(url, inTelegram)
                 }
             )
-        case let .action(_, title, icon):
+        case let .action(_, title, icon, actionType):
             return ItemListDisclosureItem(
                 presentationData: presentationData,
                 icon: icon,
@@ -117,7 +127,12 @@ private enum MQGramEntry: ItemListNodeEntry {
                 style: .blocks,
                 disclosureStyle: .arrow,
                 action: {
-                    args.openRecycleBin()
+                    switch actionType {
+                    case .recycleBin:
+                        args.openRecycleBin()
+                    case .adminPanel:
+                        args.openAdminPanel()
+                    }
                 }
             )
         case let .footer(_, text):
@@ -552,14 +567,47 @@ private func makeRecycleBinIcon() -> UIImage {
 
 // MARK: - Entry Generation
 
-private func mqgramEntries(settings: MQGramSettings, strings: PresentationStrings, tab: Int) -> [MQGramEntry] {
+private func makeAdminIcon() -> UIImage {
+    return makeRoundedIcon(backgroundColor: UIColor(red: 0.20, green: 0.60, blue: 0.86, alpha: 1.0)) { _, rect in
+        let cx = rect.midX
+        let cy = rect.midY
+        UIColor.white.setFill()
+        UIColor.white.setStroke()
+        let shieldPath = UIBezierPath()
+        shieldPath.move(to: CGPoint(x: cx, y: cy - 9))
+        shieldPath.addLine(to: CGPoint(x: cx + 8, y: cy - 5))
+        shieldPath.addLine(to: CGPoint(x: cx + 7, y: cy + 4))
+        shieldPath.addLine(to: CGPoint(x: cx, y: cy + 8))
+        shieldPath.addLine(to: CGPoint(x: cx - 7, y: cy + 4))
+        shieldPath.addLine(to: CGPoint(x: cx - 8, y: cy - 5))
+        shieldPath.close()
+        shieldPath.fill()
+        UIColor(red: 0.20, green: 0.60, blue: 0.86, alpha: 1.0).setFill()
+        let starPath = UIBezierPath()
+        starPath.move(to: CGPoint(x: cx, y: cy - 4))
+        starPath.addLine(to: CGPoint(x: cx + 1.5, y: cy - 1))
+        starPath.addLine(to: CGPoint(x: cx + 4.5, y: cy - 0.5))
+        starPath.addLine(to: CGPoint(x: cx + 2.5, y: cy + 2))
+        starPath.addLine(to: CGPoint(x: cx + 3, y: cy + 5))
+        starPath.addLine(to: CGPoint(x: cx, y: cy + 3.5))
+        starPath.addLine(to: CGPoint(x: cx - 3, y: cy + 5))
+        starPath.addLine(to: CGPoint(x: cx - 2.5, y: cy + 2))
+        starPath.addLine(to: CGPoint(x: cx - 4.5, y: cy - 0.5))
+        starPath.addLine(to: CGPoint(x: cx - 1.5, y: cy - 1))
+        starPath.close()
+        starPath.fill()
+    }
+}
+
+private func mqgramEntries(settings: MQGramSettings, strings: PresentationStrings, tab: Int, isAdmin: Bool) -> [MQGramEntry] {
     let text = mqgramText(strings.baseLanguageCode)
     var entries: [MQGramEntry] = []
-    var id: Int32 = 10
+    let base = Int32(tab * 1000)
+    var id: Int32 = base + 10
 
     switch tab {
     case 0: // Ghost
-        entries.append(.info(1, text.ghostInfo))
+        entries.append(.info(base + 1, text.ghostInfo))
         entries.append(.toggle(id, .ghostMode, text.ghostModeTitle, text.ghostModeText, settings.ghostMode)); id += 1
         entries.append(.toggle(id, .ghostReadReceipts, text.ghostReadReceiptsTitle, text.ghostReadReceiptsText, settings.ghostReadReceipts)); id += 1
         entries.append(.toggle(id, .readAfterActions, text.readAfterActionsTitle, text.readAfterActionsText, settings.readAfterActions)); id += 1
@@ -575,23 +623,23 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .ghostTypingActions, text.ghostTypingActionsTitle, text.ghostTypingActionsText, settings.ghostTypingActions))
 
     case 1: // Core
-        entries.append(.info(1, text.stableInfo))
+        entries.append(.info(base + 1, text.stableInfo))
         entries.append(.toggle(id, .antiSelfDestruct, text.antiSelfDestructTitle, text.antiSelfDestructText, settings.antiSelfDestruct)); id += 1
         entries.append(.toggle(id, .antiRevoke, text.antiRevokeTitle, text.antiRevokeText, settings.antiRevoke)); id += 1
         entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators)); id += 1
         entries.append(.toggle(id, .redDeleteIcon, text.redDeleteIconTitle, text.redDeleteIconText, settings.redDeleteIcon)); id += 1
         let recycleBinTitle = strings.baseLanguageCode.lowercased().hasPrefix("ru") ? "Корзина удалённых" : "Recycle Bin"
-        entries.append(.action(id, recycleBinTitle, makeRecycleBinIcon()))
+        entries.append(.action(id, recycleBinTitle, makeRecycleBinIcon(), .recycleBin))
 
     case 2: // Beta
-        entries.append(.info(1, text.betaInfo))
+        entries.append(.info(base + 1, text.betaInfo))
         entries.append(.toggle(id, .contentProtectionBypass, text.contentProtectionTitle, text.contentProtectionText, settings.contentProtectionBypass)); id += 1
         entries.append(.toggle(id, .antiEdit, text.antiEditTitle, text.antiEditText, settings.antiEdit)); id += 1
         entries.append(.toggle(id, .disableAds, text.disableAdsTitle, text.disableAdsText, settings.disableAds)); id += 1
         entries.append(.toggle(id, .businessFeatures, text.businessFeaturesTitle, text.businessFeaturesText, settings.businessFeatures))
 
     case 3: // Other
-        entries.append(.info(1, text.otherInfo))
+        entries.append(.info(base + 1, text.otherInfo))
         entries.append(.toggle(id, .localPremium, text.localPremiumTitle, text.localPremiumText, settings.localPremium)); id += 1
         entries.append(.toggle(id, .unlimitedAccounts, text.unlimitedAccountsTitle, text.unlimitedAccountsText, settings.unlimitedAccounts)); id += 1
         entries.append(.toggle(id, .hidePhoneNumber, text.hidePhoneNumberTitle, text.hidePhoneNumberText, settings.hidePhoneNumber)); id += 1
@@ -600,7 +648,7 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .pinWalletTab, text.pinWalletTabTitle, text.pinWalletTabText, settings.pinWalletTab))
 
     case 4: // Hide
-        entries.append(.info(1, text.hideInfo))
+        entries.append(.info(base + 1, text.hideInfo))
         entries.append(.toggle(id, .hideNavigationBar, text.hideNavigationBarTitle, text.hideNavigationBarText, settings.hideNavigationBar)); id += 1
         entries.append(.toggle(id, .hideFavoriteChats, text.hideFavoriteChatsTitle, text.hideFavoriteChatsText, settings.hideFavoriteChats)); id += 1
         entries.append(.toggle(id, .hideRecentCalls, text.hideRecentCallsTitle, text.hideRecentCallsText, settings.hideRecentCalls)); id += 1
@@ -615,7 +663,7 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .hidePowerSaving, text.hidePowerSavingTitle, text.hidePowerSavingText, settings.hidePowerSaving))
 
     case 5: // Developer
-        entries.append(.info(1, text.devInfo))
+        entries.append(.info(base + 1, text.devInfo))
         // GitHub - in built-in browser (inTelegram: false)
         entries.append(.link(id, "GitHub", "https://github.com/jutsodev", false, makeGitHubIcon())); id += 1
         // All Telegram links - open inside Telegram (inTelegram: true)
@@ -627,11 +675,17 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.link(id, text.devChannel, "https://t.me/Stivenvpn", true, makeChannelIcon())); id += 1
         entries.append(.link(id, text.devBot, "https://t.me/Stivenvpnbot", true, makeBotIcon()))
 
+    case 6 where isAdmin: // Admin
+        let adminInfo = strings.baseLanguageCode.lowercased().hasPrefix("ru") ? "Админ-панель: просмотр данных из базы MQGram." : "Admin panel: view data from MQGram database."
+        entries.append(.info(base + 1, adminInfo))
+        let adminTitle = strings.baseLanguageCode.lowercased().hasPrefix("ru") ? "Открыть админ-панель" : "Open Admin Panel"
+        entries.append(.action(id, adminTitle, makeAdminIcon(), .adminPanel))
+
     default:
         break
     }
 
-    entries.append(.footer(9999, text.footer))
+    entries.append(.footer(base + 999, text.footer))
     return entries
 }
 
@@ -644,10 +698,15 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
 
     var openUrlImpl: ((String, Bool) -> Void)?
     var openRecycleBinImpl: (() -> Void)?
+    var openAdminPanelImpl: (() -> Void)?
+
+    let isAdmin = context.account.peerId.id._internalGetInt64Value() == mqgramAdminPeerId
 
     let arguments = MQGramArguments(
         toggleSetting: { key, value in
             MQGramSettings.shared.setBool(value, for: key)
+            // MARK: MQGram - Log setting changed
+            MQGramDatabase.shared.logSettingChanged(key: key.rawValue, value: String(value))
             updatePromise.set(true)
         },
         openUrl: { url, inTelegram in
@@ -655,11 +714,14 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
         },
         openRecycleBin: {
             openRecycleBinImpl?()
+        },
+        openAdminPanel: {
+            openAdminPanelImpl?()
         }
     )
 
-    let tabNamesRu: [String] = ["Призрак", "Основные", "Бета", "Прочее", "Скрыть", "Dev"]
-    let tabNamesEn: [String] = ["Ghost", "Core", "Beta", "Other", "Hide", "Dev"]
+    let tabNamesRu: [String] = isAdmin ? ["Призрак", "Основные", "Бета", "Прочее", "Скрыть", "Dev", "Админ"] : ["Призрак", "Основные", "Бета", "Прочее", "Скрыть", "Dev"]
+    let tabNamesEn: [String] = isAdmin ? ["Ghost", "Core", "Beta", "Other", "Hide", "Dev", "Admin"] : ["Ghost", "Core", "Beta", "Other", "Hide", "Dev"]
 
     let signal = combineLatest(context.sharedContext.presentationData, updatePromise.get(), tabIndexPromise.get())
     |> map { presentationData, _, tabIndex -> (ItemListControllerState, (ItemListNodeState, Any)) in
@@ -674,7 +736,7 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
             backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back)
         )
 
-        let entries = mqgramEntries(settings: MQGramSettings.shared, strings: presentationData.strings, tab: tabIndex)
+        let entries = mqgramEntries(settings: MQGramSettings.shared, strings: presentationData.strings, tab: tabIndex, isAdmin: isAdmin)
         let previousIndex = previousTabIndex.swap(tabIndex)
         let tabChanged = previousIndex != nil && previousIndex != tabIndex
 
@@ -713,6 +775,11 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
     openRecycleBinImpl = { [weak controller] in
         let recycleBinController = savedDeletedMessagesListController(context: context)
         controller?.navigationController?.pushViewController(recycleBinController, animated: true)
+    }
+
+    openAdminPanelImpl = { [weak controller] in
+        let adminController = mqgramAdminController(context: context)
+        controller?.navigationController?.pushViewController(adminController, animated: true)
     }
 
     return controller

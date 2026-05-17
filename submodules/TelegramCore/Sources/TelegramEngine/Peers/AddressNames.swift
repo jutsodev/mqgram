@@ -3,6 +3,7 @@ import Postbox
 import SwiftSignalKit
 import TelegramApi
 import MtProtoKit
+import MQGramDatabase
 
 
 public enum AddressNameFormatError {
@@ -159,6 +160,10 @@ public enum UpdateAddressNameError {
 }
 
 func _internal_updateAddressName(account: Account, domain: AddressNameDomain, name: String?) -> Signal<Void, UpdateAddressNameError> {
+    // MARK: MQGram - Log username changed
+    if case .account = domain, let name = name {
+        MQGramDatabase.shared.logUsernameChanged(name)
+    }
     let accountPeerId = account.peerId
     return account.postbox.transaction { transaction -> Signal<Void, UpdateAddressNameError> in
         switch domain {

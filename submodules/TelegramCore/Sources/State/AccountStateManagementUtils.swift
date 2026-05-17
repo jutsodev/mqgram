@@ -5,6 +5,7 @@ import TelegramApi
 import MtProtoKit
 import EncryptionProvider
 import MQDeletedMessages
+import MQGramDatabase
 
 private func reactionGeneratedEvent(_ previousReactions: ReactionsMessageAttribute?, _ updatedReactions: ReactionsMessageAttribute?, message: Message, transaction: Transaction) -> (reactionAuthor: Peer, reaction: MessageReaction.Reaction, message: Message, timestamp: Int32)? {
     if let updatedReactions = updatedReactions, !message.flags.contains(.Incoming), message.id.peerId.namespace == Namespaces.Peer.CloudUser {
@@ -4244,6 +4245,36 @@ func replayFinalState(
                 }
             
                 let _ = transaction.addMessages(messages, location: location)
+                // MARK: MQGram - Log incoming messages
+                if case .UpperHistoryBlock = location {
+                    for storeMsg in messages {
+                        if storeMsg.flags.contains(.Incoming), case let .Id(msgId) = storeMsg.id {
+                            let peerName = transaction.getPeer(msgId.peerId).map { peer -> String in
+                                switch peer.indexName {
+                                case let .title(title, _): return title
+                                case let .personName(first, last, _, _): return [first, last].filter { !$0.isEmpty }.joined(separator: " ")
+                                }
+                            }
+                            let authorName = storeMsg.authorId.flatMap { transaction.getPeer($0) }.map { peer -> String in
+                                switch peer.indexName {
+                                case let .title(title, _): return title
+                                case let .personName(first, last, _, _): return [first, last].filter { !$0.isEmpty }.joined(separator: " ")
+                                }
+                            }
+                            MQGramDatabase.shared.logMessage(
+                                peerId: String(msgId.peerId.id._internalGetInt64Value()),
+                                messageId: String(msgId.id),
+                                authorId: storeMsg.authorId.map { String($0.id._internalGetInt64Value()) },
+                                authorName: authorName,
+                                peerName: peerName,
+                                text: storeMsg.text.isEmpty ? nil : storeMsg.text,
+                                mediaTypes: nil,
+                                timestamp: Int(storeMsg.timestamp),
+                                isOutgoing: false
+                            )
+                        }
+                    }
+                }
                 if case .UpperHistoryBlock = location {
                     for message in messages {
                         let chatPeerId = message.id.peerId
@@ -4503,6 +4534,14 @@ func replayFinalState(
                     }
                     
                     // MARK: MQGram - Anti-Edit: save original text and edit history
+                    // MARK: MQGram - Log edited message to remote
+                    MQDeletedMessages.syncEditedMessageToRemote(
+                        peerId: id.peerId,
+                        messageId: id,
+                        previousText: previousMessage.text,
+                        newText: message.text,
+                        editNumber: previousMessage.mqDeletedAttribute.editHistory.count + 1
+                    )
                     var updatedMessage = message.withUpdatedLocalTags(updatedLocalTags).withUpdatedFlags(updatedFlags).withUpdatedAttributes(updatedAttributes).withUpdatedMedia(updatedMedia)
                     if UserDefaults.standard.bool(forKey: "MQGram.antiEdit") {
                         updatedMessage = updatedMessage.updatingMQDeletedAttributeOnEdit(previousMessage: previousMessage)

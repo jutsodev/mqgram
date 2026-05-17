@@ -12,11 +12,14 @@ swift_library(
     deps = [
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/Display:Display",
+        "//submodules/Postbox:Postbox",
+        "//submodules/TelegramCore:TelegramCore",
         "//submodules/TelegramPresentationData:TelegramPresentationData",
         "//submodules/ItemListUI:ItemListUI",
         "//submodules/PresentationDataUtils:PresentationDataUtils",
         "//submodules/AccountContext:AccountContext",
         "//MQGram/MQDeletedMessagesUI:MQDeletedMessagesUI",
+        "//MQGram/MQGramDatabase:MQGramDatabase",
     ],
     visibility = [
         "//visibility:public",

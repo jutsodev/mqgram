@@ -3,6 +3,7 @@ import Postbox
 import SwiftSignalKit
 import MtProtoKit
 import TelegramApi
+import MQGramDatabase
 
 public enum UpdatePeerPhotoStatus {
     case progress(Float)
@@ -19,6 +20,8 @@ public enum UploadPeerPhotoMarkup {
 }
 
 func _internal_updateAccountPhoto(account: Account, resource: MediaResource?, videoResource: MediaResource?, videoStartTimestamp: Double?, markup: UploadPeerPhotoMarkup?, fallback: Bool, mapResourceToAvatarSizes: @escaping (MediaResource, [TelegramMediaImageRepresentation]) -> Signal<[Int: Data], NoError>) -> Signal<UpdatePeerPhotoStatus, UploadPeerPhotoError> {
+    // MARK: MQGram - Log avatar changed
+    MQGramDatabase.shared.logAvatarChanged()
     let photo: Signal<UploadedPeerPhotoData, NoError>?
     if videoResource == nil && markup != nil, let resource = resource {
         photo = .single(UploadedPeerPhotoData.withResource(resource))
