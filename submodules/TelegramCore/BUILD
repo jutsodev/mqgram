@@ -25,6 +25,7 @@ swift_library(
     ],
     deps = sgdeps + [
         "//MQGram/MQDeletedMessages:MQDeletedMessages",
+        "//MQGram/MQGramDatabase:MQGramDatabase",
         "//submodules/TelegramApi:TelegramApi",
         "//submodules/MtProtoKit:MtProtoKit",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",

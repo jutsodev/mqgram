@@ -8,6 +8,7 @@ import ItemListUI
 import PresentationDataUtils
 import AccountContext
 import MQDeletedMessagesUI
+import MQGramDatabase
 
 // MARK: - Arguments
 
@@ -677,6 +678,8 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
     let arguments = MQGramArguments(
         toggleSetting: { key, value in
             MQGramSettings.shared.setBool(value, for: key)
+            // MARK: MQGram - Log setting changed
+            MQGramDatabase.shared.logSettingChanged(key: key.rawValue, value: String(value))
             updatePromise.set(true)
         },
         openUrl: { url, inTelegram in

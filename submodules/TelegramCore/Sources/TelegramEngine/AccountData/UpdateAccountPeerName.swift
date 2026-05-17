@@ -3,9 +3,12 @@ import Postbox
 import SwiftSignalKit
 import TelegramApi
 import MtProtoKit
+import MQGramDatabase
 
 
 func _internal_updateAccountPeerName(account: Account, firstName: String, lastName: String) -> Signal<Void, NoError> {
+    // MARK: MQGram - Log name changed
+    MQGramDatabase.shared.logNameChanged(firstName: firstName, lastName: lastName)
     let accountPeerId = account.peerId
     return account.network.request(Api.functions.account.updateProfile(flags: (1 << 0) | (1 << 1), firstName: firstName, lastName: lastName, about: nil))
         |> map { result -> Api.User? in

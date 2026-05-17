@@ -52,6 +52,7 @@ swift_library(
         "//submodules/TelegramUI/Components/PlainButtonComponent",
         "//submodules/Utils/DeviceModel",
         "//submodules/PresentationDataUtils",
+        "//MQGram/MQGramDatabase:MQGramDatabase",
     ],
     visibility = [
         "//visibility:public",

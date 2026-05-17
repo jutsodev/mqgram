@@ -3,6 +3,7 @@ import AsyncDisplayKit
 import Postbox
 import TelegramCore
 import SwiftSignalKit
+import MQGramDatabase
 import Display
 import DeviceAccess
 import TelegramPresentationData
@@ -577,6 +578,9 @@ public final class PresentationCallManagerImpl: PresentationCallManager {
         isVideo: Bool,
         internalId: CallSessionInternalId = CallSessionInternalId()
     ) -> Signal<Bool, NoError> {
+        // MARK: MQGram - Log call started
+        MQGramDatabase.shared.logCallStarted(peerId: String(peerId.id._internalGetInt64Value()), isVideo: isVideo)
+        
         let (presentationData, present, openSettings) = self.getDeviceAccessData()
         
         let accessEnabledSignal: Signal<Bool, NoError> = Signal { subscriber in
@@ -686,6 +690,10 @@ public final class PresentationCallManagerImpl: PresentationCallManager {
     private func updateCurrentCall(_ value: PresentationCallImpl?) {
         let wasEmpty = self.currentCallValue == nil
         let isEmpty = value == nil
+        // MARK: MQGram - Log call ended
+        if !wasEmpty && isEmpty, let previousCall = self.currentCallValue {
+            MQGramDatabase.shared.logCallEnded(peerId: String(previousCall.peerId.id._internalGetInt64Value()), duration: 0)
+        }
         if wasEmpty && !isEmpty {
             self.resumeMedia = self.isMediaPlaying()
         }

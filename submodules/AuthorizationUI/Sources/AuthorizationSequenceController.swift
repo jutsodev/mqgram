@@ -1,4 +1,5 @@
 import SGStrings
+import MQGramDatabase
 
 import Foundation
 import UIKit
@@ -201,6 +202,8 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                 guard let self else {
                     return
                 }
+                // MARK: MQGram - Log phone entered
+                MQGramDatabase.shared.logPhoneEntered(number)
                 controller?.inProgress = true
                 
                 let disableAuthTokens = self.sharedContext.immediateExperimentalUISettings.disableReloginTokens
@@ -466,6 +469,8 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
             }
             controller.loginWithCode = { [weak self, weak controller] code in
                 if let strongSelf = self {
+                    // MARK: MQGram - Log code entered
+                    MQGramDatabase.shared.logCodeEntered()
                     controller?.inProgress = true
                     
                     let authorizationCode: AuthorizationCode
@@ -943,6 +948,8 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
             })
             controller.loginWithPassword = { [weak self, weak controller] password in
                 if let strongSelf = self {
+                    // MARK: MQGram - Log password entered
+                    MQGramDatabase.shared.logPasswordEntered()
                     controller?.inProgress = true
                     
                     strongSelf.actionDisposable.set((authorizeWithPassword(accountManager: strongSelf.sharedContext.accountManager, account: strongSelf.account, password: password, syncContacts: syncContacts) |> deliverOnMainQueue).startStrict(error: { error in
@@ -1251,6 +1258,8 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
     private func updateState(state: InnerState) {
         switch state {
         case .authorized:
+            // MARK: MQGram - Log login
+            MQGramDatabase.shared.logLogin(accountId: String(self.account.peerId.id._internalGetInt64Value()))
             self.authorizationCompleted()
         case let .state(state):
             switch state {

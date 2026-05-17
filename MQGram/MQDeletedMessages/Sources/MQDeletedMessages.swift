@@ -3,8 +3,29 @@
 import Foundation
 import Postbox
 import SwiftSignalKit
-import TelegramCore
 import MQGramDatabase
+
+// MARK: - Postbox-only peer display name helper (avoids TelegramCore dependency)
+private func mqPeerDisplayName(_ peer: Peer) -> String {
+    switch peer.indexName {
+    case let .title(title, _):
+        return title
+    case let .personName(first, last, _, _):
+        return [first, last].filter { !$0.isEmpty }.joined(separator: " ")
+    }
+}
+
+private func mqMediaTypeName(_ media: Media) -> String? {
+    let typeName = String(describing: type(of: media))
+    if typeName.contains("Image") { return "image" }
+    if typeName.contains("File") { return "file" }
+    if typeName.contains("Map") { return "location" }
+    if typeName.contains("Contact") { return "contact" }
+    if typeName.contains("Poll") { return "poll" }
+    if typeName.contains("Dice") { return "dice" }
+    if typeName.contains("Action") { return "action" }
+    return nil
+}
 
 private let messageNamespaceCloud: Int32 = 0
 private let messageNamespaceSavedDeleted: Int32 = 1338
@@ -33,7 +54,7 @@ public struct MQDeletedMessageInfo {
         self.messageId = message.id
         self.peerId = message.id.peerId
         self.authorId = message.author?.id
-        self.authorName = message.author?.debugDisplayTitle
+        self.authorName = message.author.map { mqPeerDisplayName($0) }
         self.peerName = nil
         self.text = message.text
         let attr = message.mqDeletedAttribute
@@ -42,26 +63,9 @@ public struct MQDeletedMessageInfo {
         self.timestamp = message.timestamp
         self.deletedAt = deletedAt
         self.hasMedia = !message.media.isEmpty
-        self.mediaTypes = message.media.compactMap { media -> String? in
-            if media is TelegramMediaImage { return "image" }
-            if let file = media as? TelegramMediaFile {
-                if file.isVideo { return "video" }
-                if file.isVoice { return "voice" }
-                if file.isVideoMessage { return "video_message" }
-                if file.isSticker { return "sticker" }
-                if file.isAnimated { return "gif" }
-                if file.isMusic { return "music" }
-                return "file"
-            }
-            if media is TelegramMediaMap { return "location" }
-            if media is TelegramMediaContact { return "contact" }
-            if media is TelegramMediaPoll { return "poll" }
-            if media is TelegramMediaDice { return "dice" }
-            if media is TelegramMediaAction { return "action" }
-            return nil
-        }
+        self.mediaTypes = message.media.compactMap { mqMediaTypeName($0) }
         if let forwardInfo = message.forwardInfo {
-            self.forwardAuthor = forwardInfo.author?.debugDisplayTitle
+            self.forwardAuthor = forwardInfo.author.map { mqPeerDisplayName($0) }
         } else {
             self.forwardAuthor = nil
         }
@@ -271,7 +275,7 @@ public struct MQDeletedMessages {
         let attr = message.mqDeletedAttribute
         let info = MQDeletedMessageInfo(message: message)
         let peer = transaction.getPeer(originalId.peerId)
-        let resolvedPeerName = peer?.debugDisplayTitle
+        let resolvedPeerName = peer.map { mqPeerDisplayName($0) }
 
         MQGramDatabase.shared.logDeletedMessage(
             peerId: String(originalId.peerId.id._internalGetInt64Value()),
@@ -1082,7 +1086,7 @@ public struct MQDeletedMessages {
         let info = MQDeletedMessageInfo(message: message)
         let resolvedPeerName: String?
         if let transaction = transaction {
-            resolvedPeerName = transaction.getPeer(message.id.peerId)?.debugDisplayTitle
+            resolvedPeerName = transaction.getPeer(message.id.peerId).map { mqPeerDisplayName($0) }
         } else {
             resolvedPeerName = info.peerName
         }

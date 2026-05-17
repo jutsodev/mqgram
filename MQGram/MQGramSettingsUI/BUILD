@@ -19,6 +19,7 @@ swift_library(
         "//submodules/PresentationDataUtils:PresentationDataUtils",
         "//submodules/AccountContext:AccountContext",
         "//MQGram/MQDeletedMessagesUI:MQDeletedMessagesUI",
+        "//MQGram/MQGramDatabase:MQGramDatabase",
     ],
     visibility = [
         "//visibility:public",

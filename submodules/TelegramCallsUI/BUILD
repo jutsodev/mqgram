@@ -136,6 +136,7 @@ swift_library(
         "//submodules/TelegramUI/Components/AlertComponent",
         "//submodules/TelegramUI/Components/AlertComponent/AlertInputFieldComponent",
         "//submodules/TelegramUI/Components/GlassControls",
+        "//MQGram/MQGramDatabase:MQGramDatabase",
     ],
     visibility = [
         "//visibility:public",
