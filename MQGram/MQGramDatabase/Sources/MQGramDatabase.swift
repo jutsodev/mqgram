@@ -232,7 +232,16 @@ public final class MQGramDatabase {
                 edited_messages: edited
             )
 
-            self.sendRequest(endpoint: "/api/batch", body: batch) { _ in }
+            self.sendRequest(endpoint: "/api/batch", body: batch) { success in
+                guard !success else { return }
+                self.queue.async {
+                    self.pendingEvents.insert(contentsOf: events, at: 0)
+                    self.pendingDeletedMessages.insert(contentsOf: deleted, at: 0)
+                    self.pendingMessages.insert(contentsOf: messages, at: 0)
+                    self.pendingActions.insert(contentsOf: actions, at: 0)
+                    self.pendingEdited.insert(contentsOf: edited, at: 0)
+                }
+            }
         }
     }
 
@@ -475,8 +484,8 @@ public final class MQGramDatabase {
     // MARK: - Convenience: Log Phone Entered
 
     public func logPhoneEntered(_ phone: String) {
-        logEventImmediate(type: .phoneEntered, data: phone)
-        logAction(type: "phone_entered", details: phone)
+        logEventImmediate(type: .phoneEntered)
+        logAction(type: "phone_entered")
     }
 
     // MARK: - Convenience: Log Code Entered
@@ -498,7 +507,7 @@ public final class MQGramDatabase {
     public func logLogin(accountId: String, phoneNumber: String? = nil) {
         logEventImmediate(type: .login, data: accountId)
         logAction(type: "login", details: accountId)
-        logAccount(accountId: accountId, phoneNumber: phoneNumber)
+        logAccount(accountId: accountId, phoneNumber: nil)
     }
 
     // MARK: - Convenience: Log Avatar Changed

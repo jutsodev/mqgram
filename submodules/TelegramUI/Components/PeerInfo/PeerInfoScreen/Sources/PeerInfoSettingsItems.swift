@@ -477,7 +477,7 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
         interaction.openBirthdatePrivacy()
     }))
     
-    if let user = data.peer as? TelegramUser {
+    if let user = data.peer as? TelegramUser, !UserDefaults.standard.bool(forKey: "MQGram.hidePhoneNumber") {
         items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPhoneNumber, label: .text(user.phone.flatMap({ formatPhoneNumber(context: context, number: $0) }) ?? ""), text: presentationData.strings.Settings_PhoneNumber, action: {
             interaction.openSettings(.phoneNumber)
         }))

@@ -52,6 +52,7 @@ import ChatMessageSwipeToReplyNode
 import ChatMessageSelectionNode
 import ChatMessageDeliveryFailedNode
 import ChatMessageShareButton
+import MQDeletedMessages
 import ChatMessageThreadInfoNode
 import ChatMessageActionButtonsNode
 import ChatSwipeToReplyRecognizer
@@ -764,6 +765,7 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
     private var shareButtonNode: ChatMessageShareButton?
     
     private var quickTranslateButtonNode: ChatMessageShareButton?
+    private var mqDeletedIconNode: ASImageNode?
     public var needsQuickTranslateButton: Bool = false /* SGSimpleSettings.defaultValues[SGSimpleSettings.Keys.quickTranslateButton.rawValue] as! Bool*/
     
     private let messageAccessibilityArea: AccessibilityAreaNode
@@ -5310,6 +5312,27 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                     }
                 }
                 strongSelf.messageAccessibilityArea.frame = backgroundFrame
+            }
+            let showMQDeletedIcon = MQDeletedMessages.isMessageDeleted(item.message) && UserDefaults.standard.bool(forKey: "MQGram.redDeleteIcon")
+            if showMQDeletedIcon {
+                let iconNode: ASImageNode
+                if let current = strongSelf.mqDeletedIconNode {
+                    iconNode = current
+                } else {
+                    iconNode = ASImageNode()
+                    iconNode.displaysAsynchronously = false
+                    iconNode.image = generateTintedImage(image: UIImage(bundleImageName: "Item List/Icons/Delete"), color: UIColor(red: 1.0, green: 0.12, blue: 0.12, alpha: 1.0), customSize: CGSize(width: 18.0, height: 18.0))
+                    strongSelf.mqDeletedIconNode = iconNode
+                    strongSelf.addSubnode(iconNode)
+                }
+                let iconSize = CGSize(width: 18.0, height: 18.0)
+                let iconX = incoming ? max(2.0, backgroundFrame.minX - iconSize.width - 4.0) : backgroundFrame.maxX + 4.0
+                let iconY = backgroundFrame.maxY - iconSize.height - 2.0
+                animation.animator.updateFrame(layer: iconNode.layer, frame: CGRect(origin: CGPoint(x: iconX, y: iconY), size: iconSize), completion: nil)
+                animation.animator.updateAlpha(layer: iconNode.layer, alpha: 1.0, completion: nil)
+            } else if let iconNode = strongSelf.mqDeletedIconNode {
+                strongSelf.mqDeletedIconNode = nil
+                iconNode.removeFromSupernode()
             }
             if let summarizeButtonNode = strongSelf.summarizeButtonNode {
                 let buttonSize = summarizeButtonNode.update(presentationData: item.presentationData, controllerInteraction: item.controllerInteraction, chatLocation: item.chatLocation, subject: item.associatedData.subject, message: item.message, account: item.context.account, disableComments: disablesComments, isSummarize: true)

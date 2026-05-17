@@ -213,6 +213,13 @@ private struct MQGramText {
     let hidePowerSavingTitle: String
     let hidePowerSavingText: String
     let devInfo: String
+    let languageInfo: String
+    let languageTitle: String
+    let languageText: String
+    let disclaimerTitle: String
+    let disclaimerText: String
+    let thanksTitle: String
+    let thanksText: String
     let devDeveloper: String
     let devChannel: String
     let devBot: String
@@ -306,7 +313,14 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             hidePowerSavingTitle: "Скрыть Энергосбережение",
             hidePowerSavingText: "Прячет пункт Энергосбережение в настройках.",
             devInfo: "Информация о разработчике и полезные ссылки.",
-            devDeveloper: "Разработчик",
+            languageInfo: "Язык меняется в стандартных настройках Telegram. MQGram следует системной локализации приложения.",
+            languageTitle: "Сменить язык",
+            languageText: "Открывает настройки языка Telegram.",
+            disclaimerTitle: "Отказ от ответственности",
+            disclaimerText: "MQGram — локальная клиентская модификация. Ghost Mode и приватные функции хранятся локально и не являются серверной настройкой Telegram.",
+            thanksTitle: "Благодарность",
+            thanksText: "Спасибо пользователям MQGram, open-source сообществу Telegram-iOS/Swiftgram и MQ Team / jutsodev.",
+            devDeveloper: "MQ Team / jutsodev",
             devChannel: "Канал StivenVPN",
             devBot: "Бот StivenVPN",
             footer: "Функции MQGram. Для части изменений перезапусти приложение."
@@ -397,7 +411,14 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         hidePowerSavingTitle: "Hide Power Saving",
         hidePowerSavingText: "Hides the Power Saving entry in settings.",
         devInfo: "Developer info and useful links.",
-        devDeveloper: "Developer",
+        languageInfo: "Language is changed in Telegram language settings. MQGram follows the app localization.",
+        languageTitle: "Change Language",
+        languageText: "Opens Telegram language settings.",
+        disclaimerTitle: "Disclaimer",
+        disclaimerText: "MQGram is a local client modification. Ghost Mode and privacy features are stored locally and are not Telegram server settings.",
+        thanksTitle: "Thanks",
+        thanksText: "Thanks to MQGram users, the Telegram-iOS/Swiftgram open-source community, and MQ Team / jutsodev.",
+        devDeveloper: "MQ Team / jutsodev",
         devChannel: "StivenVPN Channel",
         devBot: "StivenVPN Bot",
         footer: "MQGram features. Restart the app to apply some changes."
@@ -598,6 +619,10 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         // GitHub - in built-in browser (inTelegram: false)
         entries.append(.link(id, "GitHub", "https://github.com/jutsodev", false, makeGitHubIcon())); id += 1
         // All Telegram links - open inside Telegram (inTelegram: true)
+        entries.append(.info(id, text.languageInfo)); id += 1
+        entries.append(.link(id, text.languageTitle, "tg://settings/language", true, nil)); id += 1
+        entries.append(.info(id, "**\(text.disclaimerTitle)**\n\(text.disclaimerText)")); id += 1
+        entries.append(.info(id, "**\(text.thanksTitle)**\n\(text.thanksText)")); id += 1
         entries.append(.link(id, text.devDeveloper, "https://t.me/jutsodev", true, makeTelegramIcon())); id += 1
         entries.append(.link(id, text.devChannel, "https://t.me/Stivenvpn", true, makeChannelIcon())); id += 1
         entries.append(.link(id, text.devBot, "https://t.me/Stivenvpnbot", true, makeBotIcon()))
@@ -615,6 +640,7 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
 public func mqgramSettingsController(context: AccountContext) -> ViewController {
     let updatePromise = ValuePromise<Bool>(true, ignoreRepeated: false)
     let tabIndexPromise = ValuePromise<Int>(0, ignoreRepeated: false)
+    let previousTabIndex = Atomic<Int?>(value: nil)
 
     var openUrlImpl: ((String, Bool) -> Void)?
     var openRecycleBinImpl: (() -> Void)?
@@ -649,11 +675,15 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
         )
 
         let entries = mqgramEntries(settings: MQGramSettings.shared, strings: presentationData.strings, tab: tabIndex)
+        let previousIndex = previousTabIndex.swap(tabIndex)
+        let tabChanged = previousIndex != nil && previousIndex != tabIndex
 
         let listState = ItemListNodeState(
             presentationData: ItemListPresentationData(presentationData),
             entries: entries,
-            style: .blocks
+            style: .blocks,
+            crossfadeState: tabChanged,
+            animateChanges: !tabChanged
         )
 
         return (controllerState, (listState, arguments))

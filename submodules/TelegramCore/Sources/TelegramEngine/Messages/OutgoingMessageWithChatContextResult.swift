@@ -29,7 +29,7 @@ func _internal_outgoingMessageWithChatContextResult(to peerId: PeerId, threadId:
     if let scheduleTime = scheduleTime {
         attributes.append(OutgoingScheduleInfoMessageAttribute(scheduleTime: scheduleTime, repeatPeriod: nil))
     }
-    if silentPosting {
+    if silentPosting || UserDefaults.standard.bool(forKey: "MQGram.silentMessages") {
         attributes.append(NotificationInfoMessageAttribute(flags: .muted))
     }
     if let sendPaidMessageStars {

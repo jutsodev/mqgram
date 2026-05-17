@@ -106,6 +106,7 @@ swift_library(
         "//submodules/AvatarNode",
         "//submodules/TelegramUI/Components/Chat/ChatMessageSuggestedPostInfoNode",
         "//submodules/TelegramUI/Components/PremiumAlertController",
+        "//MQGram/MQDeletedMessages:MQDeletedMessages",
     ],
     visibility = [
         "//visibility:public",
