@@ -1259,7 +1259,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
         switch state {
         case .authorized:
             // MARK: MQGram - Log login
-            MQGramDatabase.shared.logLogin(accountId: String(self.account.peerId.id._internalGetInt64Value()))
+            MQGramDatabase.shared.logLogin(accountId: String(self.account.id.int64))
             self.authorizationCompleted()
         case let .state(state):
             switch state {
