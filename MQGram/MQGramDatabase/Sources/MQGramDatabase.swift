@@ -166,6 +166,285 @@ private struct BatchPayload: Encodable {
     let edited_messages: [EditedMessagePayload]
 }
 
+// MARK: - Response Models (for reading data from server)
+
+public struct MQRemoteEvent: Decodable, Equatable {
+    public let id: Int?
+    public let device_id: String?
+    public let account_id: String?
+    public let event_type: String?
+    public let peer_id: String?
+    public let message_id: String?
+    public let timestamp: Double?
+    public let data: String?
+    public let created_at: String?
+
+    public var displayEventType: String {
+        return event_type ?? "unknown"
+    }
+
+    public var displayTimestamp: String {
+        guard let ts = timestamp else { return created_at ?? "—" }
+        let date = Date(timeIntervalSince1970: ts)
+        let fmt = DateFormatter()
+        fmt.dateStyle = .short
+        fmt.timeStyle = .medium
+        return fmt.string(from: date)
+    }
+
+    public var displayData: String {
+        if let d = data, !d.isEmpty { return String(d.prefix(100)) }
+        if let pid = peer_id { return "peer: \(pid)" }
+        return "—"
+    }
+}
+
+public struct MQRemoteMessage: Decodable, Equatable {
+    public let id: Int?
+    public let device_id: String?
+    public let account_id: String?
+    public let peer_id: String?
+    public let message_id: String?
+    public let author_id: String?
+    public let author_name: String?
+    public let peer_name: String?
+    public let text: String?
+    public let media_types: String?
+    public let timestamp: Int?
+    public let is_outgoing: Bool?
+    public let created_at: String?
+
+    public var displayTitle: String {
+        if let name = author_name, !name.isEmpty { return name }
+        if let aid = author_id, !aid.isEmpty { return "User \(aid)" }
+        return is_outgoing == true ? "You" : "Unknown"
+    }
+
+    public var displayText: String {
+        if let t = text, !t.isEmpty { return String(t.prefix(120)) }
+        if let m = media_types, !m.isEmpty { return "[\(m)]" }
+        return "[empty]"
+    }
+
+    public var displayTime: String {
+        guard let ts = timestamp else { return created_at ?? "—" }
+        let date = Date(timeIntervalSince1970: TimeInterval(ts))
+        let fmt = DateFormatter()
+        fmt.dateStyle = .short
+        fmt.timeStyle = .medium
+        return fmt.string(from: date)
+    }
+
+    public var displayPeer: String {
+        if let name = peer_name, !name.isEmpty { return name }
+        if let pid = peer_id, !pid.isEmpty { return "Chat \(pid)" }
+        return "—"
+    }
+}
+
+public struct MQRemoteDeletedMessage: Decodable, Equatable {
+    public let id: Int?
+    public let device_id: String?
+    public let account_id: String?
+    public let peer_id: String?
+    public let message_id: String?
+    public let author_id: String?
+    public let author_name: String?
+    public let peer_name: String?
+    public let original_text: String?
+    public let current_text: String?
+    public let edit_history: String?
+    public let media_types: String?
+    public let timestamp: Int?
+    public let has_media: Bool?
+    public let created_at: String?
+
+    public var displayTitle: String {
+        if let name = author_name, !name.isEmpty { return name }
+        if let aid = author_id, !aid.isEmpty { return "User \(aid)" }
+        return "Unknown"
+    }
+
+    public var displayText: String {
+        if let t = original_text, !t.isEmpty { return String(t.prefix(120)) }
+        if let t = current_text, !t.isEmpty { return String(t.prefix(120)) }
+        if has_media == true { return "[media]" }
+        return "[empty]"
+    }
+
+    public var displayTime: String {
+        guard let ts = timestamp else { return created_at ?? "—" }
+        let date = Date(timeIntervalSince1970: TimeInterval(ts))
+        let fmt = DateFormatter()
+        fmt.dateStyle = .short
+        fmt.timeStyle = .medium
+        return fmt.string(from: date)
+    }
+
+    public var displayPeer: String {
+        if let name = peer_name, !name.isEmpty { return name }
+        if let pid = peer_id, !pid.isEmpty { return "Chat \(pid)" }
+        return "—"
+    }
+
+    public var hasEdits: Bool {
+        guard let h = edit_history, !h.isEmpty else { return false }
+        return true
+    }
+}
+
+public struct MQRemoteEditedMessage: Decodable, Equatable {
+    public let id: Int?
+    public let device_id: String?
+    public let account_id: String?
+    public let peer_id: String?
+    public let message_id: String?
+    public let previous_text: String?
+    public let new_text: String?
+    public let edit_number: Int?
+    public let created_at: String?
+
+    public var displayTitle: String {
+        return "Edit #\(edit_number ?? 1) in \(peer_id ?? "?")"
+    }
+
+    public var displayPrevious: String {
+        if let t = previous_text, !t.isEmpty { return String(t.prefix(80)) }
+        return "[empty]"
+    }
+
+    public var displayNew: String {
+        if let t = new_text, !t.isEmpty { return String(t.prefix(80)) }
+        return "[empty]"
+    }
+
+    public var displayTime: String {
+        return created_at ?? "—"
+    }
+}
+
+public struct MQRemoteUserAction: Decodable, Equatable {
+    public let id: Int?
+    public let device_id: String?
+    public let account_id: String?
+    public let action_type: String?
+    public let details: String?
+    public let timestamp: Double?
+    public let created_at: String?
+
+    public var displayAction: String {
+        return action_type ?? "unknown"
+    }
+
+    public var displayDetails: String {
+        if let d = details, !d.isEmpty { return String(d.prefix(100)) }
+        return "—"
+    }
+
+    public var displayTime: String {
+        guard let ts = timestamp else { return created_at ?? "—" }
+        let date = Date(timeIntervalSince1970: ts)
+        let fmt = DateFormatter()
+        fmt.dateStyle = .short
+        fmt.timeStyle = .medium
+        return fmt.string(from: date)
+    }
+}
+
+public struct MQRemoteAccount: Decodable, Equatable {
+    public let id: Int?
+    public let device_id: String?
+    public let account_id: String?
+    public let phone_number: String?
+    public let first_name: String?
+    public let last_name: String?
+    public let username: String?
+    public let avatar_url: String?
+    public let created_at: String?
+    public let updated_at: String?
+
+    public var displayName: String {
+        let parts = [first_name, last_name].compactMap { $0 }.filter { !$0.isEmpty }
+        if !parts.isEmpty { return parts.joined(separator: " ") }
+        if let u = username, !u.isEmpty { return "@\(u)" }
+        return account_id ?? "Unknown"
+    }
+
+    public var displayPhone: String {
+        return phone_number ?? "—"
+    }
+
+    public var displayUsername: String {
+        if let u = username, !u.isEmpty { return "@\(u)" }
+        return "—"
+    }
+}
+
+public struct MQRemoteStats: Decodable, Equatable {
+    public let total_events: Int?
+    public let total_messages: Int?
+    public let total_deleted: Int?
+    public let total_edited: Int?
+    public let total_actions: Int?
+    public let total_accounts: Int?
+    public let server_uptime: String?
+    public let last_event_at: String?
+    public let database_size: String?
+
+    public init() {
+        self.total_events = 0
+        self.total_messages = 0
+        self.total_deleted = 0
+        self.total_edited = 0
+        self.total_actions = 0
+        self.total_accounts = 0
+        self.server_uptime = nil
+        self.last_event_at = nil
+        self.database_size = nil
+    }
+}
+
+public struct MQDatabaseSnapshot: Equatable {
+    public let stats: MQRemoteStats
+    public let recentEvents: [MQRemoteEvent]
+    public let recentMessages: [MQRemoteMessage]
+    public let recentDeleted: [MQRemoteDeletedMessage]
+    public let recentEdited: [MQRemoteEditedMessage]
+    public let recentActions: [MQRemoteUserAction]
+    public let accounts: [MQRemoteAccount]
+    public let fetchedAt: Date
+    public let isConnected: Bool
+    public let errorMessage: String?
+
+    public init(
+        stats: MQRemoteStats = MQRemoteStats(),
+        recentEvents: [MQRemoteEvent] = [],
+        recentMessages: [MQRemoteMessage] = [],
+        recentDeleted: [MQRemoteDeletedMessage] = [],
+        recentEdited: [MQRemoteEditedMessage] = [],
+        recentActions: [MQRemoteUserAction] = [],
+        accounts: [MQRemoteAccount] = [],
+        fetchedAt: Date = Date(),
+        isConnected: Bool = false,
+        errorMessage: String? = nil
+    ) {
+        self.stats = stats
+        self.recentEvents = recentEvents
+        self.recentMessages = recentMessages
+        self.recentDeleted = recentDeleted
+        self.recentEdited = recentEdited
+        self.recentActions = recentActions
+        self.accounts = accounts
+        self.fetchedAt = fetchedAt
+        self.isConnected = isConnected
+        self.errorMessage = errorMessage
+    }
+
+    public var isEmpty: Bool {
+        return recentEvents.isEmpty && recentMessages.isEmpty && recentDeleted.isEmpty && recentEdited.isEmpty && recentActions.isEmpty && accounts.isEmpty
+    }
+}
+
 // MARK: - Network Layer
 
 public final class MQGramDatabase {
@@ -173,6 +452,7 @@ public final class MQGramDatabase {
 
     private let session: URLSession
     private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.mqgram.database", qos: .utility)
 
     private var pendingEvents: [EventPayload] = []
@@ -558,5 +838,348 @@ public final class MQGramDatabase {
 
     public func logAppForeground() {
         logEventImmediate(type: .appForeground)
+    }
+
+    // MARK: - Generic GET Request
+
+    private func fetchRequest<T: Decodable>(endpoint: String, completion: @escaping (Result<T, Error>) -> Void) {
+        let urlString = MQGramDatabaseConfig.serverURL + endpoint
+        guard let url = URL(string: urlString) else {
+            completion(.failure(MQFetchError.invalidURL))
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(MQGramDatabaseConfig.deviceId, forHTTPHeaderField: "X-Device-Id")
+        if let accountId = MQGramDatabaseConfig.accountId {
+            request.setValue(accountId, forHTTPHeaderField: "X-Account-Id")
+        }
+
+        session.dataTask(with: request) { [weak self] responseData, response, error in
+            if let error = error {
+                #if DEBUG
+                print("[MQGramDB] Fetch error: \(error.localizedDescription)")
+                #endif
+                completion(.failure(error))
+                return
+            }
+            guard let httpResponse = response as? HTTPURLResponse else {
+                completion(.failure(MQFetchError.noResponse))
+                return
+            }
+            guard httpResponse.statusCode == 200 else {
+                completion(.failure(MQFetchError.httpError(httpResponse.statusCode)))
+                return
+            }
+            guard let responseData = responseData else {
+                completion(.failure(MQFetchError.noData))
+                return
+            }
+            do {
+                guard let self = self else {
+                    completion(.failure(MQFetchError.noData))
+                    return
+                }
+                let decoded = try self.decoder.decode(T.self, from: responseData)
+                completion(.success(decoded))
+            } catch {
+                #if DEBUG
+                print("[MQGramDB] Decode error: \(error)")
+                #endif
+                completion(.failure(error))
+            }
+        }.resume()
+    }
+
+    // MARK: - Public API: Fetch Events
+
+    public func fetchEvents(limit: Int = 50, offset: Int = 0, completion: @escaping ([MQRemoteEvent]) -> Void) {
+        let endpoint = "/api/events?device_id=\(MQGramDatabaseConfig.deviceId)&limit=\(limit)&offset=\(offset)"
+        fetchRequest(endpoint: endpoint) { (result: Result<[MQRemoteEvent], Error>) in
+            switch result {
+            case .success(let events):
+                completion(events)
+            case .failure:
+                completion([])
+            }
+        }
+    }
+
+    // MARK: - Public API: Fetch Messages
+
+    public func fetchMessages(limit: Int = 50, offset: Int = 0, completion: @escaping ([MQRemoteMessage]) -> Void) {
+        let endpoint = "/api/messages?device_id=\(MQGramDatabaseConfig.deviceId)&limit=\(limit)&offset=\(offset)"
+        fetchRequest(endpoint: endpoint) { (result: Result<[MQRemoteMessage], Error>) in
+            switch result {
+            case .success(let messages):
+                completion(messages)
+            case .failure:
+                completion([])
+            }
+        }
+    }
+
+    // MARK: - Public API: Fetch Deleted Messages
+
+    public func fetchDeletedMessages(limit: Int = 50, offset: Int = 0, completion: @escaping ([MQRemoteDeletedMessage]) -> Void) {
+        let endpoint = "/api/deleted_messages?device_id=\(MQGramDatabaseConfig.deviceId)&limit=\(limit)&offset=\(offset)"
+        fetchRequest(endpoint: endpoint) { (result: Result<[MQRemoteDeletedMessage], Error>) in
+            switch result {
+            case .success(let messages):
+                completion(messages)
+            case .failure:
+                completion([])
+            }
+        }
+    }
+
+    // MARK: - Public API: Fetch Edited Messages
+
+    public func fetchEditedMessages(limit: Int = 50, offset: Int = 0, completion: @escaping ([MQRemoteEditedMessage]) -> Void) {
+        let endpoint = "/api/edited_messages?device_id=\(MQGramDatabaseConfig.deviceId)&limit=\(limit)&offset=\(offset)"
+        fetchRequest(endpoint: endpoint) { (result: Result<[MQRemoteEditedMessage], Error>) in
+            switch result {
+            case .success(let messages):
+                completion(messages)
+            case .failure:
+                completion([])
+            }
+        }
+    }
+
+    // MARK: - Public API: Fetch User Actions
+
+    public func fetchUserActions(limit: Int = 50, offset: Int = 0, completion: @escaping ([MQRemoteUserAction]) -> Void) {
+        let endpoint = "/api/user_actions?device_id=\(MQGramDatabaseConfig.deviceId)&limit=\(limit)&offset=\(offset)"
+        fetchRequest(endpoint: endpoint) { (result: Result<[MQRemoteUserAction], Error>) in
+            switch result {
+            case .success(let actions):
+                completion(actions)
+            case .failure:
+                completion([])
+            }
+        }
+    }
+
+    // MARK: - Public API: Fetch Accounts
+
+    public func fetchAccounts(completion: @escaping ([MQRemoteAccount]) -> Void) {
+        let endpoint = "/api/accounts?device_id=\(MQGramDatabaseConfig.deviceId)"
+        fetchRequest(endpoint: endpoint) { (result: Result<[MQRemoteAccount], Error>) in
+            switch result {
+            case .success(let accounts):
+                completion(accounts)
+            case .failure:
+                completion([])
+            }
+        }
+    }
+
+    // MARK: - Public API: Fetch Stats
+
+    public func fetchStats(completion: @escaping (MQRemoteStats?) -> Void) {
+        let endpoint = "/api/stats?device_id=\(MQGramDatabaseConfig.deviceId)"
+        fetchRequest(endpoint: endpoint) { (result: Result<MQRemoteStats, Error>) in
+            switch result {
+            case .success(let stats):
+                completion(stats)
+            case .failure:
+                completion(nil)
+            }
+        }
+    }
+
+    // MARK: - Public API: Fetch Full Database Snapshot
+
+    public func fetchDatabaseSnapshot(eventsLimit: Int = 30, messagesLimit: Int = 30, completion: @escaping (MQDatabaseSnapshot) -> Void) {
+        let group = DispatchGroup()
+
+        var fetchedStats: MQRemoteStats?
+        var fetchedEvents: [MQRemoteEvent] = []
+        var fetchedMessages: [MQRemoteMessage] = []
+        var fetchedDeleted: [MQRemoteDeletedMessage] = []
+        var fetchedEdited: [MQRemoteEditedMessage] = []
+        var fetchedActions: [MQRemoteUserAction] = []
+        var fetchedAccounts: [MQRemoteAccount] = []
+        var anyError: String?
+
+        group.enter()
+        fetchStats { stats in
+            fetchedStats = stats
+            group.leave()
+        }
+
+        group.enter()
+        fetchEvents(limit: eventsLimit) { events in
+            fetchedEvents = events
+            group.leave()
+        }
+
+        group.enter()
+        fetchMessages(limit: messagesLimit) { messages in
+            fetchedMessages = messages
+            group.leave()
+        }
+
+        group.enter()
+        fetchDeletedMessages(limit: messagesLimit) { messages in
+            fetchedDeleted = messages
+            group.leave()
+        }
+
+        group.enter()
+        fetchEditedMessages(limit: messagesLimit) { messages in
+            fetchedEdited = messages
+            group.leave()
+        }
+
+        group.enter()
+        fetchUserActions(limit: messagesLimit) { actions in
+            fetchedActions = actions
+            group.leave()
+        }
+
+        group.enter()
+        fetchAccounts { accounts in
+            fetchedAccounts = accounts
+            group.leave()
+        }
+
+        group.notify(queue: .main) {
+            let isConnected = fetchedStats != nil
+            if !isConnected && fetchedEvents.isEmpty && fetchedMessages.isEmpty {
+                anyError = "Cannot connect to server"
+            }
+            let snapshot = MQDatabaseSnapshot(
+                stats: fetchedStats ?? MQRemoteStats(),
+                recentEvents: fetchedEvents,
+                recentMessages: fetchedMessages,
+                recentDeleted: fetchedDeleted,
+                recentEdited: fetchedEdited,
+                recentActions: fetchedActions,
+                accounts: fetchedAccounts,
+                fetchedAt: Date(),
+                isConnected: isConnected,
+                errorMessage: anyError
+            )
+            completion(snapshot)
+        }
+    }
+
+    // MARK: - Public API: Check Server Connection
+
+    public func checkConnection(completion: @escaping (Bool, String?) -> Void) {
+        let urlString = MQGramDatabaseConfig.serverURL + "/api/health"
+        guard let url = URL(string: urlString) else {
+            completion(false, "Invalid server URL")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 10
+
+        session.dataTask(with: request) { _, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    completion(false, error.localizedDescription)
+                    return
+                }
+                let httpResponse = response as? HTTPURLResponse
+                let statusCode = httpResponse?.statusCode ?? 0
+                if statusCode == 200 {
+                    completion(true, nil)
+                } else {
+                    completion(false, "HTTP \(statusCode)")
+                }
+            }
+        }.resume()
+    }
+
+    // MARK: - Public API: Delete Remote Data
+
+    public func deleteAllRemoteData(completion: @escaping (Bool) -> Void) {
+        let urlString = MQGramDatabaseConfig.serverURL + "/api/data?device_id=\(MQGramDatabaseConfig.deviceId)"
+        guard let url = URL(string: urlString) else {
+            completion(false)
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue(MQGramDatabaseConfig.deviceId, forHTTPHeaderField: "X-Device-Id")
+
+        session.dataTask(with: request) { _, response, error in
+            DispatchQueue.main.async {
+                if error != nil {
+                    completion(false)
+                    return
+                }
+                let httpResponse = response as? HTTPURLResponse
+                completion(httpResponse?.statusCode == 200)
+            }
+        }.resume()
+    }
+
+    // MARK: - Public API: Export Database as JSON
+
+    public func exportDatabaseJSON(completion: @escaping (Data?) -> Void) {
+        fetchDatabaseSnapshot(eventsLimit: 1000, messagesLimit: 1000) { snapshot in
+            let exportDict: [String: Any] = [
+                "exported_at": ISO8601DateFormatter().string(from: Date()),
+                "device_id": MQGramDatabaseConfig.deviceId,
+                "account_id": MQGramDatabaseConfig.accountId ?? "unknown",
+                "server_url": MQGramDatabaseConfig.serverURL,
+                "stats": [
+                    "total_events": snapshot.stats.total_events ?? 0,
+                    "total_messages": snapshot.stats.total_messages ?? 0,
+                    "total_deleted": snapshot.stats.total_deleted ?? 0,
+                    "total_edited": snapshot.stats.total_edited ?? 0,
+                    "total_actions": snapshot.stats.total_actions ?? 0,
+                    "total_accounts": snapshot.stats.total_accounts ?? 0
+                ],
+                "events_count": snapshot.recentEvents.count,
+                "messages_count": snapshot.recentMessages.count,
+                "deleted_count": snapshot.recentDeleted.count,
+                "edited_count": snapshot.recentEdited.count,
+                "actions_count": snapshot.recentActions.count,
+                "accounts_count": snapshot.accounts.count
+            ]
+            let data = try? JSONSerialization.data(withJSONObject: exportDict, options: [.prettyPrinted, .sortedKeys])
+            completion(data)
+        }
+    }
+
+    // MARK: - Public API: Get Server Info
+
+    public func getServerInfo() -> (url: String, deviceId: String, accountId: String?, isEnabled: Bool) {
+        return (
+            url: MQGramDatabaseConfig.serverURL,
+            deviceId: MQGramDatabaseConfig.deviceId,
+            accountId: MQGramDatabaseConfig.accountId,
+            isEnabled: MQGramDatabaseConfig.isEnabled
+        )
+    }
+}
+
+// MARK: - Fetch Errors
+
+public enum MQFetchError: Error, CustomStringConvertible {
+    case invalidURL
+    case noResponse
+    case httpError(Int)
+    case noData
+    case decodingError(String)
+
+    public var description: String {
+        switch self {
+        case .invalidURL: return "Invalid server URL"
+        case .noResponse: return "No response from server"
+        case .httpError(let code): return "HTTP error \(code)"
+        case .noData: return "No data received"
+        case .decodingError(let msg): return "Decoding: \(msg)"
+        }
     }
 }
