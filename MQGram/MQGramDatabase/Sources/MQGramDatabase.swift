@@ -168,7 +168,7 @@ private struct BatchPayload: Encodable {
 
 // MARK: - Response Models (for reading data from server)
 
-public struct MQRemoteEvent: Decodable {
+public struct MQRemoteEvent: Decodable, Equatable {
     public let id: Int?
     public let device_id: String?
     public let account_id: String?
@@ -199,7 +199,7 @@ public struct MQRemoteEvent: Decodable {
     }
 }
 
-public struct MQRemoteMessage: Decodable {
+public struct MQRemoteMessage: Decodable, Equatable {
     public let id: Int?
     public let device_id: String?
     public let account_id: String?
@@ -242,7 +242,7 @@ public struct MQRemoteMessage: Decodable {
     }
 }
 
-public struct MQRemoteDeletedMessage: Decodable {
+public struct MQRemoteDeletedMessage: Decodable, Equatable {
     public let id: Int?
     public let device_id: String?
     public let account_id: String?
@@ -293,7 +293,7 @@ public struct MQRemoteDeletedMessage: Decodable {
     }
 }
 
-public struct MQRemoteEditedMessage: Decodable {
+public struct MQRemoteEditedMessage: Decodable, Equatable {
     public let id: Int?
     public let device_id: String?
     public let account_id: String?
@@ -323,7 +323,7 @@ public struct MQRemoteEditedMessage: Decodable {
     }
 }
 
-public struct MQRemoteUserAction: Decodable {
+public struct MQRemoteUserAction: Decodable, Equatable {
     public let id: Int?
     public let device_id: String?
     public let account_id: String?
@@ -351,7 +351,7 @@ public struct MQRemoteUserAction: Decodable {
     }
 }
 
-public struct MQRemoteAccount: Decodable {
+public struct MQRemoteAccount: Decodable, Equatable {
     public let id: Int?
     public let device_id: String?
     public let account_id: String?
@@ -380,7 +380,7 @@ public struct MQRemoteAccount: Decodable {
     }
 }
 
-public struct MQRemoteStats: Decodable {
+public struct MQRemoteStats: Decodable, Equatable {
     public let total_events: Int?
     public let total_messages: Int?
     public let total_deleted: Int?
@@ -404,7 +404,7 @@ public struct MQRemoteStats: Decodable {
     }
 }
 
-public struct MQDatabaseSnapshot {
+public struct MQDatabaseSnapshot: Equatable {
     public let stats: MQRemoteStats
     public let recentEvents: [MQRemoteEvent]
     public let recentMessages: [MQRemoteMessage]

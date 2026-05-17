@@ -290,7 +290,7 @@ private final class DatabaseViewerArguments {
 
 // MARK: - State
 
-private struct DatabaseViewerState {
+private struct DatabaseViewerState: Equatable {
     var snapshot: MQDatabaseSnapshot
     var selectedTab: Int
     var autoRefresh: Bool
@@ -757,7 +757,7 @@ public func mqgramDatabaseViewerController(context: AccountContext) -> ViewContr
     }
 
     let controller = ItemListController(context: context, state: signal)
-    controller.didDisappear = { [weak controller] _ in
+    controller.didDisappear = { [weak controller] (_: Bool) in
         let _ = controller
         refreshTimerDisposable?.dispose()
         refreshTimerDisposable = nil
