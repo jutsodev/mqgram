@@ -568,15 +568,8 @@ public struct MQDeletedMessages {
             if let mediaType = filter.mediaType {
                 filtered = filtered.filter { msg in
                     for media in msg.media {
-                        switch mediaType {
-                        case "image": if media is TelegramMediaImage { return true }
-                        case "video": if let f = media as? TelegramMediaFile, f.isVideo { return true }
-                        case "voice": if let f = media as? TelegramMediaFile, f.isVoice { return true }
-                        case "file": if media is TelegramMediaFile { return true }
-                        case "sticker": if let f = media as? TelegramMediaFile, f.isSticker { return true }
-                        case "location": if media is TelegramMediaMap { return true }
-                        case "contact": if media is TelegramMediaContact { return true }
-                        default: break
+                        if let detected = mqMediaTypeName(media), detected == mediaType {
+                            return true
                         }
                     }
                     return false
@@ -625,24 +618,7 @@ public struct MQDeletedMessages {
                         } else {
                             mediaCount += 1
                             for media in message.media {
-                                let typeName: String
-                                if media is TelegramMediaImage {
-                                    typeName = "image"
-                                } else if let file = media as? TelegramMediaFile {
-                                    if file.isVideo { typeName = "video" }
-                                    else if file.isVoice { typeName = "voice" }
-                                    else if file.isSticker { typeName = "sticker" }
-                                    else if file.isMusic { typeName = "music" }
-                                    else { typeName = "file" }
-                                } else if media is TelegramMediaMap {
-                                    typeName = "location"
-                                } else if media is TelegramMediaContact {
-                                    typeName = "contact"
-                                } else if media is TelegramMediaPoll {
-                                    typeName = "poll"
-                                } else {
-                                    typeName = "other"
-                                }
+                                let typeName = mqMediaTypeName(media) ?? "other"
                                 mediaBreakdown[typeName, default: 0] += 1
                             }
                         }
@@ -867,7 +843,7 @@ public struct MQDeletedMessages {
                     var entry: [String: Any] = [
                         "message_id": Int(msg.id.id),
                         "peer_id": Int(msg.id.peerId.id._internalGetInt64Value()),
-                        "peer_name": peer?.debugDisplayTitle ?? "",
+                        "peer_name": peer.map { mqPeerDisplayName($0) } ?? "",
                         "text": msg.text,
                         "timestamp": Int(msg.timestamp),
                         "date": dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(msg.timestamp))),
@@ -878,7 +854,7 @@ public struct MQDeletedMessages {
                     if !attr.editHistory.isEmpty { entry["edit_history"] = attr.editHistory }
                     if let author = msg.author {
                         entry["author_id"] = Int(author.id.id._internalGetInt64Value())
-                        entry["author_name"] = author.debugDisplayTitle
+                        entry["author_name"] = mqPeerDisplayName(author)
                     }
                     entries.append(entry)
                 }
@@ -892,8 +868,8 @@ public struct MQDeletedMessages {
                 for msg in allMessages {
                     let attr = msg.mqDeletedAttribute
                     let peer = transaction.getPeer(msg.id.peerId)
-                    let peerName = (peer?.debugDisplayTitle ?? "").replacingOccurrences(of: ",", with: ";")
-                    let authorName = (msg.author?.debugDisplayTitle ?? "").replacingOccurrences(of: ",", with: ";")
+                    let peerName = (peer.map { mqPeerDisplayName($0) } ?? "").replacingOccurrences(of: ",", with: ";")
+                    let authorName = (msg.author.map { mqPeerDisplayName($0) } ?? "").replacingOccurrences(of: ",", with: ";")
                     let text = msg.text.replacingOccurrences(of: ",", with: ";").replacingOccurrences(of: "\n", with: " ")
                     let origText = (attr.originalText ?? "").replacingOccurrences(of: ",", with: ";").replacingOccurrences(of: "\n", with: " ")
                     let dateStr = dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(msg.timestamp)))
@@ -911,8 +887,8 @@ public struct MQDeletedMessages {
                 for msg in allMessages {
                     let attr = msg.mqDeletedAttribute
                     let peer = transaction.getPeer(msg.id.peerId)
-                    let peerName = peer?.debugDisplayTitle ?? "Unknown"
-                    let authorName = msg.author?.debugDisplayTitle ?? "Unknown"
+                    let peerName = peer.map { mqPeerDisplayName($0) } ?? "Unknown"
+                    let authorName = msg.author.map { mqPeerDisplayName($0) } ?? "Unknown"
                     let dateStr = dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(msg.timestamp)))
                     text += "[\(dateStr)] \(peerName) | \(authorName):\n"
                     if let ot = attr.originalText, ot != msg.text {
