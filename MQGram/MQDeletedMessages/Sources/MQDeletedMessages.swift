@@ -2,27 +2,32 @@
 // Comprehensive local database + remote sync for deleted/edited messages
 import Foundation
 import Postbox
-import TelegramCore
 import SwiftSignalKit
 import MQGramDatabase
 
 private func peerDisplayName(_ peer: Peer?) -> String {
     guard let peer = peer else { return "" }
-    if let user = peer as? TelegramUser {
-        let first = user.firstName ?? ""
-        let last = user.lastName ?? ""
+    switch peer.indexName {
+    case let .personName(first, last, _, _):
         if !first.isEmpty && !last.isEmpty {
             return "\(first) \(last)"
         }
         return first.isEmpty ? last : first
+    case let .title(title, _):
+        return title
     }
-    if let group = peer as? TelegramGroup {
-        return group.title
-    }
-    if let channel = peer as? TelegramChannel {
-        return channel.title
-    }
-    return ""
+}
+
+private func mediaTypeName(_ media: Media) -> String? {
+    let typeName = String(describing: type(of: media))
+    if typeName.contains("Image") { return "image" }
+    if typeName.contains("File") { return "file" }
+    if typeName.contains("Map") { return "location" }
+    if typeName.contains("Contact") { return "contact" }
+    if typeName.contains("Poll") { return "poll" }
+    if typeName.contains("Dice") { return "dice" }
+    if typeName.contains("Action") { return "action" }
+    return nil
 }
 
 private let messageNamespaceCloud: Int32 = 0
@@ -61,24 +66,7 @@ public struct MQDeletedMessageInfo {
         self.timestamp = message.timestamp
         self.deletedAt = deletedAt
         self.hasMedia = !message.media.isEmpty
-        self.mediaTypes = message.media.compactMap { media -> String? in
-            if media is TelegramMediaImage { return "image" }
-            if let file = media as? TelegramMediaFile {
-                if file.isVideo { return "video" }
-                if file.isVoice { return "voice" }
-                if file.isVideoMessage { return "video_message" }
-                if file.isSticker { return "sticker" }
-                if file.isAnimated { return "gif" }
-                if file.isMusic { return "music" }
-                return "file"
-            }
-            if media is TelegramMediaMap { return "location" }
-            if media is TelegramMediaContact { return "contact" }
-            if media is TelegramMediaPoll { return "poll" }
-            if media is TelegramMediaDice { return "dice" }
-            if media is TelegramMediaAction { return "action" }
-            return nil
-        }
+        self.mediaTypes = message.media.compactMap { mediaTypeName($0) }
         if let forwardInfo = message.forwardInfo {
             self.forwardAuthor = forwardInfo.author.flatMap { peerDisplayName($0) }
         } else {
