@@ -534,11 +534,19 @@ private func makeRecycleBinIcon() -> UIImage {
 private func mqgramEntries(settings: MQGramSettings, strings: PresentationStrings, tab: Int) -> [MQGramEntry] {
     let text = mqgramText(strings.baseLanguageCode)
     var entries: [MQGramEntry] = []
-    var id: Int32 = 10
+
+    // Each tab uses a unique stableId range so the list view treats tab
+    // switches as a full insert/delete instead of trying to diff entries
+    // that happen to share an integer id but mean different things.
+    //   tab 0 -> 1000..1999, tab 1 -> 2000..2999, ..., footer -> baseId + 999
+    let baseId: Int32 = Int32(1000 * (tab + 1))
+    var id: Int32 = baseId + 1
+    let infoId: Int32 = baseId
+    let footerId: Int32 = baseId + 999
 
     switch tab {
     case 0: // Ghost
-        entries.append(.info(1, text.ghostInfo))
+        entries.append(.info(infoId, text.ghostInfo))
         entries.append(.toggle(id, .ghostMode, text.ghostModeTitle, text.ghostModeText, settings.ghostMode)); id += 1
         entries.append(.toggle(id, .ghostReadReceipts, text.ghostReadReceiptsTitle, text.ghostReadReceiptsText, settings.ghostReadReceipts)); id += 1
         entries.append(.toggle(id, .readAfterActions, text.readAfterActionsTitle, text.readAfterActionsText, settings.readAfterActions)); id += 1
@@ -554,7 +562,7 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .ghostTypingActions, text.ghostTypingActionsTitle, text.ghostTypingActionsText, settings.ghostTypingActions))
 
     case 1: // Core
-        entries.append(.info(1, text.stableInfo))
+        entries.append(.info(infoId, text.stableInfo))
         entries.append(.toggle(id, .antiSelfDestruct, text.antiSelfDestructTitle, text.antiSelfDestructText, settings.antiSelfDestruct)); id += 1
         entries.append(.toggle(id, .antiRevoke, text.antiRevokeTitle, text.antiRevokeText, settings.antiRevoke)); id += 1
         entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators)); id += 1
@@ -563,14 +571,14 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.action(id, recycleBinTitle, makeRecycleBinIcon()))
 
     case 2: // Beta
-        entries.append(.info(1, text.betaInfo))
+        entries.append(.info(infoId, text.betaInfo))
         entries.append(.toggle(id, .contentProtectionBypass, text.contentProtectionTitle, text.contentProtectionText, settings.contentProtectionBypass)); id += 1
         entries.append(.toggle(id, .antiEdit, text.antiEditTitle, text.antiEditText, settings.antiEdit)); id += 1
         entries.append(.toggle(id, .disableAds, text.disableAdsTitle, text.disableAdsText, settings.disableAds)); id += 1
         entries.append(.toggle(id, .businessFeatures, text.businessFeaturesTitle, text.businessFeaturesText, settings.businessFeatures))
 
     case 3: // Other
-        entries.append(.info(1, text.otherInfo))
+        entries.append(.info(infoId, text.otherInfo))
         entries.append(.toggle(id, .localPremium, text.localPremiumTitle, text.localPremiumText, settings.localPremium)); id += 1
         entries.append(.toggle(id, .unlimitedAccounts, text.unlimitedAccountsTitle, text.unlimitedAccountsText, settings.unlimitedAccounts)); id += 1
         entries.append(.toggle(id, .hidePhoneNumber, text.hidePhoneNumberTitle, text.hidePhoneNumberText, settings.hidePhoneNumber)); id += 1
@@ -579,7 +587,7 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .pinWalletTab, text.pinWalletTabTitle, text.pinWalletTabText, settings.pinWalletTab))
 
     case 4: // Hide
-        entries.append(.info(1, text.hideInfo))
+        entries.append(.info(infoId, text.hideInfo))
         entries.append(.toggle(id, .hideNavigationBar, text.hideNavigationBarTitle, text.hideNavigationBarText, settings.hideNavigationBar)); id += 1
         entries.append(.toggle(id, .hideFavoriteChats, text.hideFavoriteChatsTitle, text.hideFavoriteChatsText, settings.hideFavoriteChats)); id += 1
         entries.append(.toggle(id, .hideRecentCalls, text.hideRecentCallsTitle, text.hideRecentCallsText, settings.hideRecentCalls)); id += 1
@@ -594,7 +602,7 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .hidePowerSaving, text.hidePowerSavingTitle, text.hidePowerSavingText, settings.hidePowerSaving))
 
     case 5: // Developer
-        entries.append(.info(1, text.devInfo))
+        entries.append(.info(infoId, text.devInfo))
         // GitHub - in built-in browser (inTelegram: false)
         entries.append(.link(id, "GitHub", "https://github.com/jutsodev", false, makeGitHubIcon())); id += 1
         // All Telegram links - open inside Telegram (inTelegram: true)
@@ -606,7 +614,7 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         break
     }
 
-    entries.append(.footer(9999, text.footer))
+    entries.append(.footer(footerId, text.footer))
     return entries
 }
 
