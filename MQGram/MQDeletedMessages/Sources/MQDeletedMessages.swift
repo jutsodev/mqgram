@@ -2,8 +2,28 @@
 // Comprehensive local database + remote sync for deleted/edited messages
 import Foundation
 import Postbox
+import TelegramCore
 import SwiftSignalKit
 import MQGramDatabase
+
+private func peerDisplayName(_ peer: Peer?) -> String {
+    guard let peer = peer else { return "" }
+    if let user = peer as? TelegramUser {
+        let first = user.firstName ?? ""
+        let last = user.lastName ?? ""
+        if !first.isEmpty && !last.isEmpty {
+            return "\(first) \(last)"
+        }
+        return first.isEmpty ? last : first
+    }
+    if let group = peer as? TelegramGroup {
+        return group.title
+    }
+    if let channel = peer as? TelegramChannel {
+        return channel.title
+    }
+    return ""
+}
 
 private let messageNamespaceCloud: Int32 = 0
 private let messageNamespaceSavedDeleted: Int32 = 1338
@@ -32,7 +52,7 @@ public struct MQDeletedMessageInfo {
         self.messageId = message.id
         self.peerId = message.id.peerId
         self.authorId = message.author?.id
-        self.authorName = message.author?.displayTitle(strings: nil, displayOrder: .firstLast) ?? nil
+        self.authorName = message.author.flatMap { peerDisplayName($0) }
         self.peerName = nil
         self.text = message.text
         let attr = message.mqDeletedAttribute
@@ -60,7 +80,7 @@ public struct MQDeletedMessageInfo {
             return nil
         }
         if let forwardInfo = message.forwardInfo {
-            self.forwardAuthor = forwardInfo.author?.displayTitle(strings: nil, displayOrder: .firstLast)
+            self.forwardAuthor = forwardInfo.author.flatMap { peerDisplayName($0) }
         } else {
             self.forwardAuthor = nil
         }
@@ -860,7 +880,7 @@ public struct MQDeletedMessages {
                     var entry: [String: Any] = [
                         "message_id": Int(msg.id.id),
                         "peer_id": Int(msg.id.peerId.id._internalGetInt64Value()),
-                        "peer_name": peer?.displayTitle(strings: nil, displayOrder: .firstLast) ?? "",
+                        "peer_name": peerDisplayName(peer),
                         "text": msg.text,
                         "timestamp": Int(msg.timestamp),
                         "date": dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(msg.timestamp))),
@@ -871,7 +891,7 @@ public struct MQDeletedMessages {
                     if !attr.editHistory.isEmpty { entry["edit_history"] = attr.editHistory }
                     if let author = msg.author {
                         entry["author_id"] = Int(author.id.id._internalGetInt64Value())
-                        entry["author_name"] = author.displayTitle(strings: nil, displayOrder: .firstLast)
+                        entry["author_name"] = peerDisplayName(author)
                     }
                     entries.append(entry)
                 }
@@ -885,8 +905,8 @@ public struct MQDeletedMessages {
                 for msg in allMessages {
                     let attr = msg.mqDeletedAttribute
                     let peer = transaction.getPeer(msg.id.peerId)
-                    let peerName = (peer?.displayTitle(strings: nil, displayOrder: .firstLast) ?? "").replacingOccurrences(of: ",", with: ";")
-                    let authorName = (msg.author?.displayTitle(strings: nil, displayOrder: .firstLast) ?? "").replacingOccurrences(of: ",", with: ";")
+                    let peerName = peerDisplayName(peer).replacingOccurrences(of: ",", with: ";")
+                    let authorName = peerDisplayName(msg.author).replacingOccurrences(of: ",", with: ";")
                     let text = msg.text.replacingOccurrences(of: ",", with: ";").replacingOccurrences(of: "\n", with: " ")
                     let origText = (attr.originalText ?? "").replacingOccurrences(of: ",", with: ";").replacingOccurrences(of: "\n", with: " ")
                     let dateStr = dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(msg.timestamp)))
@@ -904,8 +924,10 @@ public struct MQDeletedMessages {
                 for msg in allMessages {
                     let attr = msg.mqDeletedAttribute
                     let peer = transaction.getPeer(msg.id.peerId)
-                    let peerName = peer?.displayTitle(strings: nil, displayOrder: .firstLast) ?? "Unknown"
-                    let authorName = msg.author?.displayTitle(strings: nil, displayOrder: .firstLast) ?? "Unknown"
+                    let pn = peerDisplayName(peer)
+                    let peerName = pn.isEmpty ? "Unknown" : pn
+                    let an = peerDisplayName(msg.author)
+                    let authorName = an.isEmpty ? "Unknown" : an
                     let dateStr = dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(msg.timestamp)))
                     text += "[\(dateStr)] \(peerName) | \(authorName):\n"
                     if let ot = attr.originalText, ot != msg.text {
