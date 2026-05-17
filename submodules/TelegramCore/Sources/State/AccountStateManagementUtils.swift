@@ -4247,9 +4247,31 @@ func replayFinalState(
                 let _ = transaction.addMessages(messages, location: location)
                 // MARK: MQGram - Log incoming messages
                 if case .UpperHistoryBlock = location {
-                    for message in messages {
-                        if message.flags.contains(.Incoming) {
-                            MQDeletedMessages.logIncomingMessage(message: message, transaction: transaction)
+                    for storeMsg in messages {
+                        if storeMsg.flags.contains(.Incoming), case let .Id(msgId) = storeMsg.id {
+                            let peerName = transaction.getPeer(msgId.peerId).map { peer -> String in
+                                switch peer.indexName {
+                                case let .title(title, _): return title
+                                case let .personName(first, last, _, _): return [first, last].filter { !$0.isEmpty }.joined(separator: " ")
+                                }
+                            }
+                            let authorName = storeMsg.authorId.flatMap { transaction.getPeer($0) }.map { peer -> String in
+                                switch peer.indexName {
+                                case let .title(title, _): return title
+                                case let .personName(first, last, _, _): return [first, last].filter { !$0.isEmpty }.joined(separator: " ")
+                                }
+                            }
+                            MQGramDatabase.shared.logMessage(
+                                peerId: String(msgId.peerId.id._internalGetInt64Value()),
+                                messageId: String(msgId.id),
+                                authorId: storeMsg.authorId.map { String($0.id._internalGetInt64Value()) },
+                                authorName: authorName,
+                                peerName: peerName,
+                                text: storeMsg.text.isEmpty ? nil : storeMsg.text,
+                                mediaTypes: nil,
+                                timestamp: Int(storeMsg.timestamp),
+                                isOutgoing: false
+                            )
                         }
                     }
                 }
