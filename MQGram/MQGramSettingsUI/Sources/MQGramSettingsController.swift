@@ -7,16 +7,19 @@ import TelegramPresentationData
 import ItemListUI
 import PresentationDataUtils
 import AccountContext
+import MQDeletedMessagesUI
 
 // MARK: - Arguments
 
 private final class MQGramArguments {
     let toggleSetting: (MQGramSettings.Key, Bool) -> Void
     let openUrl: (String, Bool) -> Void
+    let openRecycleBin: () -> Void
 
-    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openUrl: @escaping (String, Bool) -> Void) {
+    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openUrl: @escaping (String, Bool) -> Void, openRecycleBin: @escaping () -> Void) {
         self.toggleSetting = toggleSetting
         self.openUrl = openUrl
+        self.openRecycleBin = openRecycleBin
     }
 }
 
@@ -26,6 +29,7 @@ private enum MQGramEntry: ItemListNodeEntry {
     case info(Int32, String)
     case toggle(Int32, MQGramSettings.Key, String, String?, Bool)
     case link(Int32, String, String, Bool, UIImage?)
+    case action(Int32, String, UIImage?)
     case footer(Int32, String)
 
     var section: ItemListSectionId {
@@ -45,6 +49,8 @@ private enum MQGramEntry: ItemListNodeEntry {
             return id
         case let .link(id, _, _, _, _):
             return id
+        case let .action(id, _, _):
+            return id
         case let .footer(id, _):
             return id
         }
@@ -59,6 +65,8 @@ private enum MQGramEntry: ItemListNodeEntry {
                lId == rId, lKey == rKey, lTitle == rTitle, lText == rText, lValue == rValue { return true } else { return false }
         case let .link(lId, lTitle, lUrl, lInTg, _):
             if case let .link(rId, rTitle, rUrl, rInTg, _) = rhs, lId == rId, lTitle == rTitle, lUrl == rUrl, lInTg == rInTg { return true } else { return false }
+        case let .action(lId, lTitle, _):
+            if case let .action(rId, rTitle, _) = rhs, lId == rId, lTitle == rTitle { return true } else { return false }
         case let .footer(lId, lText):
             if case let .footer(rId, rText) = rhs, lId == rId, lText == rText { return true } else { return false }
         }
@@ -97,6 +105,19 @@ private enum MQGramEntry: ItemListNodeEntry {
                 disclosureStyle: .arrow,
                 action: {
                     args.openUrl(url, inTelegram)
+                }
+            )
+        case let .action(_, title, icon):
+            return ItemListDisclosureItem(
+                presentationData: presentationData,
+                icon: icon,
+                title: title,
+                label: "",
+                sectionId: self.section,
+                style: .blocks,
+                disclosureStyle: .arrow,
+                action: {
+                    args.openRecycleBin()
                 }
             )
         case let .footer(_, text):
@@ -491,6 +512,23 @@ private func makeBotIcon() -> UIImage {
     }
 }
 
+private func makeRecycleBinIcon() -> UIImage {
+    return makeRoundedIcon(backgroundColor: UIColor(red: 0.90, green: 0.22, blue: 0.21, alpha: 1.0)) { _, rect in
+        let cx = rect.midX
+        let cy = rect.midY
+        UIColor.white.setFill()
+        UIColor.white.setStroke()
+        let lid = UIBezierPath(roundedRect: CGRect(x: cx - 7, y: cy - 7, width: 14, height: 3), cornerRadius: 1)
+        lid.fill()
+        let body = UIBezierPath(roundedRect: CGRect(x: cx - 5.5, y: cy - 4, width: 11, height: 11), cornerRadius: 1.5)
+        body.fill()
+        UIColor(red: 0.90, green: 0.22, blue: 0.21, alpha: 1.0).setFill()
+        for xOff: CGFloat in [-2.5, 0, 2.5] {
+            UIBezierPath(roundedRect: CGRect(x: cx + xOff - 0.5, y: cy - 1, width: 1, height: 6), cornerRadius: 0.5).fill()
+        }
+    }
+}
+
 // MARK: - Entry Generation
 
 private func mqgramEntries(settings: MQGramSettings, strings: PresentationStrings, tab: Int) -> [MQGramEntry] {
@@ -520,7 +558,9 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .antiSelfDestruct, text.antiSelfDestructTitle, text.antiSelfDestructText, settings.antiSelfDestruct)); id += 1
         entries.append(.toggle(id, .antiRevoke, text.antiRevokeTitle, text.antiRevokeText, settings.antiRevoke)); id += 1
         entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators)); id += 1
-        entries.append(.toggle(id, .redDeleteIcon, text.redDeleteIconTitle, text.redDeleteIconText, settings.redDeleteIcon))
+        entries.append(.toggle(id, .redDeleteIcon, text.redDeleteIconTitle, text.redDeleteIconText, settings.redDeleteIcon)); id += 1
+        let recycleBinTitle = strings.baseLanguageCode.lowercased().hasPrefix("ru") ? "Корзина удалённых" : "Recycle Bin"
+        entries.append(.action(id, recycleBinTitle, makeRecycleBinIcon()))
 
     case 2: // Beta
         entries.append(.info(1, text.betaInfo))
@@ -577,6 +617,7 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
     let tabIndexPromise = ValuePromise<Int>(0, ignoreRepeated: false)
 
     var openUrlImpl: ((String, Bool) -> Void)?
+    var openRecycleBinImpl: (() -> Void)?
 
     let arguments = MQGramArguments(
         toggleSetting: { key, value in
@@ -585,6 +626,9 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
         },
         openUrl: { url, inTelegram in
             openUrlImpl?(url, inTelegram)
+        },
+        openRecycleBin: {
+            openRecycleBinImpl?()
         }
     )
 
@@ -634,6 +678,11 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
             navigationController: navigationController,
             dismissInput: {}
         )
+    }
+
+    openRecycleBinImpl = { [weak controller] in
+        let recycleBinController = savedDeletedMessagesListController(context: context)
+        controller?.navigationController?.pushViewController(recycleBinController, animated: true)
     }
 
     return controller

@@ -2,6 +2,7 @@ import Foundation
 import Postbox
 import SwiftSignalKit
 import TelegramApi
+import MQDeletedMessages
 
 func addMessageMediaResourceIdsToRemove(media: Media, resourceIds: inout [MediaResourceId]) {
     if let image = media as? TelegramMediaImage {
@@ -22,10 +23,12 @@ func addMessageMediaResourceIdsToRemove(message: Message, resourceIds: inout [Me
     }
 }
 
-public func _internal_deleteMessages(transaction: Transaction, mediaBox: MediaBox, ids: [MessageId], deleteMedia: Bool = true, manualAddMessageThreadStatsDifference: ((MessageThreadKey, Int, Int) -> Void)? = nil) {
+// MARK: MQGram - Force-delete message ids (bypasses saved deleted messages).
+public func _internal_forceDeleteMessages(transaction: Transaction, mediaBox: MediaBox, ids: [MessageId], deleteMedia: Bool = true, manualAddMessageThreadStatsDifference: ((MessageThreadKey, Int, Int) -> Void)? = nil) -> [MessageId] {
+    let idsToDelete = ids
     var resourceIds: [MediaResourceId] = []
     if deleteMedia {
-        for id in ids {
+        for id in idsToDelete {
             if id.peerId.namespace == Namespaces.Peer.SecretChat {
                 if let message = transaction.getMessage(id) {
                     addMessageMediaResourceIdsToRemove(message: message, resourceIds: &resourceIds)
@@ -36,7 +39,7 @@ public func _internal_deleteMessages(transaction: Transaction, mediaBox: MediaBo
     if !resourceIds.isEmpty {
         let _ = mediaBox.removeCachedResources(Array(Set(resourceIds)), force: true).start()
     }
-    for id in ids {
+    for id in idsToDelete {
         if id.peerId.namespace == Namespaces.Peer.CloudChannel && id.namespace == Namespaces.Message.Cloud {
             if let message = transaction.getMessage(id) {
                 if let threadId = message.threadId {
@@ -52,8 +55,99 @@ public func _internal_deleteMessages(transaction: Transaction, mediaBox: MediaBo
             }
         }
     }
-    transaction.deleteMessages(ids, forEachMedia: { _ in
+    transaction.deleteMessages(idsToDelete, forEachMedia: { _ in
     })
+    return idsToDelete
+}
+
+// MARK: MQGram - Save snapshots before deleting (AyuGram-style)
+@discardableResult
+public func _internal_deleteMessages(transaction: Transaction, mediaBox: MediaBox, ids: [MessageId], deleteMedia: Bool = true, manualAddMessageThreadStatsDifference: ((MessageThreadKey, Int, Int) -> Void)? = nil) -> [MessageId] {
+    // MQGram: save snapshots of messages before deleting them
+    let _ = MQDeletedMessages.saveSnapshots(ids: ids, transaction: transaction)
+    let idsToDelete = ids
+    var resourceIds: [MediaResourceId] = []
+    if deleteMedia {
+        for id in idsToDelete {
+            if id.peerId.namespace == Namespaces.Peer.SecretChat {
+                if let message = transaction.getMessage(id) {
+                    addMessageMediaResourceIdsToRemove(message: message, resourceIds: &resourceIds)
+                }
+            }
+        }
+    }
+    if !resourceIds.isEmpty {
+        let _ = mediaBox.removeCachedResources(Array(Set(resourceIds)), force: true).start()
+    }
+    for id in idsToDelete {
+        if id.peerId.namespace == Namespaces.Peer.CloudChannel && id.namespace == Namespaces.Message.Cloud {
+            if let message = transaction.getMessage(id) {
+                if let threadId = message.threadId {
+                    let messageThreadKey = MessageThreadKey(peerId: message.id.peerId, threadId: threadId)
+                    if id.peerId.namespace == Namespaces.Peer.CloudChannel {
+                        if let manualAddMessageThreadStatsDifference = manualAddMessageThreadStatsDifference {
+                            manualAddMessageThreadStatsDifference(messageThreadKey, 0, 1)
+                        } else {
+                            updateMessageThreadStats(transaction: transaction, threadKey: messageThreadKey, removedCount: 1, addedMessagePeers: [])
+                        }
+                    }
+                }
+            }
+        }
+    }
+    transaction.deleteMessages(idsToDelete, forEachMedia: { _ in
+    })
+    return idsToDelete
+}
+
+// MARK: MQGram - Safely delete messages in range, preserving saved deleted messages
+func _internal_deleteMessagesInRangeSafely(transaction: Transaction, mediaBox: MediaBox, peerId: PeerId, namespace: MessageId.Namespace, minId: MessageId.Id, maxId: MessageId.Id, forEachMedia: ((Media) -> Void)?) {
+    guard MQDeletedMessages.showDeletedMessages else {
+        var resourceIds: [MediaResourceId] = []
+        transaction.deleteMessagesInRange(peerId: peerId, namespace: namespace, minId: minId, maxId: maxId, forEachMedia: { media in
+            addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
+            forEachMedia?(media)
+        })
+        if !resourceIds.isEmpty {
+            let _ = mediaBox.removeCachedResources(Array(Set(resourceIds)), force: true).start()
+        }
+        return
+    }
+
+    var messageIdsInRange: [MessageId] = []
+    transaction.withAllMessages(peerId: peerId, namespace: namespace, reversed: false) { message in
+        if message.id.id > maxId {
+            return false
+        }
+        if message.id.id >= minId {
+            messageIdsInRange.append(message.id)
+        }
+        return true
+    }
+
+    var idsToDelete: [MessageId] = []
+    var resourceIds: [MediaResourceId] = []
+
+    for messageId in messageIdsInRange {
+        if let message = transaction.getMessage(messageId) {
+            let isSaved = message.mqDeletedAttribute.isDeleted
+            if !isSaved {
+                idsToDelete.append(messageId)
+                for media in message.media {
+                    addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
+                    forEachMedia?(media)
+                }
+            }
+        }
+    }
+
+    if !idsToDelete.isEmpty {
+        _ = _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: idsToDelete, deleteMedia: false)
+    }
+
+    if !resourceIds.isEmpty {
+        let _ = mediaBox.removeCachedResources(Array(Set(resourceIds)), force: true).start()
+    }
 }
 
 func _internal_deleteAllMessagesWithAuthor(transaction: Transaction, mediaBox: MediaBox, peerId: PeerId, authorId: PeerId, namespace: MessageId.Namespace) {
