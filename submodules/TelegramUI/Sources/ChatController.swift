@@ -8512,7 +8512,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                     attributes.append(PaidStarsMessageAttribute(stars: sendPaidMessageStars, postponeSending: effectivePostpone))
                 }
                 
-                if silentPosting || scheduleTime != nil {
+                if silentPosting || scheduleTime != nil || UserDefaults.standard.bool(forKey: "MQGram.silentMessages") {
                     for i in (0 ..< attributes.count).reversed() {
                         if attributes[i] is NotificationInfoMessageAttribute {
                             attributes.remove(at: i)
@@ -8520,7 +8520,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             attributes.remove(at: i)
                         }
                     }
-                    if silentPosting {
+                    if silentPosting || UserDefaults.standard.bool(forKey: "MQGram.silentMessages") {
                         attributes.append(NotificationInfoMessageAttribute(flags: .muted))
                     }
                     if let scheduleTime {
