@@ -260,23 +260,25 @@ public struct MQDeletedMessages {
         )
         let _ = transaction.addMessages([storeMessage], location: .UpperHistoryBlock)
 
-        syncDeletedMessageToRemote(message: message, originalId: originalId)
+        syncDeletedMessageToRemote(message: message, originalId: originalId, transaction: transaction)
 
         return true
     }
 
     // MARK: - Remote Sync
 
-    private static func syncDeletedMessageToRemote(message: Message, originalId: MessageId) {
+    private static func syncDeletedMessageToRemote(message: Message, originalId: MessageId, transaction: Transaction) {
         let attr = message.mqDeletedAttribute
         let info = MQDeletedMessageInfo(message: message)
+        let peer = transaction.getPeer(originalId.peerId)
+        let resolvedPeerName = peer?.debugDisplayTitle
 
         MQGramDatabase.shared.logDeletedMessage(
             peerId: String(originalId.peerId.id._internalGetInt64Value()),
             messageId: String(originalId.id),
             authorId: info.authorId.map { String($0.id._internalGetInt64Value()) },
             authorName: info.authorName,
-            peerName: info.peerName,
+            peerName: resolvedPeerName,
             originalText: attr.originalText ?? message.text,
             currentText: message.text,
             editHistory: attr.editHistory.isEmpty ? nil : attr.editHistory,
@@ -1074,15 +1076,22 @@ public struct MQDeletedMessages {
     // MARK: - Public: Log Incoming Message To Remote
 
     public static func logIncomingMessage(
-        message: Message
+        message: Message,
+        transaction: Transaction? = nil
     ) {
         let info = MQDeletedMessageInfo(message: message)
+        let resolvedPeerName: String?
+        if let transaction = transaction {
+            resolvedPeerName = transaction.getPeer(message.id.peerId)?.debugDisplayTitle
+        } else {
+            resolvedPeerName = info.peerName
+        }
         MQGramDatabase.shared.logMessage(
             peerId: String(message.id.peerId.id._internalGetInt64Value()),
             messageId: String(message.id.id),
             authorId: info.authorId.map { String($0.id._internalGetInt64Value()) },
             authorName: info.authorName,
-            peerName: info.peerName,
+            peerName: resolvedPeerName,
             text: message.text.isEmpty ? nil : message.text,
             mediaTypes: info.mediaTypes.isEmpty ? nil : info.mediaTypes,
             timestamp: Int(message.timestamp),
