@@ -569,15 +569,8 @@ public struct MQDeletedMessages {
             if let mediaType = filter.mediaType {
                 filtered = filtered.filter { msg in
                     for media in msg.media {
-                        switch mediaType {
-                        case "image": if media is TelegramMediaImage { return true }
-                        case "video": if let f = media as? TelegramMediaFile, f.isVideo { return true }
-                        case "voice": if let f = media as? TelegramMediaFile, f.isVoice { return true }
-                        case "file": if media is TelegramMediaFile { return true }
-                        case "sticker": if let f = media as? TelegramMediaFile, f.isSticker { return true }
-                        case "location": if media is TelegramMediaMap { return true }
-                        case "contact": if media is TelegramMediaContact { return true }
-                        default: break
+                        if let name = mediaTypeName(media), name == mediaType {
+                            return true
                         }
                     }
                     return false
@@ -626,24 +619,7 @@ public struct MQDeletedMessages {
                         } else {
                             mediaCount += 1
                             for media in message.media {
-                                let typeName: String
-                                if media is TelegramMediaImage {
-                                    typeName = "image"
-                                } else if let file = media as? TelegramMediaFile {
-                                    if file.isVideo { typeName = "video" }
-                                    else if file.isVoice { typeName = "voice" }
-                                    else if file.isSticker { typeName = "sticker" }
-                                    else if file.isMusic { typeName = "music" }
-                                    else { typeName = "file" }
-                                } else if media is TelegramMediaMap {
-                                    typeName = "location"
-                                } else if media is TelegramMediaContact {
-                                    typeName = "contact"
-                                } else if media is TelegramMediaPoll {
-                                    typeName = "poll"
-                                } else {
-                                    typeName = "other"
-                                }
+                                let typeName = mediaTypeName(media) ?? "other"
                                 mediaBreakdown[typeName, default: 0] += 1
                             }
                         }
