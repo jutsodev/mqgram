@@ -24,6 +24,7 @@ swift_library(
         "-warnings-as-errors",
     ],
     deps = sgdeps + [
+        "//MQGram/MQDeletedMessages:MQDeletedMessages",
         "//submodules/TelegramApi:TelegramApi",
         "//submodules/MtProtoKit:MtProtoKit",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
