@@ -8,6 +8,7 @@ import ItemListUI
 import PresentationDataUtils
 import AccountContext
 import MQDeletedMessagesUI
+import MQGramDatabase
 
 // MARK: - Arguments
 
@@ -15,11 +16,42 @@ private final class MQGramArguments {
     let toggleSetting: (MQGramSettings.Key, Bool) -> Void
     let openUrl: (String, Bool) -> Void
     let openRecycleBin: () -> Void
+    let openDatabaseViewer: () -> Void
+    let toggleDatabaseCollection: (Bool) -> Void
+    let resetAllSettings: () -> Void
+    let enableAllGhost: () -> Void
+    let disableAllGhost: () -> Void
+    let showGhostStatus: () -> Void
+    let enableAllHide: () -> Void
+    let disableAllHide: () -> Void
+    let showFeatureInfo: (String) -> Void
 
-    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openUrl: @escaping (String, Bool) -> Void, openRecycleBin: @escaping () -> Void) {
+    init(
+        toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void,
+        openUrl: @escaping (String, Bool) -> Void,
+        openRecycleBin: @escaping () -> Void,
+        openDatabaseViewer: @escaping () -> Void,
+        toggleDatabaseCollection: @escaping (Bool) -> Void,
+        resetAllSettings: @escaping () -> Void,
+        enableAllGhost: @escaping () -> Void,
+        disableAllGhost: @escaping () -> Void,
+        showGhostStatus: @escaping () -> Void,
+        enableAllHide: @escaping () -> Void,
+        disableAllHide: @escaping () -> Void,
+        showFeatureInfo: @escaping (String) -> Void
+    ) {
         self.toggleSetting = toggleSetting
         self.openUrl = openUrl
         self.openRecycleBin = openRecycleBin
+        self.openDatabaseViewer = openDatabaseViewer
+        self.toggleDatabaseCollection = toggleDatabaseCollection
+        self.resetAllSettings = resetAllSettings
+        self.enableAllGhost = enableAllGhost
+        self.disableAllGhost = disableAllGhost
+        self.showGhostStatus = showGhostStatus
+        self.enableAllHide = enableAllHide
+        self.disableAllHide = disableAllHide
+        self.showFeatureInfo = showFeatureInfo
     }
 }
 
@@ -30,6 +62,10 @@ private enum MQGramEntry: ItemListNodeEntry {
     case toggle(Int32, MQGramSettings.Key, String, String?, Bool)
     case link(Int32, String, String, Bool, UIImage?)
     case action(Int32, String, UIImage?)
+    case databaseAction(Int32, String, UIImage?)
+    case databaseToggle(Int32, String, Bool)
+    case bulkAction(Int32, String, String)
+    case statusRow(Int32, String, String)
     case footer(Int32, String)
 
     var section: ItemListSectionId {
@@ -41,6 +77,10 @@ private enum MQGramEntry: ItemListNodeEntry {
         }
     }
 
+    var sortOrder: Int32 {
+        return stableId
+    }
+
     var stableId: Int32 {
         switch self {
         case let .info(id, _):
@@ -50,6 +90,14 @@ private enum MQGramEntry: ItemListNodeEntry {
         case let .link(id, _, _, _, _):
             return id
         case let .action(id, _, _):
+            return id
+        case let .databaseAction(id, _, _):
+            return id
+        case let .databaseToggle(id, _, _):
+            return id
+        case let .bulkAction(id, _, _):
+            return id
+        case let .statusRow(id, _, _):
             return id
         case let .footer(id, _):
             return id
@@ -67,6 +115,14 @@ private enum MQGramEntry: ItemListNodeEntry {
             if case let .link(rId, rTitle, rUrl, rInTg, _) = rhs, lId == rId, lTitle == rTitle, lUrl == rUrl, lInTg == rInTg { return true } else { return false }
         case let .action(lId, lTitle, _):
             if case let .action(rId, rTitle, _) = rhs, lId == rId, lTitle == rTitle { return true } else { return false }
+        case let .databaseAction(lId, lTitle, _):
+            if case let .databaseAction(rId, rTitle, _) = rhs, lId == rId, lTitle == rTitle { return true } else { return false }
+        case let .databaseToggle(lId, lTitle, lValue):
+            if case let .databaseToggle(rId, rTitle, rValue) = rhs, lId == rId, lTitle == rTitle, lValue == rValue { return true } else { return false }
+        case let .bulkAction(lId, lTitle, lType):
+            if case let .bulkAction(rId, rTitle, rType) = rhs, lId == rId, lTitle == rTitle, lType == rType { return true } else { return false }
+        case let .statusRow(lId, lTitle, lValue):
+            if case let .statusRow(rId, rTitle, rValue) = rhs, lId == rId, lTitle == rTitle, lValue == rValue { return true } else { return false }
         case let .footer(lId, lText):
             if case let .footer(rId, rText) = rhs, lId == rId, lText == rText { return true } else { return false }
         }
@@ -119,6 +175,67 @@ private enum MQGramEntry: ItemListNodeEntry {
                 action: {
                     args.openRecycleBin()
                 }
+            )
+        case let .databaseAction(_, title, icon):
+            return ItemListDisclosureItem(
+                presentationData: presentationData,
+                icon: icon,
+                title: title,
+                label: "",
+                sectionId: self.section,
+                style: .blocks,
+                disclosureStyle: .arrow,
+                action: {
+                    args.openDatabaseViewer()
+                }
+            )
+        case let .databaseToggle(_, title, value):
+            return ItemListSwitchItem(
+                presentationData: presentationData,
+                title: title,
+                value: value,
+                sectionId: self.section,
+                style: .blocks,
+                updated: { newValue in
+                    args.toggleDatabaseCollection(newValue)
+                }
+            )
+        case let .bulkAction(_, title, actionType):
+            return ItemListActionItem(
+                presentationData: presentationData,
+                title: title,
+                kind: actionType == "destructive" ? .destructive : .generic,
+                alignment: .center,
+                sectionId: self.section,
+                style: .blocks,
+                action: {
+                    switch actionType {
+                    case "enableAllGhost":
+                        args.enableAllGhost()
+                    case "disableAllGhost":
+                        args.disableAllGhost()
+                    case "showGhostStatus":
+                        args.showGhostStatus()
+                    case "enableAllHide":
+                        args.enableAllHide()
+                    case "disableAllHide":
+                        args.disableAllHide()
+                    case "resetAll":
+                        args.resetAllSettings()
+                    default:
+                        break
+                    }
+                }
+            )
+        case let .statusRow(_, title, value):
+            return ItemListDisclosureItem(
+                presentationData: presentationData,
+                title: title,
+                label: value,
+                sectionId: self.section,
+                style: .blocks,
+                disclosureStyle: .none,
+                action: nil
             )
         case let .footer(_, text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
@@ -216,6 +333,17 @@ private struct MQGramText {
     let devDeveloper: String
     let devChannel: String
     let devBot: String
+    let databaseInfo: String
+    let databaseViewerTitle: String
+    let databaseCollectionTitle: String
+    let databaseCollectionText: String
+    let enableAllGhostTitle: String
+    let disableAllGhostTitle: String
+    let ghostStatusTitle: String
+    let enableAllHideTitle: String
+    let disableAllHideTitle: String
+    let resetAllTitle: String
+    let recycleBinTitle: String
     let footer: String
 }
 
@@ -309,6 +437,17 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             devDeveloper: "Разработчик",
             devChannel: "Канал StivenVPN",
             devBot: "Бот StivenVPN",
+            databaseInfo: "Просмотр базы данных MQGram в реальном времени.",
+            databaseViewerTitle: "Просмотр базы данных",
+            databaseCollectionTitle: "Сбор данных",
+            databaseCollectionText: "Включает отправку событий и сообщений на сервер MQGram.",
+            enableAllGhostTitle: "Включить все призрак-функции",
+            disableAllGhostTitle: "Выключить все призрак-функции",
+            ghostStatusTitle: "Статус режима призрака",
+            enableAllHideTitle: "Скрыть все элементы",
+            disableAllHideTitle: "Показать все элементы",
+            resetAllTitle: "Сбросить все настройки",
+            recycleBinTitle: "Корзина удалённых сообщений",
             footer: "Функции MQGram. Для части изменений перезапусти приложение."
         )
     }
@@ -400,6 +539,17 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         devDeveloper: "Developer",
         devChannel: "StivenVPN Channel",
         devBot: "StivenVPN Bot",
+        databaseInfo: "View MQGram database in real-time.",
+        databaseViewerTitle: "Database Viewer",
+        databaseCollectionTitle: "Data Collection",
+        databaseCollectionText: "Enable sending events and messages to MQGram server.",
+        enableAllGhostTitle: "Enable All Ghost Features",
+        disableAllGhostTitle: "Disable All Ghost Features",
+        ghostStatusTitle: "Ghost Mode Status",
+        enableAllHideTitle: "Hide All Elements",
+        disableAllHideTitle: "Show All Elements",
+        resetAllTitle: "Reset All Settings",
+        recycleBinTitle: "Deleted Messages Recycle Bin",
         footer: "MQGram features. Restart the app to apply some changes."
     )
 }
@@ -531,14 +681,75 @@ private func makeRecycleBinIcon() -> UIImage {
 
 // MARK: - Entry Generation
 
+// MARK: - Database Icon
+
+private func makeDatabaseIcon() -> UIImage {
+    return makeRoundedIcon(backgroundColor: UIColor(red: 0.0, green: 0.48, blue: 1.0, alpha: 1.0)) { ctx, rect in
+        ctx.setStrokeColor(UIColor.white.cgColor)
+        ctx.setLineWidth(1.4)
+        let cx = rect.midX
+        let cy = rect.midY
+        let w: CGFloat = 12
+        let h: CGFloat = 3
+        // top ellipse
+        ctx.addEllipse(in: CGRect(x: cx - w/2, y: cy - 5, width: w, height: h))
+        ctx.strokePath()
+        // sides
+        ctx.move(to: CGPoint(x: cx - w/2, y: cy - 3.5))
+        ctx.addLine(to: CGPoint(x: cx - w/2, y: cy + 3.5))
+        ctx.move(to: CGPoint(x: cx + w/2, y: cy - 3.5))
+        ctx.addLine(to: CGPoint(x: cx + w/2, y: cy + 3.5))
+        ctx.strokePath()
+        // middle ellipse
+        ctx.addEllipse(in: CGRect(x: cx - w/2, y: cy - 1.5, width: w, height: h))
+        ctx.strokePath()
+        // bottom ellipse
+        ctx.addEllipse(in: CGRect(x: cx - w/2, y: cy + 2, width: w, height: h))
+        ctx.strokePath()
+    }
+}
+
+// MARK: - Ghost Status Helpers
+
+private func ghostEnabledCount(settings: MQGramSettings) -> Int {
+    let ghostKeys: [MQGramSettings.Key] = [
+        .ghostMode, .ghostReadReceipts, .ghostStories, .ghostContentReads,
+        .ghostPersonalActions, .ghostScreenshots, .ghostDrafts, .ghostEmojiInteractions,
+        .ghostReactions, .ghostStickerActivity, .ghostOnlineStatus, .ghostTypingActions,
+        .readAfterActions
+    ]
+    return ghostKeys.filter { settings.bool(for: $0) }.count
+}
+
+private func hideEnabledCount(settings: MQGramSettings) -> Int {
+    let hideKeys: [MQGramSettings.Key] = [
+        .hideNavigationBar, .hideFavoriteChats, .hideRecentCalls, .hideDevices,
+        .hideChatFolders, .hideNotificationsSettings, .hidePrivacySettings,
+        .hideDataSettings, .hideAppearanceSettings, .hideLanguageSettings,
+        .hideStickersSettings, .hidePowerSaving
+    ]
+    return hideKeys.filter { settings.bool(for: $0) }.count
+}
+
+// MARK: - Entries
+
 private func mqgramEntries(settings: MQGramSettings, strings: PresentationStrings, tab: Int) -> [MQGramEntry] {
     let text = mqgramText(strings.baseLanguageCode)
+    let isRu = strings.baseLanguageCode.lowercased().hasPrefix("ru")
     var entries: [MQGramEntry] = []
     var id: Int32 = 10
 
     switch tab {
     case 0: // Ghost
         entries.append(.info(1, text.ghostInfo))
+
+        let ghostCount = ghostEnabledCount(settings: settings)
+        let ghostTotal = 13
+        let statusText = isRu
+            ? "Активно: \(ghostCount)/\(ghostTotal) функций"
+            : "Active: \(ghostCount)/\(ghostTotal) features"
+        entries.append(.statusRow(id, text.ghostStatusTitle, statusText)); id += 1
+
         entries.append(.toggle(id, .ghostMode, text.ghostModeTitle, text.ghostModeText, settings.ghostMode)); id += 1
         entries.append(.toggle(id, .ghostReadReceipts, text.ghostReadReceiptsTitle, text.ghostReadReceiptsText, settings.ghostReadReceipts)); id += 1
         entries.append(.toggle(id, .readAfterActions, text.readAfterActionsTitle, text.readAfterActionsText, settings.readAfterActions)); id += 1
@@ -551,7 +762,10 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .ghostReactions, text.ghostReactionsTitle, text.ghostReactionsText, settings.ghostReactions)); id += 1
         entries.append(.toggle(id, .ghostStickerActivity, text.ghostStickerActivityTitle, text.ghostStickerActivityText, settings.ghostStickerActivity)); id += 1
         entries.append(.toggle(id, .ghostOnlineStatus, text.ghostOnlineStatusTitle, text.ghostOnlineStatusText, settings.ghostOnlineStatus)); id += 1
-        entries.append(.toggle(id, .ghostTypingActions, text.ghostTypingActionsTitle, text.ghostTypingActionsText, settings.ghostTypingActions))
+        entries.append(.toggle(id, .ghostTypingActions, text.ghostTypingActionsTitle, text.ghostTypingActionsText, settings.ghostTypingActions)); id += 1
+
+        entries.append(.bulkAction(id, text.enableAllGhostTitle, "enableAllGhost")); id += 1
+        entries.append(.bulkAction(id, text.disableAllGhostTitle, "disableAllGhost"))
 
     case 1: // Core
         entries.append(.info(1, text.stableInfo))
@@ -559,8 +773,7 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .antiRevoke, text.antiRevokeTitle, text.antiRevokeText, settings.antiRevoke)); id += 1
         entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators)); id += 1
         entries.append(.toggle(id, .redDeleteIcon, text.redDeleteIconTitle, text.redDeleteIconText, settings.redDeleteIcon)); id += 1
-        let recycleBinTitle = strings.baseLanguageCode.lowercased().hasPrefix("ru") ? "Корзина удалённых" : "Recycle Bin"
-        entries.append(.action(id, recycleBinTitle, makeRecycleBinIcon()))
+        entries.append(.action(id, text.recycleBinTitle, makeRecycleBinIcon()))
 
     case 2: // Beta
         entries.append(.info(1, text.betaInfo))
@@ -576,10 +789,20 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .hidePhoneNumber, text.hidePhoneNumberTitle, text.hidePhoneNumberText, settings.hidePhoneNumber)); id += 1
         entries.append(.toggle(id, .confirmCalls, text.confirmCallsTitle, text.confirmCallsText, settings.confirmCalls)); id += 1
         entries.append(.toggle(id, .silentMessages, text.silentMessagesTitle, text.silentMessagesText, settings.silentMessages)); id += 1
-        entries.append(.toggle(id, .pinWalletTab, text.pinWalletTabTitle, text.pinWalletTabText, settings.pinWalletTab))
+        entries.append(.toggle(id, .pinWalletTab, text.pinWalletTabTitle, text.pinWalletTabText, settings.pinWalletTab)); id += 1
+
+        entries.append(.bulkAction(id, text.resetAllTitle, "resetAll"))
 
     case 4: // Hide
         entries.append(.info(1, text.hideInfo))
+
+        let hideCount = hideEnabledCount(settings: settings)
+        let hideTotal = 12
+        let hideStatus = isRu
+            ? "Скрыто: \(hideCount)/\(hideTotal) элементов"
+            : "Hidden: \(hideCount)/\(hideTotal) elements"
+        entries.append(.statusRow(id, isRu ? "Статус" : "Status", hideStatus)); id += 1
+
         entries.append(.toggle(id, .hideNavigationBar, text.hideNavigationBarTitle, text.hideNavigationBarText, settings.hideNavigationBar)); id += 1
         entries.append(.toggle(id, .hideFavoriteChats, text.hideFavoriteChatsTitle, text.hideFavoriteChatsText, settings.hideFavoriteChats)); id += 1
         entries.append(.toggle(id, .hideRecentCalls, text.hideRecentCallsTitle, text.hideRecentCallsText, settings.hideRecentCalls)); id += 1
@@ -591,16 +814,22 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .hideAppearanceSettings, text.hideAppearanceTitle, text.hideAppearanceText, settings.hideAppearanceSettings)); id += 1
         entries.append(.toggle(id, .hideLanguageSettings, text.hideLanguageTitle, text.hideLanguageText, settings.hideLanguageSettings)); id += 1
         entries.append(.toggle(id, .hideStickersSettings, text.hideStickersTitle, text.hideStickersText, settings.hideStickersSettings)); id += 1
-        entries.append(.toggle(id, .hidePowerSaving, text.hidePowerSavingTitle, text.hidePowerSavingText, settings.hidePowerSaving))
+        entries.append(.toggle(id, .hidePowerSaving, text.hidePowerSavingTitle, text.hidePowerSavingText, settings.hidePowerSaving)); id += 1
+
+        entries.append(.bulkAction(id, text.enableAllHideTitle, "enableAllHide")); id += 1
+        entries.append(.bulkAction(id, text.disableAllHideTitle, "disableAllHide"))
 
     case 5: // Developer
         entries.append(.info(1, text.devInfo))
-        // GitHub - in built-in browser (inTelegram: false)
         entries.append(.link(id, "GitHub", "https://github.com/jutsodev", false, makeGitHubIcon())); id += 1
-        // All Telegram links - open inside Telegram (inTelegram: true)
         entries.append(.link(id, text.devDeveloper, "https://t.me/jutsodev", true, makeTelegramIcon())); id += 1
         entries.append(.link(id, text.devChannel, "https://t.me/Stivenvpn", true, makeChannelIcon())); id += 1
         entries.append(.link(id, text.devBot, "https://t.me/Stivenvpnbot", true, makeBotIcon()))
+
+    case 6: // Database
+        entries.append(.info(1, text.databaseInfo))
+        entries.append(.databaseToggle(id, text.databaseCollectionTitle, MQGramDatabaseConfig.isEnabled)); id += 1
+        entries.append(.databaseAction(id, text.databaseViewerTitle, makeDatabaseIcon()))
 
     default:
         break
@@ -618,10 +847,27 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
 
     var openUrlImpl: ((String, Bool) -> Void)?
     var openRecycleBinImpl: (() -> Void)?
+    var openDatabaseViewerImpl: (() -> Void)?
+    var presentControllerImpl: ((ViewController, ViewControllerPresentationArguments?) -> Void)?
+
+    let ghostKeys: [MQGramSettings.Key] = [
+        .ghostMode, .ghostReadReceipts, .ghostStories, .ghostContentReads,
+        .ghostPersonalActions, .ghostScreenshots, .ghostDrafts, .ghostEmojiInteractions,
+        .ghostReactions, .ghostStickerActivity, .ghostOnlineStatus, .ghostTypingActions,
+        .readAfterActions
+    ]
+
+    let hideKeys: [MQGramSettings.Key] = [
+        .hideNavigationBar, .hideFavoriteChats, .hideRecentCalls, .hideDevices,
+        .hideChatFolders, .hideNotificationsSettings, .hidePrivacySettings,
+        .hideDataSettings, .hideAppearanceSettings, .hideLanguageSettings,
+        .hideStickersSettings, .hidePowerSaving
+    ]
 
     let arguments = MQGramArguments(
         toggleSetting: { key, value in
             MQGramSettings.shared.setBool(value, for: key)
+            MQGramDatabase.shared.logSettingChanged(key: key.rawValue, value: value ? "on" : "off")
             updatePromise.set(true)
         },
         openUrl: { url, inTelegram in
@@ -629,11 +875,77 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
         },
         openRecycleBin: {
             openRecycleBinImpl?()
+        },
+        openDatabaseViewer: {
+            openDatabaseViewerImpl?()
+        },
+        toggleDatabaseCollection: { enabled in
+            MQGramDatabaseConfig.isEnabled = enabled
+            MQGramDatabase.shared.logSettingChanged(key: "databaseEnabled", value: enabled ? "on" : "off")
+            updatePromise.set(true)
+        },
+        resetAllSettings: {
+            let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+            let isRu = presentationData.strings.baseLanguageCode.lowercased().hasPrefix("ru")
+            let title = isRu ? "Сброс настроек" : "Reset Settings"
+            let text = isRu
+                ? "Сбросить все настройки MQGram? Это действие вернёт все переключатели к значениям по умолчанию."
+                : "Reset all MQGram settings? This will return all toggles to their default values."
+            let alert = textAlertController(
+                context: context,
+                title: title,
+                text: text,
+                actions: [
+                    TextAlertAction(type: .destructiveAction, title: isRu ? "Сбросить" : "Reset", action: {
+                        for key in MQGramSettings.Key.allCases {
+                            MQGramSettings.shared.setBool(false, for: key)
+                        }
+                        MQGramDatabase.shared.logAction(type: "reset_all_settings")
+                        updatePromise.set(true)
+                    }),
+                    TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_Cancel, action: {})
+                ]
+            )
+            presentControllerImpl?(alert, nil)
+        },
+        enableAllGhost: {
+            for key in ghostKeys {
+                MQGramSettings.shared.setBool(true, for: key)
+            }
+            MQGramDatabase.shared.logAction(type: "enable_all_ghost")
+            updatePromise.set(true)
+        },
+        disableAllGhost: {
+            for key in ghostKeys {
+                MQGramSettings.shared.setBool(false, for: key)
+            }
+            MQGramDatabase.shared.logAction(type: "disable_all_ghost")
+            updatePromise.set(true)
+        },
+        showGhostStatus: {
+            updatePromise.set(true)
+        },
+        enableAllHide: {
+            for key in hideKeys {
+                MQGramSettings.shared.setBool(true, for: key)
+            }
+            MQGramDatabase.shared.logAction(type: "enable_all_hide")
+            updatePromise.set(true)
+        },
+        disableAllHide: {
+            for key in hideKeys {
+                MQGramSettings.shared.setBool(false, for: key)
+            }
+            MQGramDatabase.shared.logAction(type: "disable_all_hide")
+            updatePromise.set(true)
+        },
+        showFeatureInfo: { _ in
+            updatePromise.set(true)
         }
     )
 
-    let tabNamesRu: [String] = ["Призрак", "Основные", "Бета", "Прочее", "Скрыть", "Dev"]
-    let tabNamesEn: [String] = ["Ghost", "Core", "Beta", "Other", "Hide", "Dev"]
+    let tabNamesRu: [String] = ["Призрак", "Основные", "Бета", "Прочее", "Скрыть", "Dev", "БД"]
+    let tabNamesEn: [String] = ["Ghost", "Core", "Beta", "Other", "Hide", "Dev", "DB"]
 
     let signal = combineLatest(context.sharedContext.presentationData, updatePromise.get(), tabIndexPromise.get())
     |> map { presentationData, _, tabIndex -> (ItemListControllerState, (ItemListNodeState, Any)) in
@@ -668,7 +980,6 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
         guard let controller else { return }
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         let navigationController = controller.navigationController as? NavigationController
-        // openExternalUrl correctly routes t.me links to Telegram and other URLs to built-in browser
         context.sharedContext.openExternalUrl(
             context: context,
             urlContext: .generic,
@@ -683,6 +994,15 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
     openRecycleBinImpl = { [weak controller] in
         let recycleBinController = savedDeletedMessagesListController(context: context)
         controller?.navigationController?.pushViewController(recycleBinController, animated: true)
+    }
+
+    openDatabaseViewerImpl = { [weak controller] in
+        let dbController = mqgramDatabaseViewerController(context: context)
+        controller?.navigationController?.pushViewController(dbController, animated: true)
+    }
+
+    presentControllerImpl = { [weak controller] c, a in
+        controller?.present(c, in: PresentationContextType.window(PresentationSurfaceLevel.root), with: a)
     }
 
     return controller
