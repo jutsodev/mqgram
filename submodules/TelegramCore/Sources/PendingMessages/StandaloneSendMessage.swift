@@ -545,7 +545,7 @@ private func sendUploadedMessageContent(
                     sendMessageRequest = network.request(Api.functions.messages.sendInlineBotResult(flags: flags, peer: inputPeer, replyTo: replyTo, randomId: uniqueId, queryId: chatContextResult.queryId, id: chatContextResult.id, scheduleDate: scheduleTime, sendAs: sendAsInputPeer, quickReplyShortcut: nil, allowPaidStars: allowPaidStars))
                     |> map(NetworkRequestResult.result)
                 case .messageScreenshot:
-                    if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostScreenshots") {
+                    if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostScreenshots") || UserDefaults.standard.bool(forKey: "MQGram.screenshotNoNotify") {
                         sendMessageRequest = .single(.acknowledged)
                     } else {
                                             let replyTo: Api.InputReplyTo

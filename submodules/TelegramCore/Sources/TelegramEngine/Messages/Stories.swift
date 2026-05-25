@@ -3077,7 +3077,7 @@ func _internal_setStoryReaction(account: Account, peerId: EnginePeer.Id, id: Int
         account.stateManager.injectStoryUpdates(updates: [InternalStoryUpdate.updateMyReaction(peerId: peerId, id: id, reaction: reaction)])
 
         // MARK: MQGram - Ghost Reactions on stories
-        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostReactions") {
+        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostReactions") || UserDefaults.standard.bool(forKey: "MQGram.ghostEmojiReaction") {
             return .complete()
         }
 

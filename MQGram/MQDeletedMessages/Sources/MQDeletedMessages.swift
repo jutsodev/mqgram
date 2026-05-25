@@ -192,7 +192,7 @@ public struct MQExportedData {
 
 public struct MQDeletedMessages {
     public static var showDeletedMessages: Bool {
-        return UserDefaults.standard.bool(forKey: "MQGram.antiRevoke")
+        return UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") || UserDefaults.standard.bool(forKey: "MQGram.saveDeletedMessages")
     }
 
     private static func savedDeletedId(for originalId: MessageId) -> MessageId {

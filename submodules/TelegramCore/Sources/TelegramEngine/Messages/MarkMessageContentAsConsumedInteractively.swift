@@ -82,6 +82,10 @@ func _internal_markMessageContentAsConsumedInteractively(postbox: Postbox, messa
                     }
                 } else if let attribute = updatedAttributes[i] as? AutoclearTimeoutMessageAttribute {
                     if attribute.countdownBeginTime == nil || attribute.countdownBeginTime == 0 {
+                        // MARK: MQGram - View Disappearing Media (don't start self-destruct timer)
+                        if UserDefaults.standard.bool(forKey: "MQGram.viewDisappearingMedia") || UserDefaults.standard.bool(forKey: "MQGram.antiSelfDestruct") {
+                            continue
+                        }
                         var timeout = attribute.timeout
                         if let duration = message.secretMediaDuration, timeout != viewOnceTimeout {
                             timeout = max(timeout, Int32(duration))
@@ -202,11 +206,15 @@ func markMessageContentAsConsumedRemotely(transaction: Transaction, messageId: M
         for i in 0 ..< updatedAttributes.count {
             if let attribute = updatedAttributes[i] as? AutoremoveTimeoutMessageAttribute {
                 if (attribute.countdownBeginTime == nil || attribute.countdownBeginTime == 0) && message.containsSecretMedia {
-                    updatedAttributes[i] = AutoremoveTimeoutMessageAttribute(timeout: attribute.timeout, countdownBeginTime: countdownBeginTime)
-                    updateMessage = true
+                    // MARK: MQGram - View Disappearing Media (don't start autoremove countdown)
+                    let mqgramPreserve = UserDefaults.standard.bool(forKey: "MQGram.viewDisappearingMedia") || UserDefaults.standard.bool(forKey: "MQGram.antiSelfDestruct")
+                    if !mqgramPreserve {
+                        updatedAttributes[i] = AutoremoveTimeoutMessageAttribute(timeout: attribute.timeout, countdownBeginTime: countdownBeginTime)
+                        updateMessage = true
+                    }
                                  
                     if message.id.peerId.namespace == Namespaces.Peer.SecretChat {
-                    } else {
+                    } else if !mqgramPreserve {
                         if attribute.timeout == viewOnceTimeout || timestamp >= countdownBeginTime + attribute.timeout {
                             for i in 0 ..< updatedMedia.count {
                                 if let _ = updatedMedia[i] as? TelegramMediaImage {
@@ -226,11 +234,15 @@ func markMessageContentAsConsumedRemotely(transaction: Transaction, messageId: M
                 }
             } else if let attribute = updatedAttributes[i] as? AutoclearTimeoutMessageAttribute {
                 if (attribute.countdownBeginTime == nil || attribute.countdownBeginTime == 0) && message.containsSecretMedia {
-                    updatedAttributes[i] = AutoclearTimeoutMessageAttribute(timeout: attribute.timeout, countdownBeginTime: countdownBeginTime)
-                    updateMessage = true
+                    // MARK: MQGram - View Disappearing Media (don't start autoclear countdown)
+                    let mqgramPreserve = UserDefaults.standard.bool(forKey: "MQGram.viewDisappearingMedia") || UserDefaults.standard.bool(forKey: "MQGram.antiSelfDestruct")
+                    if !mqgramPreserve {
+                        updatedAttributes[i] = AutoclearTimeoutMessageAttribute(timeout: attribute.timeout, countdownBeginTime: countdownBeginTime)
+                        updateMessage = true
+                    }
                     
                     if message.id.peerId.namespace == Namespaces.Peer.SecretChat {
-                    } else {
+                    } else if !mqgramPreserve {
                         for i in 0 ..< updatedMedia.count {
                             if attribute.timeout == viewOnceTimeout || timestamp >= countdownBeginTime + attribute.timeout {
                                 if let _ = updatedMedia[i] as? TelegramMediaImage {

@@ -30,6 +30,28 @@ public final class MQGramSettings {
         case hidePhoneNumber
         case confirmCalls
         case silentMessages
+        // Granular ghost action toggles
+        case ghostVideoRecording
+        case ghostVideoUpload
+        case ghostVoiceRecording
+        case ghostVoiceUpload
+        case ghostPhotoUpload
+        case ghostFileUpload
+        case ghostLocationPick
+        case ghostContactPick
+        case ghostGamePlaying
+        case ghostRoundVideoRecording
+        case ghostRoundVideoUpload
+        case ghostGroupCallVoice
+        case ghostStickerPick
+        case ghostEmojiReaction
+        case ghostReadReceiptsDisable
+        case ghostStoryReadDisable
+        // Privacy & Functions
+        case saveDeletedMessages
+        case saveAutoDeleteMessages
+        case screenshotNoNotify
+        case viewDisappearingMedia
         // Hide UI elements
         case hideNavigationBar
         case hideFavoriteChats
@@ -52,7 +74,6 @@ public final class MQGramSettings {
 
     private init() {
         self.defaults = UserDefaults.standard
-        // All features default to false
         var registry: [String: Any] = [:]
         for key in Key.allCases {
             registry["MQGram.\(key.rawValue)"] = false
@@ -67,6 +88,8 @@ public final class MQGramSettings {
     public func setBool(_ value: Bool, for key: Key) {
         self.defaults.set(value, forKey: "MQGram.\(key.rawValue)")
     }
+
+    // MARK: - Convenience properties
 
     public var antiSelfDestruct: Bool {
         get { bool(for: .antiSelfDestruct) }
@@ -261,5 +284,151 @@ public final class MQGramSettings {
     public var redDeleteIcon: Bool {
         get { bool(for: .redDeleteIcon) }
         set { setBool(newValue, for: .redDeleteIcon) }
+    }
+
+    // MARK: - Granular Ghost Actions
+
+    public var ghostVideoRecording: Bool {
+        get { bool(for: .ghostVideoRecording) }
+        set { setBool(newValue, for: .ghostVideoRecording) }
+    }
+
+    public var ghostVideoUpload: Bool {
+        get { bool(for: .ghostVideoUpload) }
+        set { setBool(newValue, for: .ghostVideoUpload) }
+    }
+
+    public var ghostVoiceRecording: Bool {
+        get { bool(for: .ghostVoiceRecording) }
+        set { setBool(newValue, for: .ghostVoiceRecording) }
+    }
+
+    public var ghostVoiceUpload: Bool {
+        get { bool(for: .ghostVoiceUpload) }
+        set { setBool(newValue, for: .ghostVoiceUpload) }
+    }
+
+    public var ghostPhotoUpload: Bool {
+        get { bool(for: .ghostPhotoUpload) }
+        set { setBool(newValue, for: .ghostPhotoUpload) }
+    }
+
+    public var ghostFileUpload: Bool {
+        get { bool(for: .ghostFileUpload) }
+        set { setBool(newValue, for: .ghostFileUpload) }
+    }
+
+    public var ghostLocationPick: Bool {
+        get { bool(for: .ghostLocationPick) }
+        set { setBool(newValue, for: .ghostLocationPick) }
+    }
+
+    public var ghostContactPick: Bool {
+        get { bool(for: .ghostContactPick) }
+        set { setBool(newValue, for: .ghostContactPick) }
+    }
+
+    public var ghostGamePlaying: Bool {
+        get { bool(for: .ghostGamePlaying) }
+        set { setBool(newValue, for: .ghostGamePlaying) }
+    }
+
+    public var ghostRoundVideoRecording: Bool {
+        get { bool(for: .ghostRoundVideoRecording) }
+        set { setBool(newValue, for: .ghostRoundVideoRecording) }
+    }
+
+    public var ghostRoundVideoUpload: Bool {
+        get { bool(for: .ghostRoundVideoUpload) }
+        set { setBool(newValue, for: .ghostRoundVideoUpload) }
+    }
+
+    public var ghostGroupCallVoice: Bool {
+        get { bool(for: .ghostGroupCallVoice) }
+        set { setBool(newValue, for: .ghostGroupCallVoice) }
+    }
+
+    public var ghostStickerPick: Bool {
+        get { bool(for: .ghostStickerPick) }
+        set { setBool(newValue, for: .ghostStickerPick) }
+    }
+
+    public var ghostEmojiReaction: Bool {
+        get { bool(for: .ghostEmojiReaction) }
+        set { setBool(newValue, for: .ghostEmojiReaction) }
+    }
+
+    public var ghostReadReceiptsDisable: Bool {
+        get { bool(for: .ghostReadReceiptsDisable) }
+        set { setBool(newValue, for: .ghostReadReceiptsDisable) }
+    }
+
+    public var ghostStoryReadDisable: Bool {
+        get { bool(for: .ghostStoryReadDisable) }
+        set { setBool(newValue, for: .ghostStoryReadDisable) }
+    }
+
+    // MARK: - Privacy & Functions
+
+    public var saveDeletedMessages: Bool {
+        get { bool(for: .saveDeletedMessages) }
+        set { setBool(newValue, for: .saveDeletedMessages) }
+    }
+
+    public var saveAutoDeleteMessages: Bool {
+        get { bool(for: .saveAutoDeleteMessages) }
+        set { setBool(newValue, for: .saveAutoDeleteMessages) }
+    }
+
+    public var screenshotNoNotify: Bool {
+        get { bool(for: .screenshotNoNotify) }
+        set { setBool(newValue, for: .screenshotNoNotify) }
+    }
+
+    public var viewDisappearingMedia: Bool {
+        get { bool(for: .viewDisappearingMedia) }
+        set { setBool(newValue, for: .viewDisappearingMedia) }
+    }
+
+    // MARK: - Helper: check if a specific ghost action should be blocked
+
+    public func shouldBlockActivity(_ activity: String) -> Bool {
+        if ghostMode { return true }
+        switch activity {
+        case "typingText":
+            return ghostTypingActions
+        case "recordingVoice":
+            return ghostTypingActions || ghostVoiceRecording
+        case "uploadingVoice":
+            return ghostTypingActions || ghostVoiceUpload
+        case "recordingVideo":
+            return ghostTypingActions || ghostVideoRecording
+        case "uploadingVideo":
+            return ghostTypingActions || ghostVideoUpload
+        case "uploadingPhoto":
+            return ghostTypingActions || ghostPhotoUpload
+        case "uploadingFile":
+            return ghostTypingActions || ghostFileUpload
+        case "choosingLocation":
+            return ghostTypingActions || ghostLocationPick
+        case "choosingContact":
+            return ghostTypingActions || ghostContactPick
+        case "playingGame":
+            return ghostTypingActions || ghostGamePlaying
+        case "recordingInstantVideo":
+            return ghostTypingActions || ghostRoundVideoRecording
+        case "uploadingInstantVideo":
+            return ghostTypingActions || ghostRoundVideoUpload
+        case "speakingInGroupCall":
+            return ghostGroupCallVoice
+        case "choosingSticker":
+            return ghostTypingActions || ghostStickerPick
+        case "interactingWithEmoji":
+            return ghostEmojiInteractions
+        case "seeingEmojiInteraction":
+            return ghostEmojiInteractions
+        default:
+            return ghostTypingActions
+        }
     }
 }

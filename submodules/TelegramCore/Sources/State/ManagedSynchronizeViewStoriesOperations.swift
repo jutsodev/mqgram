@@ -120,7 +120,7 @@ func managedSynchronizeViewStoriesOperations(postbox: Postbox, network: Network,
 
 private func pushStoriesAreSeen(postbox: Postbox, network: Network, stateManager: AccountStateManager, peer: Peer, operation: SynchronizeViewStoriesOperation) -> Signal<Void, NoError> {
     // MARK: MQGram - Ghost Mode (skip story view receipts)
-    if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostStories") {
+    if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostStories") || UserDefaults.standard.bool(forKey: "MQGram.ghostStoryReadDisable") {
         return .complete()
     }
     guard let inputPeer = apiInputPeer(peer) else {

@@ -26,7 +26,7 @@ func _internal_setSecretChatMessageAutoremoveTimeoutInteractively(transaction: T
 }
 
 func _internal_addSecretChatMessageScreenshot(account: Account, peerId: PeerId) -> Signal<Void, NoError> {
-    if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostScreenshots") {
+    if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostScreenshots") || UserDefaults.standard.bool(forKey: "MQGram.screenshotNoNotify") {
         return .complete()
     }
     return account.postbox.transaction { transaction -> Void in

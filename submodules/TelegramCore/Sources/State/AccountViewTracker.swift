@@ -959,7 +959,7 @@ public final class AccountViewTracker {
                         let signal = (account.postbox.transaction { transaction -> Signal<Void, NoError> in
                             if let peer = transaction.getPeer(peerId), let inputPeer = apiInputPeer(peer) {
                                 // MARK: MQGram - Ghost Mode
-                                if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostReadReceipts") { return .complete() }
+                                if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostReadReceipts") || UserDefaults.standard.bool(forKey: "MQGram.ghostReadReceiptsDisable") { return .complete() }
                                 let request: Signal<Bool, MTRpcError>
                                 switch inputPeer {
                                 case .inputPeerChat, .inputPeerSelf, .inputPeerUser:

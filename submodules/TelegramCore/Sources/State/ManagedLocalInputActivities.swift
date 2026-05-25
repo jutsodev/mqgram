@@ -141,16 +141,73 @@ private func actionFromActivity(_ activity: PeerInputActivity?) -> Api.SendMessa
     }
 }
 
-private func requestActivity(postbox: Postbox, network: Network, accountPeerId: PeerId, peerId: PeerId, threadId: Int64?, activity: PeerInputActivity?) -> Signal<Void, NoError> {
-    if let activity = activity, UserDefaults.standard.bool(forKey: "MQGram.ghostEmojiInteractions") {
-        switch activity {
-        case .interactingWithEmoji, .seeingEmojiInteraction:
-            return .complete()
-        default:
-            break
-        }
+private func mqgramActivityKey(_ activity: PeerInputActivity) -> String {
+    switch activity {
+    case .typingText:
+        return "typingText"
+    case .recordingVoice:
+        return "recordingVoice"
+    case .playingGame:
+        return "playingGame"
+    case .uploadingFile:
+        return "uploadingFile"
+    case .uploadingPhoto:
+        return "uploadingPhoto"
+    case .uploadingVideo:
+        return "uploadingVideo"
+    case .recordingInstantVideo:
+        return "recordingInstantVideo"
+    case .uploadingInstantVideo:
+        return "uploadingInstantVideo"
+    case .speakingInGroupCall:
+        return "speakingInGroupCall"
+    case .choosingSticker:
+        return "choosingSticker"
+    case .interactingWithEmoji:
+        return "interactingWithEmoji"
+    case .seeingEmojiInteraction:
+        return "seeingEmojiInteraction"
     }
-    if activity != nil && (UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostTypingActions")) {
+}
+
+private func mqgramShouldBlockActivity(_ activity: PeerInputActivity) -> Bool {
+    let defaults = UserDefaults.standard
+    let ghostMode = defaults.bool(forKey: "MQGram.ghostMode")
+    if ghostMode { return true }
+
+    let key = mqgramActivityKey(activity)
+    switch key {
+    case "typingText":
+        return defaults.bool(forKey: "MQGram.ghostTypingActions")
+    case "recordingVoice":
+        return defaults.bool(forKey: "MQGram.ghostTypingActions") || defaults.bool(forKey: "MQGram.ghostVoiceRecording")
+    case "playingGame":
+        return defaults.bool(forKey: "MQGram.ghostTypingActions") || defaults.bool(forKey: "MQGram.ghostGamePlaying")
+    case "uploadingFile":
+        return defaults.bool(forKey: "MQGram.ghostTypingActions") || defaults.bool(forKey: "MQGram.ghostFileUpload")
+    case "uploadingPhoto":
+        return defaults.bool(forKey: "MQGram.ghostTypingActions") || defaults.bool(forKey: "MQGram.ghostPhotoUpload")
+    case "uploadingVideo":
+        return defaults.bool(forKey: "MQGram.ghostTypingActions") || defaults.bool(forKey: "MQGram.ghostVideoUpload")
+    case "recordingInstantVideo":
+        return defaults.bool(forKey: "MQGram.ghostTypingActions") || defaults.bool(forKey: "MQGram.ghostRoundVideoRecording")
+    case "uploadingInstantVideo":
+        return defaults.bool(forKey: "MQGram.ghostTypingActions") || defaults.bool(forKey: "MQGram.ghostRoundVideoUpload")
+    case "speakingInGroupCall":
+        return defaults.bool(forKey: "MQGram.ghostGroupCallVoice")
+    case "choosingSticker":
+        return defaults.bool(forKey: "MQGram.ghostTypingActions") || defaults.bool(forKey: "MQGram.ghostStickerPick")
+    case "interactingWithEmoji":
+        return defaults.bool(forKey: "MQGram.ghostEmojiInteractions")
+    case "seeingEmojiInteraction":
+        return defaults.bool(forKey: "MQGram.ghostEmojiInteractions")
+    default:
+        return defaults.bool(forKey: "MQGram.ghostTypingActions")
+    }
+}
+
+private func requestActivity(postbox: Postbox, network: Network, accountPeerId: PeerId, peerId: PeerId, threadId: Int64?, activity: PeerInputActivity?) -> Signal<Void, NoError> {
+    if let activity = activity, mqgramShouldBlockActivity(activity) {
         return .complete()
     }
     return postbox.transaction { transaction -> Signal<Void, NoError> in
