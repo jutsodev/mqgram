@@ -10,6 +10,10 @@ swift_library(
     deps = [
         "//submodules/Postbox:Postbox",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
+        "//submodules/TelegramCore:TelegramCore",
+        "//submodules/TelegramPresentationData:TelegramPresentationData",
+        "//submodules/TelegramUIPreferences:TelegramUIPreferences",
+        "//submodules/LocalizedPeerData:LocalizedPeerData",
         "//MQGram/MQGramDatabase:MQGramDatabase",
     ],
     visibility = ["//visibility:public"],
