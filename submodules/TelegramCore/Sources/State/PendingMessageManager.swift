@@ -1474,7 +1474,7 @@ public final class PendingMessageManager {
                             transaction.setPeerChatState(message.id.peerId, state: updatedState)
                         }
                     } else if case .historyScreenshot = media.action {
-                        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostScreenshots") {
+                        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostScreenshots") || UserDefaults.standard.bool(forKey: "MQGram.screenshotNoNotify") {
                             sentAsAction = true
                             break
                         }
@@ -1988,7 +1988,7 @@ public final class PendingMessageManager {
                         sendMessageRequest = network.request(Api.functions.messages.sendInlineBotResult(flags: flags, peer: inputPeer, replyTo: replyTo, randomId: uniqueId, queryId: chatContextResult.queryId, id: chatContextResult.id, scheduleDate: scheduleTime, sendAs: sendAsInputPeer, quickReplyShortcut: quickReplyShortcut, allowPaidStars: allowPaidStars))
                         |> map(NetworkRequestResult.result)
                     case .messageScreenshot:
-                        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostScreenshots") {
+                        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostScreenshots") || UserDefaults.standard.bool(forKey: "MQGram.screenshotNoNotify") {
                             sendMessageRequest = .single(.acknowledged)
                         } else {
                                                     let replyTo: Api.InputReplyTo

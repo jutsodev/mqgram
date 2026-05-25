@@ -371,7 +371,7 @@ private func requestUpdateMessageReaction(postbox: Postbox, network: Network, st
         }
 
         // MARK: MQGram - Ghost Reactions
-        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostReactions") {
+        if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostReactions") || UserDefaults.standard.bool(forKey: "MQGram.ghostEmojiReaction") {
             return .complete()
         }
 
