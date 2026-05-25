@@ -3,10 +3,6 @@
 import Foundation
 import Postbox
 import SwiftSignalKit
-import TelegramCore
-import TelegramPresentationData
-import TelegramUIPreferences
-import LocalizedPeerData
 import MQGramDatabase
 
 private let messageNamespaceCloud: Int32 = 0
@@ -14,15 +10,27 @@ private let messageNamespaceSavedDeleted: Int32 = 1338
 
 private func mqPeerDisplayName(_ peer: Peer?) -> String? {
     guard let peer = peer else { return nil }
-    if let user = peer as? TelegramUser {
-        let first = user.firstName ?? ""
-        let last = user.lastName ?? ""
+    switch peer.indexName {
+    case let .title(title, _):
+        return title.isEmpty ? nil : title
+    case let .personName(first, last, _, _):
         let full = [first, last].filter { !$0.isEmpty }.joined(separator: " ")
         return full.isEmpty ? nil : full
     }
-    if let group = peer as? TelegramGroup { return group.title }
-    if let channel = peer as? TelegramChannel { return channel.title }
-    return nil
+}
+
+private func mqMediaTypeName(_ media: Media) -> String? {
+    let typeName = String(describing: type(of: media))
+    switch typeName {
+    case "TelegramMediaImage": return "image"
+    case "TelegramMediaFile": return "file"
+    case "TelegramMediaMap": return "location"
+    case "TelegramMediaContact": return "contact"
+    case "TelegramMediaPoll": return "poll"
+    case "TelegramMediaDice": return "dice"
+    case "TelegramMediaAction": return "action"
+    default: return nil
+    }
 }
 
 // MARK: - Deleted Message Info
@@ -59,22 +67,7 @@ public struct MQDeletedMessageInfo {
         self.deletedAt = deletedAt
         self.hasMedia = !message.media.isEmpty
         self.mediaTypes = message.media.compactMap { media -> String? in
-            if media is TelegramMediaImage { return "image" }
-            if let file = media as? TelegramMediaFile {
-                if file.isVideo { return "video" }
-                if file.isVoice { return "voice" }
-                if file.isVideoMessage { return "video_message" }
-                if file.isSticker { return "sticker" }
-                if file.isAnimated { return "gif" }
-                if file.isMusic { return "music" }
-                return "file"
-            }
-            if media is TelegramMediaMap { return "location" }
-            if media is TelegramMediaContact { return "contact" }
-            if media is TelegramMediaPoll { return "poll" }
-            if media is TelegramMediaDice { return "dice" }
-            if media is TelegramMediaAction { return "action" }
-            return nil
+            return mqMediaTypeName(media)
         }
         if let forwardInfo = message.forwardInfo {
             self.forwardAuthor = mqPeerDisplayName(forwardInfo.author)
@@ -578,15 +571,8 @@ public struct MQDeletedMessages {
             if let mediaType = filter.mediaType {
                 filtered = filtered.filter { msg in
                     for media in msg.media {
-                        switch mediaType {
-                        case "image": if media is TelegramMediaImage { return true }
-                        case "video": if let f = media as? TelegramMediaFile, f.isVideo { return true }
-                        case "voice": if let f = media as? TelegramMediaFile, f.isVoice { return true }
-                        case "file": if media is TelegramMediaFile { return true }
-                        case "sticker": if let f = media as? TelegramMediaFile, f.isSticker { return true }
-                        case "location": if media is TelegramMediaMap { return true }
-                        case "contact": if media is TelegramMediaContact { return true }
-                        default: break
+                        if let name = mqMediaTypeName(media), name == mediaType {
+                            return true
                         }
                     }
                     return false
@@ -636,23 +622,7 @@ public struct MQDeletedMessages {
                             mediaCount += 1
                             for media in message.media {
                                 let typeName: String
-                                if media is TelegramMediaImage {
-                                    typeName = "image"
-                                } else if let file = media as? TelegramMediaFile {
-                                    if file.isVideo { typeName = "video" }
-                                    else if file.isVoice { typeName = "voice" }
-                                    else if file.isSticker { typeName = "sticker" }
-                                    else if file.isMusic { typeName = "music" }
-                                    else { typeName = "file" }
-                                } else if media is TelegramMediaMap {
-                                    typeName = "location"
-                                } else if media is TelegramMediaContact {
-                                    typeName = "contact"
-                                } else if media is TelegramMediaPoll {
-                                    typeName = "poll"
-                                } else {
-                                    typeName = "other"
-                                }
+                                typeName = mqMediaTypeName(media) ?? "other"
                                 mediaBreakdown[typeName, default: 0] += 1
                             }
                         }
