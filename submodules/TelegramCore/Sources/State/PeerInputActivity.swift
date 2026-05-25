@@ -79,6 +79,9 @@ public enum PeerInputActivity: Comparable {
     case choosingSticker
     case interactingWithEmoji(emoticon: String, messageId: MessageId, interaction: EmojiInteraction?)
     case seeingEmojiInteraction(emoticon: String)
+    // MARK: MQGram - Additional activity types
+    case choosingContact
+    case choosingLocation
     
     public var key: Int32 {
         switch self {
@@ -106,6 +109,10 @@ public enum PeerInputActivity: Comparable {
                 return 10
             case .seeingEmojiInteraction:
                 return 11
+            case .choosingContact:
+                return 12
+            case .choosingLocation:
+                return 13
         }
     }
     
@@ -117,8 +124,13 @@ public enum PeerInputActivity: Comparable {
 extension PeerInputActivity {
     init?(apiType: Api.SendMessageAction, peerId: PeerId?, timestamp: Int32) {
         switch apiType {
-            case .sendMessageCancelAction, .sendMessageChooseContactAction, .sendMessageGeoLocationAction, .sendMessageRecordVideoAction:
+            case .sendMessageCancelAction, .sendMessageRecordVideoAction:
                 return nil
+            // MARK: MQGram - Support for choosing contact and location activities
+            case .sendMessageChooseContactAction:
+                self = .choosingContact
+            case .sendMessageGeoLocationAction:
+                self = .choosingLocation
             case .sendMessageGamePlayAction:
                 self = .playingGame
             case .sendMessageRecordAudioAction, .sendMessageUploadAudioAction:

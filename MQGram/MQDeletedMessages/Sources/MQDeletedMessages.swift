@@ -334,6 +334,30 @@ public struct MQDeletedMessages {
         return ids
     }
 
+    // MARK: - Public: Save Single Snapshot If Needed (for AccountStateManagementUtils)
+    
+    /// Save snapshot of a single message if antiRevoke is enabled
+    /// This is called from AccountStateManagementUtils when processing delete updates
+    /// Returns true if snapshot was saved, false otherwise
+    public static func saveSnapshotIfNeeded(message: Message, transaction: Transaction) -> Bool {
+        // Check if antiRevoke is enabled
+        guard UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") else {
+            return false
+        }
+        
+        // Don't save if already in saved namespace
+        if message.id.namespace == messageNamespaceSavedDeleted {
+            return false
+        }
+        
+        // Save the snapshot
+        return saveSnapshotIfPossible(
+            originalId: message.id,
+            transaction: transaction,
+            transformAttributes: nil
+        )
+    }
+
     // MARK: - Public: Query Helpers
 
     public static func isMessageDeleted(_ message: Message) -> Bool {

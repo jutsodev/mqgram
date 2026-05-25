@@ -135,6 +135,11 @@ private func actionFromActivity(_ activity: PeerInputActivity?) -> Api.SendMessa
                 return .sendMessageEmojiInteraction(.init(emoticon: emoticon, msgId: messageId.id, interaction: interaction?.apiDataJson ?? .dataJSON(.init(data: ""))))
             case let .seeingEmojiInteraction(emoticon):
                 return .sendMessageEmojiInteractionSeen(.init(emoticon: emoticon))
+            // MARK: MQGram - Support for choosing contact and location
+            case .choosingContact:
+                return .sendMessageChooseContactAction
+            case .choosingLocation:
+                return .sendMessageGeoLocationAction
         }
     } else {
         return .sendMessageCancelAction
@@ -142,17 +147,117 @@ private func actionFromActivity(_ activity: PeerInputActivity?) -> Api.SendMessa
 }
 
 private func requestActivity(postbox: Postbox, network: Network, accountPeerId: PeerId, peerId: PeerId, threadId: Int64?, activity: PeerInputActivity?) -> Signal<Void, NoError> {
-    if let activity = activity, UserDefaults.standard.bool(forKey: "MQGram.ghostEmojiInteractions") {
-        switch activity {
-        case .interactingWithEmoji, .seeingEmojiInteraction:
+    // MARK: MQGram - Comprehensive Ghost Mode Activity Blocking
+    // This function blocks sending typing/activity indicators based on detailed user preferences
+    
+    // Check if activity should be blocked
+    if let activity = activity {
+        // Master ghost mode check - blocks ALL activities
+        let ghostModeEnabled = UserDefaults.standard.bool(forKey: "MQGram.ghostMode")
+        let ghostTypingActionsEnabled = UserDefaults.standard.bool(forKey: "MQGram.ghostTypingActions")
+        
+        // If master switches are on, block everything
+        if ghostModeEnabled || ghostTypingActionsEnabled {
             return .complete()
-        default:
-            break
+        }
+        
+        // Detailed per-activity checks
+        switch activity {
+        case .typingText:
+            // Block typing text indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostTypingText") {
+                return .complete()
+            }
+            
+        case .recordingVoice:
+            // Block recording voice message indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostRecordingVoice") {
+                return .complete()
+            }
+            
+        case .uploadingFile:
+            // Block uploading file indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostUploadingFile") {
+                return .complete()
+            }
+            
+        case .uploadingPhoto:
+            // Block uploading photo indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostUploadingPhoto") {
+                return .complete()
+            }
+            
+        case .uploadingVideo:
+            // Block uploading video indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostUploadingVideo") {
+                return .complete()
+            }
+            
+        case .recordingInstantVideo:
+            // Block recording round video indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostRecordingRound") {
+                return .complete()
+            }
+            
+        case .uploadingInstantVideo:
+            // Block uploading round video indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostUploadingRound") {
+                return .complete()
+            }
+            
+        case .playingGame:
+            // Block playing game indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostPlayingGame") {
+                return .complete()
+            }
+            
+        case .speakingInGroupCall:
+            // Block speaking in group call indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostSpeakingInGroupCall") {
+                return .complete()
+            }
+            
+        case .choosingSticker:
+            // Block choosing sticker indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostChoosingSticker") {
+                return .complete()
+            }
+            
+        case .interactingWithEmoji:
+            // Block emoji interaction indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostEmojiInteraction") {
+                return .complete()
+            }
+            // Legacy check for backwards compatibility
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostEmojiInteractions") {
+                return .complete()
+            }
+            
+        case .seeingEmojiInteraction:
+            // Block seeing emoji interaction indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostEmojiInteraction") {
+                return .complete()
+            }
+            // Legacy check for backwards compatibility
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostEmojiInteractions") {
+                return .complete()
+            }
+            
+        case .choosingContact:
+            // Block choosing contact indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostChoosingContact") {
+                return .complete()
+            }
+            
+        case .choosingLocation:
+            // Block choosing location indicator
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostChoosingLocation") {
+                return .complete()
+            }
         }
     }
-    if activity != nil && (UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostTypingActions")) {
-        return .complete()
-    }
+    
+    // Original Telegram logic - only execute if not blocked by MQGram
     return postbox.transaction { transaction -> Signal<Void, NoError> in
         if let peer = transaction.getPeer(peerId) {
             if peerId == accountPeerId {

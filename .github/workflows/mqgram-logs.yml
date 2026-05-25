@@ -1,0 +1,90 @@
+name: MQGram Runtime Logs
+
+on:
+  workflow_dispatch:
+    inputs:
+      workspace_or_project:
+        description: 'Xcode workspace (.xcworkspace) or project (.xcodeproj)'
+        required: true
+        default: 'Telegram.xcworkspace'
+      scheme:
+        description: 'Xcode scheme to build/test'
+        required: true
+        default: 'Telegram'
+      destination:
+        description: 'xcodebuild destination string'
+        required: true
+        default: 'platform=iOS Simulator,name=iPhone 14'
+      build_tool:
+        description: 'Build tool to use (xcodebuild|bazel)'
+        required: true
+        default: 'xcodebuild'
+
+jobs:
+  ios-sim-logs:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        if [ "${{ github.event.inputs.build_tool }}" = "bazel" ]; then
+          echo "Bazel selected — ensure Bazel setup is present in your repo and modify the build step below accordingly."
+        else
+          swift package resolve || true
+        fi
+
+    - name: Create and boot simulator
+      run: |
+        set -e
+        # create a device named mqgram-sim (idempotent)
+        xcrun simctl create mqgram-sim "iPhone 14" "com.apple.CoreSimulator.SimDeviceType.iPhone-14" || true
+        xcrun simctl boot mqgram-sim || true
+        xcrun simctl bootstatus mqgram-sim -b
+
+    - name: Start log capture
+      run: |
+        # Capture logs from the simulator; adjust predicate if your process name differs
+        xcrun simctl spawn mqgram-sim log stream --style syslog --predicate 'process == "Telegram" OR eventMessage CONTAINS "MQGram"' > mqgram.log &
+        echo $! > logpid.txt
+
+    - name: Build and run tests (xcodebuild or bazel)
+      env:
+        WORKSPACE_OR_PROJECT: ${{ github.event.inputs.workspace_or_project }}
+        SCHEME: ${{ github.event.inputs.scheme }}
+        DESTINATION: ${{ github.event.inputs.destination }}
+        BUILD_TOOL: ${{ github.event.inputs.build_tool }}
+      run: |
+        set -e
+        if [ "$BUILD_TOOL" = "bazel" ]; then
+          echo "Bazel build selected — replace the following with your bazel test/run command."
+          # Example (uncomment and adjust):
+          # bazel test //:YourUITestTarget --test_output=all
+        else
+          if [[ "$WORKSPACE_OR_PROJECT" == *.xcworkspace ]]; then
+            xcodebuild -workspace "$WORKSPACE_OR_PROJECT" -scheme "$SCHEME" -sdk iphonesimulator -destination '$DESTINATION' test -quiet || true
+          else
+            xcodebuild -project "$WORKSPACE_OR_PROJECT" -scheme "$SCHEME" -sdk iphonesimulator -destination '$DESTINATION' test -quiet || true
+          fi
+        fi
+
+    - name: Stop log capture
+      run: |
+        if [ -f logpid.txt ]; then
+          kill $(cat logpid.txt) || true
+        fi
+
+    - name: Upload logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: mqgram-logs
+        path: mqgram.log
+
+    - name: Cleanup simulator
+      if: always()
+      run: |
+        set -e || true
+        xcrun simctl shutdown mqgram-sim || true
+        xcrun simctl delete mqgram-sim || true

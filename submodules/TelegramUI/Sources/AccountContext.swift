@@ -27,6 +27,8 @@ import DCTAnimationCacheImpl
 import DCTMultiAnimationRendererImpl
 import AppBundle
 import DirectMediaImageCache
+// MQGram settings bootstrap
+@_exported import MQGramSettingsUI
 
 private final class DeviceSpecificContactImportContext {
     let disposable = MetaDisposable()
@@ -439,6 +441,9 @@ public final class AccountContextImpl: AccountContext {
         })
         
         // MARK: MQGram - store own account peer ID for Local Premium check
+        // Ensure MQGram settings are initialized early so defaults are registered
+        // and debug logging is available.
+        _ = MQGramSettings.shared
         UserDefaults.standard.set(String(account.peerId.id._internalGetInt64Value()), forKey: "MQGram.ownAccountPeerId")
 
         self.userLimitsConfigurationDisposable = (self.engine.data.subscribe(TelegramEngine.EngineData.Item.Peer.Peer(id: account.peerId))

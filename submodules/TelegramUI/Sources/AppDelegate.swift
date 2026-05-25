@@ -40,6 +40,7 @@ import AppLock
 import PresentationDataUtils
 import TelegramIntents
 import AccountUtils
+import MQGramSettingsUI
 import CoreSpotlight
 import TelegramAudio
 import DebugSettingsUI
@@ -336,6 +337,9 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         precondition(!testIsLaunched)
         testIsLaunched = true
+
+        // Ensure MQGram settings are registered early so feature flags are available
+        _ = MQGramSettings.shared
         
         let _ = voipTokenPromise.get().start(next: { token in
             self.voipDeviceToken.set(.single(token))

@@ -19,6 +19,23 @@ public final class MQGramSettings {
         case ghostStickerActivity
         case ghostOnlineStatus
         case ghostTypingActions
+        // Detailed typing actions
+        case ghostTypingText
+        case ghostRecordingVoice
+        case ghostUploadingVoice
+        case ghostRecordingVideo
+        case ghostUploadingVideo
+        case ghostUploadingPhoto
+        case ghostUploadingFile
+        case ghostChoosingLocation
+        case ghostChoosingContact
+        case ghostPlayingGame
+        case ghostRecordingRound
+        case ghostUploadingRound
+        case ghostSpeakingInGroupCall
+        case ghostChoosingSticker
+        case ghostEmojiInteraction
+        case ghostEmojiReaction
         case readAfterActions
         case customIndicators
         case contentProtectionBypass
@@ -49,6 +66,7 @@ public final class MQGramSettings {
     }
 
     private let defaults: UserDefaults
+    private static let debugLogging = true
 
     private init() {
         self.defaults = UserDefaults.standard
@@ -66,6 +84,12 @@ public final class MQGramSettings {
 
     public func setBool(_ value: Bool, for key: Key) {
         self.defaults.set(value, forKey: "MQGram.\(key.rawValue)")
+        self.defaults.synchronize()
+        if Self.debugLogging {
+            let keyString = "MQGram.\(key.rawValue)"
+            print("🔧 MQGram: Set \(keyString) = \(value)")
+            print("🔧 MQGram: Verify \(keyString) = \(self.defaults.bool(forKey: keyString))")
+        }
     }
 
     public var antiSelfDestruct: Bool {
@@ -136,6 +160,86 @@ public final class MQGramSettings {
     public var ghostTypingActions: Bool {
         get { bool(for: .ghostTypingActions) }
         set { setBool(newValue, for: .ghostTypingActions) }
+    }
+
+    public var ghostTypingText: Bool {
+        get { bool(for: .ghostTypingText) }
+        set { setBool(newValue, for: .ghostTypingText) }
+    }
+
+    public var ghostRecordingVoice: Bool {
+        get { bool(for: .ghostRecordingVoice) }
+        set { setBool(newValue, for: .ghostRecordingVoice) }
+    }
+
+    public var ghostUploadingVoice: Bool {
+        get { bool(for: .ghostUploadingVoice) }
+        set { setBool(newValue, for: .ghostUploadingVoice) }
+    }
+
+    public var ghostRecordingVideo: Bool {
+        get { bool(for: .ghostRecordingVideo) }
+        set { setBool(newValue, for: .ghostRecordingVideo) }
+    }
+
+    public var ghostUploadingVideo: Bool {
+        get { bool(for: .ghostUploadingVideo) }
+        set { setBool(newValue, for: .ghostUploadingVideo) }
+    }
+
+    public var ghostUploadingPhoto: Bool {
+        get { bool(for: .ghostUploadingPhoto) }
+        set { setBool(newValue, for: .ghostUploadingPhoto) }
+    }
+
+    public var ghostUploadingFile: Bool {
+        get { bool(for: .ghostUploadingFile) }
+        set { setBool(newValue, for: .ghostUploadingFile) }
+    }
+
+    public var ghostChoosingLocation: Bool {
+        get { bool(for: .ghostChoosingLocation) }
+        set { setBool(newValue, for: .ghostChoosingLocation) }
+    }
+
+    public var ghostChoosingContact: Bool {
+        get { bool(for: .ghostChoosingContact) }
+        set { setBool(newValue, for: .ghostChoosingContact) }
+    }
+
+    public var ghostPlayingGame: Bool {
+        get { bool(for: .ghostPlayingGame) }
+        set { setBool(newValue, for: .ghostPlayingGame) }
+    }
+
+    public var ghostRecordingRound: Bool {
+        get { bool(for: .ghostRecordingRound) }
+        set { setBool(newValue, for: .ghostRecordingRound) }
+    }
+
+    public var ghostUploadingRound: Bool {
+        get { bool(for: .ghostUploadingRound) }
+        set { setBool(newValue, for: .ghostUploadingRound) }
+    }
+
+    public var ghostSpeakingInGroupCall: Bool {
+        get { bool(for: .ghostSpeakingInGroupCall) }
+        set { setBool(newValue, for: .ghostSpeakingInGroupCall) }
+    }
+
+    public var ghostChoosingSticker: Bool {
+        get { bool(for: .ghostChoosingSticker) }
+        set { setBool(newValue, for: .ghostChoosingSticker) }
+    }
+
+    public var ghostEmojiInteraction: Bool {
+        get { bool(for: .ghostEmojiInteraction) }
+        set { setBool(newValue, for: .ghostEmojiInteraction) }
+    }
+
+    public var ghostEmojiReaction: Bool {
+        get { bool(for: .ghostEmojiReaction) }
+        set { setBool(newValue, for: .ghostEmojiReaction) }
     }
 
     public var readAfterActions: Bool {

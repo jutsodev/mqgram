@@ -15,11 +15,13 @@ private final class MQGramArguments {
     let toggleSetting: (MQGramSettings.Key, Bool) -> Void
     let openUrl: (String, Bool) -> Void
     let openRecycleBin: () -> Void
+    let openAdvancedGhost: () -> Void
 
-    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openUrl: @escaping (String, Bool) -> Void, openRecycleBin: @escaping () -> Void) {
+    init(toggleSetting: @escaping (MQGramSettings.Key, Bool) -> Void, openUrl: @escaping (String, Bool) -> Void, openRecycleBin: @escaping () -> Void, openAdvancedGhost: @escaping () -> Void) {
         self.toggleSetting = toggleSetting
         self.openUrl = openUrl
         self.openRecycleBin = openRecycleBin
+        self.openAdvancedGhost = openAdvancedGhost
     }
 }
 
@@ -30,6 +32,7 @@ private enum MQGramEntry: ItemListNodeEntry {
     case toggle(Int32, MQGramSettings.Key, String, String?, Bool)
     case link(Int32, String, String, Bool, UIImage?)
     case action(Int32, String, UIImage?)
+    case disclosure(Int32, String, String?, UIImage?)
     case footer(Int32, String)
 
     var section: ItemListSectionId {
@@ -51,6 +54,8 @@ private enum MQGramEntry: ItemListNodeEntry {
             return id
         case let .action(id, _, _):
             return id
+        case let .disclosure(id, _, _, _):
+            return id
         case let .footer(id, _):
             return id
         }
@@ -67,6 +72,8 @@ private enum MQGramEntry: ItemListNodeEntry {
             if case let .link(rId, rTitle, rUrl, rInTg, _) = rhs, lId == rId, lTitle == rTitle, lUrl == rUrl, lInTg == rInTg { return true } else { return false }
         case let .action(lId, lTitle, _):
             if case let .action(rId, rTitle, _) = rhs, lId == rId, lTitle == rTitle { return true } else { return false }
+        case let .disclosure(lId, lTitle, lSubtitle, _):
+            if case let .disclosure(rId, rTitle, rSubtitle, _) = rhs, lId == rId, lTitle == rTitle, lSubtitle == rSubtitle { return true } else { return false }
         case let .footer(lId, lText):
             if case let .footer(rId, rText) = rhs, lId == rId, lText == rText { return true } else { return false }
         }

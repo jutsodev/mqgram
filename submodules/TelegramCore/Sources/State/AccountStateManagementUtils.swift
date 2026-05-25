@@ -953,8 +953,18 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                     if previousState.pts >= pts {
                         Logger.shared.log("State", "channel \(peerId) (\((updatedState.peers[peerId] as? TelegramChannel)?.title ?? "nil")) skip old delete update")
                     } else if previousState.pts + ptsCount == pts {
-                        // MARK: MQGram - Anti-Revoke: save snapshots, then delete
-                        updatedState.deleteMessages(messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
+                        // MARK: MQGram - Anti-Revoke: save snapshots BEFORE deleting
+                        let messageIds = messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) })
+                        // CRITICAL: Save snapshots if antiRevoke is enabled
+                        if UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") {
+                            for messageId in messageIds {
+                                if let message = updatedState.storedMessages[messageId] {
+                                    // Save snapshot before deletion
+                                    _ = MQDeletedMessages.saveSnapshotIfNeeded(message: message, transaction: transaction)
+                                }
+                            }
+                        }
+                        updatedState.deleteMessages(messageIds)
                         updatedState.updateChannelState(peerId, pts: pts)
                     } else {
                         if !missingUpdatesFromChannels.contains(peerId) {
@@ -1045,8 +1055,21 @@ private func finalStateWithUpdatesAndServerTime(accountPeerId: PeerId, postbox: 
                 let peerId = PeerId(namespace: Namespaces.Peer.CloudChannel, id: PeerId.Id._internalFromInt64Value(channelId))
                 updatedState.updateMinAvailableMessage(MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: minId))
             case let .updateDeleteMessages(updateDeleteMessagesData):
-                // MARK: MQGram - Anti-Revoke: save snapshots, then delete
-                updatedState.deleteMessagesWithGlobalIds(updateDeleteMessagesData.messages)
+                // MARK: MQGram - Anti-Revoke: REAL implementation - save snapshots BEFORE deleting
+                let globalIds = updateDeleteMessagesData.messages
+                // CRITICAL: Save snapshots if antiRevoke is enabled
+                if UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") {
+                    // Convert global IDs to message IDs and save snapshots
+                    for globalId in globalIds {
+                        if let messageId = transaction.messageIdsForGlobalIds([globalId]).first {
+                            if let message = transaction.getMessage(messageId) {
+                                // Save snapshot before deletion
+                                _ = MQDeletedMessages.saveSnapshotIfNeeded(message: message, transaction: transaction)
+                            }
+                        }
+                    }
+                }
+                updatedState.deleteMessagesWithGlobalIds(globalIds)
             case let .updatePinnedMessages(updatePinnedMessagesData):
                 let (flags, peer, messages) = (updatePinnedMessagesData.flags, updatePinnedMessagesData.peer, updatePinnedMessagesData.messages)
                 let peerId = peer.peerId
@@ -3505,8 +3528,18 @@ private func pollChannel(accountPeerId: PeerId, postbox: Postbox, network: Netwo
                     switch update {
                     case let .updateDeleteChannelMessages(updateDeleteChannelMessagesData):
                         let peerId = peer.id
-                        // MARK: MQGram - Anti-Revoke: save snapshots, then delete
-                        updatedState.deleteMessages(updateDeleteChannelMessagesData.messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) }))
+                        // MARK: MQGram - Anti-Revoke: REAL implementation - save snapshots BEFORE deleting
+                        let messageIds = updateDeleteChannelMessagesData.messages.map({ MessageId(peerId: peerId, namespace: Namespaces.Message.Cloud, id: $0) })
+                        // CRITICAL: Save snapshots if antiRevoke is enabled
+                        if UserDefaults.standard.bool(forKey: "MQGram.antiRevoke") {
+                            for messageId in messageIds {
+                                if let message = updatedState.storedMessages[messageId] {
+                                    // Save snapshot before deletion
+                                    _ = MQDeletedMessages.saveSnapshotIfNeeded(message: message, transaction: transaction)
+                                }
+                            }
+                        }
+                        updatedState.deleteMessages(messageIds)
                     case let .updateEditChannelMessage(updateEditChannelMessageData):
                         let apiMessage = updateEditChannelMessageData.message
                         var peerIsForum = peer.isForum
