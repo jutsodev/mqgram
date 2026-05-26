@@ -728,13 +728,19 @@ public final class AvatarNode: ASDisplayNode {
             let previousSize = self.params?.displayDimensions
             self.params = params
             
+            let useSquareAvatars = UserDefaults.standard.bool(forKey: "MQGram.squareAvatars")
             switch clipStyle {
             case .none:
                 self.imageNode.clipsToBounds = false
                 self.imageNode.cornerRadius = 0.0
             case .round:
-                self.imageNode.clipsToBounds = true
-                self.imageNode.cornerRadius = displayDimensions.height * 0.5
+                if useSquareAvatars {
+                    self.imageNode.clipsToBounds = false
+                    self.imageNode.cornerRadius = 0.0
+                } else {
+                    self.imageNode.clipsToBounds = true
+                    self.imageNode.cornerRadius = displayDimensions.height * 0.5
+                }
             case .roundedRect:
                 self.imageNode.clipsToBounds = true
                 self.imageNode.cornerRadius = displayDimensions.height * 0.25
@@ -964,7 +970,8 @@ public final class AvatarNode: ASDisplayNode {
             if let parameters = parameters as? AvatarNodeParameters {
                 colors = parameters.colors
                 
-                if case .round = parameters.clipStyle {
+                let useSquareAvatars = UserDefaults.standard.bool(forKey: "MQGram.squareAvatars")
+                if case .round = parameters.clipStyle, !useSquareAvatars {
                     context.beginPath()
                     context.addEllipse(in: CGRect(x: 0.0, y: 0.0, width: bounds.size.width, height:
                         bounds.size.height))

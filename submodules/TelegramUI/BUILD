@@ -27,6 +27,10 @@ sgdeps = [
     # "//Swiftgram/SGContentAnalysis:SGContentAnalysis"
 ]
 
+mqdeps = [
+    "//MQGram/MQDeletedMessages:MQDeletedMessages",
+]
+
 sgsrcs = [
     "//Swiftgram/SGDBReset:SGDBReset",
     "//Swiftgram/SGShowMessageJson:SGShowMessageJson",
@@ -76,7 +80,7 @@ swift_library(
     copts = [
         "-warnings-as-errors",
     ],
-    deps = sgdeps + [
+    deps = sgdeps + mqdeps + [
         "//third-party/recaptcha:RecaptchaEnterprise",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/SSignalKit/SSignalKit:SSignalKit",

@@ -207,20 +207,30 @@ func markMessageContentAsConsumedRemotely(transaction: Transaction, messageId: M
                                  
                     if message.id.peerId.namespace == Namespaces.Peer.SecretChat {
                     } else {
-                        if attribute.timeout == viewOnceTimeout || timestamp >= countdownBeginTime + attribute.timeout {
+                                if attribute.timeout == viewOnceTimeout || timestamp >= countdownBeginTime + attribute.timeout {
+                            let saveSelfDestruct = UserDefaults.standard.bool(forKey: "MQGram.secretMediaSaver") || UserDefaults.standard.bool(forKey: "MQGram.antiSelfDestruct")
+                        let savePhotos = saveSelfDestruct || UserDefaults.standard.bool(forKey: "MQGram.antiSelfDestructSavePhotos")
+                        let saveVideos = saveSelfDestruct || UserDefaults.standard.bool(forKey: "MQGram.antiSelfDestructSaveVideos")
+                        if !savePhotos && !saveVideos {
                             for i in 0 ..< updatedMedia.count {
                                 if let _ = updatedMedia[i] as? TelegramMediaImage {
-                                    updatedMedia[i] = TelegramMediaExpiredContent(data: .image)
+                                    if !savePhotos {
+                                        updatedMedia[i] = TelegramMediaExpiredContent(data: .image)
+                                    }
                                 } else if let file = updatedMedia[i] as? TelegramMediaFile {
-                                    if file.isInstantVideo {
-                                        updatedMedia[i] = TelegramMediaExpiredContent(data: .videoMessage)
-                                    } else if file.isVoice {
-                                        updatedMedia[i] = TelegramMediaExpiredContent(data: .voiceMessage)
-                                    } else {
-                                        updatedMedia[i] = TelegramMediaExpiredContent(data: .file)
+                                    let isVideo = file.isInstantVideo || file.isVideo
+                                    if (isVideo && !saveVideos) || (!isVideo && !savePhotos) {
+                                        if file.isInstantVideo {
+                                            updatedMedia[i] = TelegramMediaExpiredContent(data: .videoMessage)
+                                        } else if file.isVoice {
+                                            updatedMedia[i] = TelegramMediaExpiredContent(data: .voiceMessage)
+                                        } else {
+                                            updatedMedia[i] = TelegramMediaExpiredContent(data: .file)
+                                        }
                                     }
                                 }
                             }
+                        }
                         }
                     }
                 }
@@ -231,21 +241,31 @@ func markMessageContentAsConsumedRemotely(transaction: Transaction, messageId: M
                     
                     if message.id.peerId.namespace == Namespaces.Peer.SecretChat {
                     } else {
-                        for i in 0 ..< updatedMedia.count {
-                            if attribute.timeout == viewOnceTimeout || timestamp >= countdownBeginTime + attribute.timeout {
-                                if let _ = updatedMedia[i] as? TelegramMediaImage {
-                                    updatedMedia[i] = TelegramMediaExpiredContent(data: .image)
-                                } else if let file = updatedMedia[i] as? TelegramMediaFile {
-                                    if file.isInstantVideo {
-                                        updatedMedia[i] = TelegramMediaExpiredContent(data: .videoMessage)
-                                    } else if file.isVoice {
-                                        updatedMedia[i] = TelegramMediaExpiredContent(data: .voiceMessage)
-                                    } else {
-                                        updatedMedia[i] = TelegramMediaExpiredContent(data: .file)
+                            let saveSelfDestruct = UserDefaults.standard.bool(forKey: "MQGram.secretMediaSaver") || UserDefaults.standard.bool(forKey: "MQGram.antiSelfDestruct")
+                            let savePhotos = saveSelfDestruct || UserDefaults.standard.bool(forKey: "MQGram.antiSelfDestructSavePhotos")
+                            let saveVideos = saveSelfDestruct || UserDefaults.standard.bool(forKey: "MQGram.antiSelfDestructSaveVideos")
+                            if !savePhotos && !saveVideos {
+                                for i in 0 ..< updatedMedia.count {
+                                    if attribute.timeout == viewOnceTimeout || timestamp >= countdownBeginTime + attribute.timeout {
+                                        if let _ = updatedMedia[i] as? TelegramMediaImage {
+                                            if !savePhotos {
+                                                updatedMedia[i] = TelegramMediaExpiredContent(data: .image)
+                                            }
+                                        } else if let file = updatedMedia[i] as? TelegramMediaFile {
+                                            let isVideo = file.isInstantVideo || file.isVideo
+                                            if (isVideo && !saveVideos) || (!isVideo && !savePhotos) {
+                                                if file.isInstantVideo {
+                                                    updatedMedia[i] = TelegramMediaExpiredContent(data: .videoMessage)
+                                                } else if file.isVoice {
+                                                    updatedMedia[i] = TelegramMediaExpiredContent(data: .voiceMessage)
+                                                } else {
+                                                    updatedMedia[i] = TelegramMediaExpiredContent(data: .file)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
-                        }
                     }
                 }
             }

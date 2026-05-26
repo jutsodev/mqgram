@@ -230,6 +230,43 @@ private struct MQGramText {
     let devDeveloper: String
     let devChannel: String
     let devBot: String
+    
+    // New Features
+    let messageSendingDelayTitle: String
+    let messageSendingDelayText: String
+    let fakePremiumTitle: String
+    let fakePremiumText: String
+    let fakeStarsTitle: String
+    let fakeStarsText: String
+    let antiCapsTitle: String
+    let antiCapsText: String
+    let autoTranslateTitle: String
+    let autoTranslateText: String
+    let autoFormatTitle: String
+    let autoFormatText: String
+    let squareAvatarsTitle: String
+    let squareAvatarsText: String
+    let deletedTransparencyTitle: String
+    let deletedTransparencyText: String
+    let secretMediaTitle: String
+    let secretMediaText: String
+    let readWhenReplyTitle: String
+    let readWhenReplyText: String
+    let readWhenReactTitle: String
+    let readWhenReactText: String
+    let hideReactionsTitle: String
+    let hideReactionsText: String
+    let hideCommentTitle: String
+    let hideCommentText: String
+    let editHistoryTitle: String
+    let editHistoryText: String
+    let readUntilTitle: String
+    let readUntilText: String
+    let savePhotosTitle: String
+    let savePhotosText: String
+    let saveVideosTitle: String
+    let saveVideosText: String
+    
     let footer: String
 }
 
@@ -330,6 +367,40 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             devDeveloper: "MQ Team / jutsodev",
             devChannel: "Канал StivenVPN",
             devBot: "Бот StivenVPN",
+            messageSendingDelayTitle: "Задержка отправки",
+            messageSendingDelayText: "Добавляет паузу перед отправкой сообщений.",
+            fakePremiumTitle: "Фейковый Премиум",
+            fakePremiumText: "Показывает статус Premium без подписки.",
+            fakeStarsTitle: "Фейковый баланс звёзд",
+            fakeStarsText: "Устанавливает поддельный баланс звёзд.",
+            antiCapsTitle: "Анти-капс",
+            antiCapsText: "Автоматически переводит капс в нижний регистр.",
+            autoTranslateTitle: "Авто-перевод",
+            autoTranslateText: "Переводит текст перед отправкой.",
+            autoFormatTitle: "Авто-формат",
+            autoFormatText: "Автоматически применяет форматирование.",
+            squareAvatarsTitle: "Квадратные аватары",
+            squareAvatarsText: "Отображает аватары как квадраты вместо кругов.",
+            deletedTransparencyTitle: "Прозрачность удалённых",
+            deletedTransparencyText: "Удалённые сообщения отображаются полупрозрачными.",
+            secretMediaTitle: "Сохранение одноразовых",
+            secretMediaText: "Автоматически сохраняет исчезающие фото и видео.",
+            readWhenReplyTitle: "Прочитать при ответе",
+            readWhenReplyText: "Отметка прочтения только при ответе.",
+            hideReactionsTitle: "Скрыть реакции",
+            hideReactionsText: "Скрывает реакции на сообщения.",
+            hideCommentTitle: "Скрыть комментарии",
+            hideCommentText: "Скрывает кнопку для ответов в комментариях.",
+            editHistoryTitle: "История редактирований",
+            editHistoryText: "Показывает историю изменений сообщений.",
+            readWhenReactTitle: "Прочитать при реакции",
+            readWhenReactText: "Отметка прочтения только при реакции.",
+            readUntilTitle: "Прочитать до сообщения",
+            readUntilText: "ПКМ по сообщению — отметить всё прочитанным до него.",
+            savePhotosTitle: "Сохранять фото",
+            savePhotosText: "Сохранять исчезающие фото при самоуничтожении.",
+            saveVideosTitle: "Сохранять видео",
+            saveVideosText: "Сохранять исчезающие видео при самоуничтожении.",
             footer: "Функции MQGram. Для части изменений перезапусти приложение."
         )
     }
@@ -428,6 +499,40 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         devDeveloper: "MQ Team / jutsodev",
         devChannel: "StivenVPN Channel",
         devBot: "StivenVPN Bot",
+        messageSendingDelayTitle: "Message Delay",
+        messageSendingDelayText: "Add a pause before sending messages.",
+        fakePremiumTitle: "Fake Premium",
+        fakePremiumText: "Show Premium status without subscription.",
+        fakeStarsTitle: "Fake Stars Balance",
+        fakeStarsText: "Set a fake stars balance.",
+        antiCapsTitle: "Anti-Caps",
+        antiCapsText: "Automatically converts caps to lowercase.",
+        autoTranslateTitle: "Auto-Translate",
+        autoTranslateText: "Translate text before sending.",
+        autoFormatTitle: "Auto-Format",
+        autoFormatText: "Automatically apply formatting.",
+        squareAvatarsTitle: "Square Avatars",
+        squareAvatarsText: "Display avatars as squares instead of circles.",
+        deletedTransparencyTitle: "Deleted Transparency",
+        deletedTransparencyText: "Show deleted messages with reduced opacity.",
+        secretMediaTitle: "Save Self-Destruct Media",
+        secretMediaText: "Auto-save disappearing photos and videos.",
+        readWhenReplyTitle: "Read on Reply",
+        readWhenReplyText: "Mark as read only when replying.",
+        hideReactionsTitle: "Hide Reactions",
+        hideReactionsText: "Hide reactions on messages.",
+        hideCommentTitle: "Hide Comment Button",
+        hideCommentText: "Hide the comment reply button.",
+        editHistoryTitle: "Edit History",
+        editHistoryText: "Show message edit history.",
+        readWhenReactTitle: "Read on React",
+        readWhenReactText: "Mark as read only when reacting.",
+        readUntilTitle: "Read Until Message",
+        readUntilText: "Right-click message to mark all read up to it.",
+        savePhotosTitle: "Save Photos",
+        savePhotosText: "Save self-destructing photos.",
+        saveVideosTitle: "Save Videos",
+        saveVideosText: "Save self-destructing videos.",
         footer: "MQGram features. Restart the app to apply some changes."
     )
 }
@@ -621,7 +726,27 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .hideStickersSettings, text.hideStickersTitle, text.hideStickersText, settings.hideStickersSettings)); id += 1
         entries.append(.toggle(id, .hidePowerSaving, text.hidePowerSavingTitle, text.hidePowerSavingText, settings.hidePowerSaving))
 
-    case 5: // Developer
+    case 5: // Advanced Features
+        entries.append(.info(1, "🚀 Расширенные функции / Advanced Features"))
+        entries.append(.toggle(id, .messageSendingDelay, text.messageSendingDelayTitle, text.messageSendingDelayText, settings.messageSendingDelay)); id += 1
+        entries.append(.toggle(id, .fakePremium, text.fakePremiumTitle, text.fakePremiumText, settings.fakePremium)); id += 1
+        entries.append(.toggle(id, .fakeStarsBalance, text.fakeStarsTitle, text.fakeStarsText, settings.fakeStarsBalance)); id += 1
+        entries.append(.toggle(id, .antiCaps, text.antiCapsTitle, text.antiCapsText, settings.antiCaps)); id += 1
+        entries.append(.toggle(id, .autoTranslate, text.autoTranslateTitle, text.autoTranslateText, settings.autoTranslate)); id += 1
+        entries.append(.toggle(id, .autoFormat, text.autoFormatTitle, text.autoFormatText, settings.autoFormat)); id += 1
+        entries.append(.toggle(id, .squareAvatars, text.squareAvatarsTitle, text.squareAvatarsText, settings.squareAvatars)); id += 1
+        entries.append(.toggle(id, .deletedMessageTransparency, text.deletedTransparencyTitle, text.deletedTransparencyText, settings.deletedMessageTransparency)); id += 1
+        entries.append(.toggle(id, .secretMediaSaver, text.secretMediaTitle, text.secretMediaText, settings.secretMediaSaver)); id += 1
+        entries.append(.toggle(id, .onlyReadWhenReplying, text.readWhenReplyTitle, text.readWhenReplyText, settings.onlyReadWhenReplying)); id += 1
+        entries.append(.toggle(id, .onlyReadWhenReacting, text.readWhenReactTitle, text.readWhenReactText, settings.onlyReadWhenReacting)); id += 1
+        entries.append(.toggle(id, .readUntilMessage, text.readUntilTitle, text.readUntilText, settings.readUntilMessage)); id += 1
+        entries.append(.toggle(id, .hideReactions, text.hideReactionsTitle, text.hideReactionsText, settings.hideReactions)); id += 1
+        entries.append(.toggle(id, .hideCommentButton, text.hideCommentTitle, text.hideCommentText, settings.hideCommentButton)); id += 1
+        entries.append(.toggle(id, .showEditHistory, text.editHistoryTitle, text.editHistoryText, settings.showEditHistory)); id += 1
+        entries.append(.toggle(id, .antiSelfDestructSavePhotos, text.savePhotosTitle, text.savePhotosText, settings.antiSelfDestructSavePhotos)); id += 1
+        entries.append(.toggle(id, .antiSelfDestructSaveVideos, text.saveVideosTitle, text.saveVideosText, settings.antiSelfDestructSaveVideos))
+
+    case 6: // Developer
         entries.append(.info(1, text.devInfo))
         // GitHub - in built-in browser (inTelegram: false)
         entries.append(.link(id, "GitHub", "https://github.com/jutsodev", false, makeGitHubIcon())); id += 1
@@ -665,8 +790,8 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
         }
     )
 
-    let tabNamesRu: [String] = ["Призрак", "Основные", "Бета", "Прочее", "Скрыть", "Dev"]
-    let tabNamesEn: [String] = ["Ghost", "Core", "Beta", "Other", "Hide", "Dev"]
+    let tabNamesRu: [String] = ["Призрак", "Основные", "Бета", "Прочее", "Скрыть", "Расширено", "Dev"]
+    let tabNamesEn: [String] = ["Ghost", "Core", "Beta", "Other", "Hide", "Advanced", "Dev"]
 
     let signal = combineLatest(context.sharedContext.presentationData, updatePromise.get(), tabIndexPromise.get())
     |> map { presentationData, _, tabIndex -> (ItemListControllerState, (ItemListNodeState, Any)) in

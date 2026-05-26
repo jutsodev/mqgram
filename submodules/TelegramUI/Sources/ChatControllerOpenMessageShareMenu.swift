@@ -59,6 +59,8 @@ func chatShareToSavedMessagesAdditionalView(_ chatController: ChatControllerImpl
                     return
                 }
                 if !messageIds.isEmpty {
+                    // MARK: MQGram - track react time for onlyReadWhenReacting
+                    UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "MQGram.lastUserReactTime")
                     let _ = chatController.context.engine.messages.setMessageReactions(ids: messageIds, reactions: [updateReaction])
                     
                     var isBuiltinReaction = false

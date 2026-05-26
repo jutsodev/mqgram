@@ -1473,7 +1473,9 @@ public class ChatMessageDateAndStatusNode: ASDisplayNode {
 }
 
 public func shouldDisplayInlineDateReactions(message: Message, isPremium: Bool, forceInline: Bool) -> Bool {
-    // MARK: Swiftgram
-    // With 10.13 it now hides reactions in favor of message effect badge
+    // MARK: MQGram - hide reactions if enabled
+    if UserDefaults.standard.bool(forKey: "MQGram.hideReactions") {
+        return true
+    }
     return SGSimpleSettings.shared.hideReactions
 }

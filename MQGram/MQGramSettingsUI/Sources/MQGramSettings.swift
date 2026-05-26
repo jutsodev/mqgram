@@ -63,6 +63,27 @@ public final class MQGramSettings {
         // Wallet tab options
         case pinWalletTab
         case redDeleteIcon
+        
+        // MQGram Advanced Features (новые функции)
+        case messageSendingDelay
+        case messageSendingDelayRandom
+        case messageSendingDelaySeconds
+        case fakePremium
+        case fakeStarsBalance
+        case antiCaps
+        case autoTranslate
+        case autoFormat
+        case squareAvatars
+        case deletedMessageTransparency
+        case secretMediaSaver
+        case onlyReadWhenReplying
+        case onlyReadWhenReacting
+        case hideReactions
+        case hideCommentButton
+        case readUntilMessage
+        case showEditHistory
+        case antiSelfDestructSavePhotos
+        case antiSelfDestructSaveVideos
     }
 
     private let defaults: UserDefaults
@@ -365,5 +386,102 @@ public final class MQGramSettings {
     public var redDeleteIcon: Bool {
         get { bool(for: .redDeleteIcon) }
         set { setBool(newValue, for: .redDeleteIcon) }
+    }
+    
+    // MARK: - New Features Properties
+    
+    public var messageSendingDelay: Bool {
+        get { bool(for: .messageSendingDelay) }
+        set { setBool(newValue, for: .messageSendingDelay) }
+    }
+    
+    public var messageSendingDelayRandom: Bool {
+        get { bool(for: .messageSendingDelayRandom) }
+        set { setBool(newValue, for: .messageSendingDelayRandom) }
+    }
+    
+    public var messageSendingDelaySeconds: Bool {
+        get { bool(for: .messageSendingDelaySeconds) }
+        set { setBool(newValue, for: .messageSendingDelaySeconds) }
+    }
+    
+    public var fakePremium: Bool {
+        get { bool(for: .fakePremium) }
+        set { setBool(newValue, for: .fakePremium) }
+    }
+    
+    public var fakeStarsBalance: Bool {
+        get { bool(for: .fakeStarsBalance) }
+        set { setBool(newValue, for: .fakeStarsBalance) }
+    }
+    
+    public var antiCaps: Bool {
+        get { bool(for: .antiCaps) }
+        set { setBool(newValue, for: .antiCaps) }
+    }
+    
+    public var autoTranslate: Bool {
+        get { bool(for: .autoTranslate) }
+        set { setBool(newValue, for: .autoTranslate) }
+    }
+    
+    public var autoFormat: Bool {
+        get { bool(for: .autoFormat) }
+        set { setBool(newValue, for: .autoFormat) }
+    }
+    
+    public var squareAvatars: Bool {
+        get { bool(for: .squareAvatars) }
+        set { setBool(newValue, for: .squareAvatars) }
+    }
+    
+    public var deletedMessageTransparency: Bool {
+        get { bool(for: .deletedMessageTransparency) }
+        set { setBool(newValue, for: .deletedMessageTransparency) }
+    }
+    
+    public var secretMediaSaver: Bool {
+        get { bool(for: .secretMediaSaver) }
+        set { setBool(newValue, for: .secretMediaSaver) }
+    }
+    
+    public var onlyReadWhenReplying: Bool {
+        get { bool(for: .onlyReadWhenReplying) }
+        set { setBool(newValue, for: .onlyReadWhenReplying) }
+    }
+    
+    public var onlyReadWhenReacting: Bool {
+        get { bool(for: .onlyReadWhenReacting) }
+        set { setBool(newValue, for: .onlyReadWhenReacting) }
+    }
+    
+    public var hideReactions: Bool {
+        get { bool(for: .hideReactions) }
+        set { setBool(newValue, for: .hideReactions) }
+    }
+    
+    public var hideCommentButton: Bool {
+        get { bool(for: .hideCommentButton) }
+        set { setBool(newValue, for: .hideCommentButton) }
+    }
+    
+    public var readUntilMessage: Bool {
+        get { bool(for: .readUntilMessage) }
+        set { setBool(newValue, for: .readUntilMessage) }
+    }
+    
+    public var showEditHistory: Bool {
+        get { bool(for: .showEditHistory) }
+        set { setBool(newValue, for: .showEditHistory) }
+    }
+    
+    public var antiSelfDestructSavePhotos: Bool {
+        get { bool(for: .antiSelfDestructSavePhotos) }
+        set { setBool(newValue, for: .antiSelfDestructSavePhotos) }
+    }
+    
+    public var antiSelfDestructSaveVideos: Bool {
+        get { bool(for: .antiSelfDestructSaveVideos) }
+        set { setBool(newValue, for: .antiSelfDestructSaveVideos) }
     }
 }

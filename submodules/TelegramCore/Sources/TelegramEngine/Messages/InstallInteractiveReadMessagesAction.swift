@@ -9,8 +9,23 @@ func _internal_installInteractiveReadMessagesAction(postbox: Postbox, stateManag
         if UserDefaults.standard.bool(forKey: "MQGram.readAfterActions") {
             let lastActionTime = UserDefaults.standard.double(forKey: "MQGram.lastUserActionTime")
             let now = Date().timeIntervalSince1970
-            // Only allow auto-read if user did an action in the last 5 seconds
             if now - lastActionTime > 5.0 {
+                return
+            }
+        }
+        // MARK: MQGram - Only read when replying
+        if UserDefaults.standard.bool(forKey: "MQGram.onlyReadWhenReplying") {
+            let lastReplyTime = UserDefaults.standard.double(forKey: "MQGram.lastUserReplyTime")
+            let now = Date().timeIntervalSince1970
+            if now - lastReplyTime > 10.0 {
+                return
+            }
+        }
+        // MARK: MQGram - Only read when reacting
+        if UserDefaults.standard.bool(forKey: "MQGram.onlyReadWhenReacting") {
+            let lastReactTime = UserDefaults.standard.double(forKey: "MQGram.lastUserReactTime")
+            let now = Date().timeIntervalSince1970
+            if now - lastReactTime > 10.0 {
                 return
             }
         }

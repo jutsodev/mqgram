@@ -3674,7 +3674,8 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             }
         }
         
-        let disablesComments = !hasInstantVideo
+        let mqHideComments = UserDefaults.standard.bool(forKey: "MQGram.hideCommentButton")
+        let disablesComments = !hasInstantVideo || mqHideComments
         
         return (layout, { animation, applyInfo, synchronousLoads in
             return ChatMessageBubbleItemNode.applyLayout(selfReference: selfReference, animation, synchronousLoads,
@@ -5313,7 +5314,8 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 }
                 strongSelf.messageAccessibilityArea.frame = backgroundFrame
             }
-            let showMQDeletedIcon = MQDeletedMessages.isMessageDeleted(item.message) && UserDefaults.standard.bool(forKey: "MQGram.redDeleteIcon")
+            let isDeleted = MQDeletedMessages.isMessageDeleted(item.message)
+            let showMQDeletedIcon = isDeleted && UserDefaults.standard.bool(forKey: "MQGram.redDeleteIcon")
             if showMQDeletedIcon {
                 let iconNode: ASImageNode
                 if let current = strongSelf.mqDeletedIconNode {
@@ -5333,6 +5335,10 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
             } else if let iconNode = strongSelf.mqDeletedIconNode {
                 strongSelf.mqDeletedIconNode = nil
                 iconNode.removeFromSupernode()
+            }
+            // MARK: MQGram - deletedMessageTransparency
+            if isDeleted && UserDefaults.standard.bool(forKey: "MQGram.deletedMessageTransparency") {
+                animation.animator.updateAlpha(layer: strongSelf.backgroundNode.layer, alpha: 0.4, completion: nil)
             }
             if let summarizeButtonNode = strongSelf.summarizeButtonNode {
                 let buttonSize = summarizeButtonNode.update(presentationData: item.presentationData, controllerInteraction: item.controllerInteraction, chatLocation: item.chatLocation, subject: item.associatedData.subject, message: item.message, account: item.context.account, disableComments: disablesComments, isSummarize: true)

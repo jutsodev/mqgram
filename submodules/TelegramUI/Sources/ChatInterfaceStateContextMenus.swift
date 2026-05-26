@@ -40,6 +40,7 @@ import ChatMessageItemView
 import ChatMessageBubbleItemNode
 import AdsInfoScreen
 import AdsReportScreen
+import MQDeletedMessages
  
 private struct MessageContextMenuData {
     let starStatus: Bool?
@@ -1908,6 +1909,28 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                 interfaceInteraction.forwardMessages(selectAll || isImage ? messages : [message], "forwardMessagesToCloudWithNoNamesAndOpen")
                 f(.dismissWithoutContent)
             })), at: 0)
+        }
+        
+        // MARK: MQGram - readUntilMessage context menu
+        if UserDefaults.standard.bool(forKey: "MQGram.readUntilMessage") {
+            actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.ChatList_Context_MarkAsRead, icon: { theme in
+                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/MarkAsUnread"), color: theme.actionSheet.primaryTextColor)
+            }, action: { _, f in
+                f(.dismissWithoutContent)
+                let _ = (context.engine.messages.markAllAsRead(peerId: message.id.peerId, upperIndex: message.index)
+                |> deliverOnMainQueue).startStandalone()
+            })))
+        }
+        // MARK: MQGram - showEditHistory context menu
+        if UserDefaults.standard.bool(forKey: "MQGram.showEditHistory") {
+            let editHistory = message.attributes.compactMap { $0 as? MQDeletedMessageAttribute }.first
+            if editHistory != nil {
+                actions.append(.action(ContextMenuActionItem(text: "История редактирований", icon: { theme in
+                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/MessageDelete"), color: theme.actionSheet.primaryTextColor)
+                }, action: { _, f in
+                    f(.dismissWithoutContent)
+                })))
+            }
         }
         
         if data.messageActions.options.contains(.report) || context.account.testingEnvironment {

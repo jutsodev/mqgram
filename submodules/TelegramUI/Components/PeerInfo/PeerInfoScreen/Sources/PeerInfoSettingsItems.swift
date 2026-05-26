@@ -311,9 +311,15 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
         }))
     }
     if let starsState = data.starsState {
-        if !isPremiumDisabled || abs(starsState.balance.value) > 0 {
+        if !isPremiumDisabled || abs(starsState.balance.value) > 0 || UserDefaults.standard.bool(forKey: "MQGram.fakeStarsBalance") {
             let balanceText: NSAttributedString
-            if abs(starsState.balance.value) > 0 {
+            if UserDefaults.standard.bool(forKey: "MQGram.fakeStarsBalance") {
+                let fakeBalance = "999999"
+                let smallLabelFont = Font.regular(floor(presentationData.listsFontSize.itemListBaseFontSize / 17.0 * 13.0))
+                let labelFont = Font.regular(presentationData.listsFontSize.itemListBaseFontSize)
+                let labelColor = presentationData.theme.list.itemSecondaryTextColor
+                balanceText = tonAmountAttributedString(fakeBalance, integralFont: labelFont, fractionalFont: smallLabelFont, color: labelColor, decimalSeparator: presentationData.dateTimeFormat.decimalSeparator)
+            } else if abs(starsState.balance.value) > 0 {
                 let formattedLabel = formatStarsAmountText(starsState.balance, dateTimeFormat: presentationData.dateTimeFormat)
                 let smallLabelFont = Font.regular(floor(presentationData.listsFontSize.itemListBaseFontSize / 17.0 * 13.0))
                 let labelFont = Font.regular(presentationData.listsFontSize.itemListBaseFontSize)

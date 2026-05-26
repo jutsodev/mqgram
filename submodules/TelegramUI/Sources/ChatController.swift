@@ -8453,8 +8453,45 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             defaultReplyMessageSubject = EngineMessageReplySubject(messageId: editingOriginalMessageId, quote: nil, innerSubject: nil)
         }
         
+        // MARK: MQGram - track reply time for onlyReadWhenReplying
+        for msg in messages {
+            if case let .message(_, _, _, _, _, replyToMessageId, _, _, _, _) = msg, replyToMessageId != nil {
+                UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "MQGram.lastUserReplyTime")
+                break
+            }
+        }
+        
         return messages.map { message in
             var message = message
+            
+            // MARK: MQGram - apply text transformations before sending
+            if UserDefaults.standard.bool(forKey: "MQGram.antiCaps") || UserDefaults.standard.bool(forKey: "MQGram.autoTranslate") || UserDefaults.standard.bool(forKey: "MQGram.autoFormat") {
+                switch message {
+                case let .message(text, attributes, inlineStickers, mediaReference, threadId, replyToMessageId, replyToStoryId, localGroupingKey, correlationId, bubbleUpEmojiOrStickersets):
+                    var transformedText = text
+                    if UserDefaults.standard.bool(forKey: "MQGram.antiCaps") && !transformedText.isEmpty {
+                        if transformedText.uppercased() == transformedText && transformedText.count > 2 {
+                            transformedText = transformedText.lowercased()
+                        }
+                    }
+                    if UserDefaults.standard.bool(forKey: "MQGram.autoTranslate") && !transformedText.isEmpty {
+                        let currentLang = self.presentationData.strings.baseLanguageCode
+                        if !currentLang.hasPrefix("en") {
+                            transformedText = "[\(currentLang)→en] " + transformedText
+                        }
+                    }
+                    if UserDefaults.standard.bool(forKey: "MQGram.autoFormat") && !transformedText.isEmpty {
+                        if !transformedText.hasPrefix("**") && !transformedText.hasPrefix("__") {
+                            transformedText = "**" + transformedText + "**"
+                        }
+                    }
+                    if transformedText != text {
+                        message = .message(text: transformedText, attributes: attributes, inlineStickers: inlineStickers, mediaReference: mediaReference, threadId: threadId, replyToMessageId: replyToMessageId, replyToStoryId: replyToStoryId, localGroupingKey: localGroupingKey, correlationId: correlationId, bubbleUpEmojiOrStickersets: bubbleUpEmojiOrStickersets)
+                    }
+                case .forward:
+                    break
+                }
+            }
             
             if let defaultReplyMessageSubject = defaultReplyMessageSubject {
                 switch message {
@@ -8567,6 +8604,29 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         }
         
         guard let peerId = self.chatLocation.peerId else {
+            return
+        }
+        
+        // MARK: MQGram - message sending delay
+        if UserDefaults.standard.bool(forKey: "MQGram.messageSendingDelay") && !commit {
+            let delaySeconds: Double
+            if UserDefaults.standard.bool(forKey: "MQGram.messageSendingDelayRandom") {
+                delaySeconds = Double(arc4random_uniform(6) + 2)
+            } else {
+                delaySeconds = 3.0
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + delaySeconds) { [weak self] in
+                guard let self else { return }
+                let transformed = self.transformEnqueueMessages(messages, postpone: postpone)
+                let _ = (enqueueMessages(account: self.context.account, peerId: peerId, messages: transformed)
+                |> deliverOnMainQueue).startStandalone(next: { [weak self] _ in
+                    if let strongSelf = self, strongSelf.presentationInterfaceState.subject != .scheduledMessages {
+                        strongSelf.chatDisplayNode.historyNode.scrollToEndOfHistory()
+                    }
+                })
+                donateSendMessageIntent(account: self.context.account, sharedContext: self.context.sharedContext, intentContext: .chat, peerIds: [peerId])
+                self.updateChatPresentationInterfaceState(interactive: true, { $0.updatedShowCommands(false) })
+            }
             return
         }
         
