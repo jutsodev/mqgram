@@ -182,7 +182,15 @@ final class StarsBalanceComponent: Component {
             case .ton:
                 formattedLabel = formatTonAmountText(component.count.value, dateTimeFormat: component.dateTimeFormat, maxDecimalPositions: 3)
             case .stars:
-                formattedLabel = formatStarsAmountText(component.count, dateTimeFormat: component.dateTimeFormat)
+                // MARK: MQGram - Fake Stars Balance: override display value
+                let effectiveCount: StarsAmount
+                if UserDefaults.standard.bool(forKey: "MQGram.fakeStarsBalance") {
+                    let fakeAmount = Int64(UserDefaults.standard.string(forKey: "MQGram.fakeStarsBalanceAmount") ?? "999999") ?? 999999
+                    effectiveCount = StarsAmount(value: fakeAmount, nanos: 0)
+                } else {
+                    effectiveCount = component.count
+                }
+                formattedLabel = formatStarsAmountText(effectiveCount, dateTimeFormat: component.dateTimeFormat)
             }
             let labelFont: UIFont
             if formattedLabel.contains(component.dateTimeFormat.decimalSeparator) {

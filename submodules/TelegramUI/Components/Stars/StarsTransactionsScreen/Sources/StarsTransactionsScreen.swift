@@ -558,7 +558,15 @@ final class StarsTransactionsScreenComponent: Component {
             if component.starsContext.ton {
                 formattedBalance = formatTonAmountText(self.starsState?.balance.value ?? 0, dateTimeFormat: environment.dateTimeFormat)
             } else {
-                formattedBalance = formatStarsAmountText(self.starsState?.balance ?? StarsAmount.zero, dateTimeFormat: environment.dateTimeFormat)
+                // MARK: MQGram - Fake Stars Balance: override display value
+                let effectiveBalance: StarsAmount
+                if UserDefaults.standard.bool(forKey: "MQGram.fakeStarsBalance") {
+                    let fakeAmount = Int64(UserDefaults.standard.string(forKey: "MQGram.fakeStarsBalanceAmount") ?? "999999") ?? 999999
+                    effectiveBalance = StarsAmount(value: fakeAmount, nanos: 0)
+                } else {
+                    effectiveBalance = self.starsState?.balance ?? StarsAmount.zero
+                }
+                formattedBalance = formatStarsAmountText(effectiveBalance, dateTimeFormat: environment.dateTimeFormat)
             }
             let smallLabelFont = Font.regular(11.0)
             let labelFont = Font.semibold(14.0)

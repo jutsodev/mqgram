@@ -159,6 +159,9 @@ enum PeerInfoContextSubject {
     case businessHours(String)
     case businessLocation(String)
     case birthday
+    // MARK: MQGram - additional context subjects
+    case peerId(String)
+    case registrationDate(String)
 }
 
 enum PeerInfoSettingsSection {

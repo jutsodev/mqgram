@@ -417,7 +417,22 @@ public func currentPresentationDataAndSettings(accountManager: AccountManager<Te
         
         let dateTimeFormat = currentDateTimeFormat()
         let stringsValue: PresentationStrings
-        if let localizationSettings = localizationSettings {
+        // MARK: MQGram - Full Russian UI: force Russian localization
+        if UserDefaults.standard.bool(forKey: "MQGram.fullRussianUI") {
+            let ruDict = NSDictionary(contentsOf: URL(fileURLWithPath: getAppBundle().path(
+                forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: "ru"
+            )!)) as? [String: String] ?? [:]
+            stringsValue = PresentationStrings(
+                primaryComponent: PresentationStrings.Component(
+                    languageCode: "ru",
+                    localizedName: "Русский",
+                    pluralizationRulesCode: "ru",
+                    dict: ruDict
+                ),
+                secondaryComponent: nil,
+                groupingSeparator: dateTimeFormat.groupingSeparator
+            )
+        } else if let localizationSettings = localizationSettings {
             stringsValue = PresentationStrings(primaryComponent: PresentationStrings.Component(languageCode: localizationSettings.primaryComponent.languageCode, localizedName: localizationSettings.primaryComponent.localizedName, pluralizationRulesCode: localizationSettings.primaryComponent.customPluralizationCode, dict: dictFromLocalization(localizationSettings.primaryComponent.localization)), secondaryComponent: localizationSettings.secondaryComponent.flatMap({ PresentationStrings.Component(languageCode: $0.languageCode, localizedName: $0.localizedName, pluralizationRulesCode: $0.customPluralizationCode, dict: dictFromLocalization($0.localization)) }), groupingSeparator: dateTimeFormat.groupingSeparator)
         } else {
             stringsValue = defaultPresentationStrings
@@ -829,7 +844,22 @@ public func updatedPresentationData(accountManager: AccountManager<TelegramAccou
                         
                         let dateTimeFormat = currentDateTimeFormat()
                         let stringsValue: PresentationStrings
-                        if let localizationSettings = localizationSettings {
+                        // MARK: MQGram - Full Russian UI: force Russian localization
+                        if UserDefaults.standard.bool(forKey: "MQGram.fullRussianUI") {
+                            let ruDict = NSDictionary(contentsOf: URL(fileURLWithPath: getAppBundle().path(
+                                forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: "ru"
+                            )!)) as? [String: String] ?? [:]
+                            stringsValue = PresentationStrings(
+                                primaryComponent: PresentationStrings.Component(
+                                    languageCode: "ru",
+                                    localizedName: "Русский",
+                                    pluralizationRulesCode: "ru",
+                                    dict: ruDict
+                                ),
+                                secondaryComponent: nil,
+                                groupingSeparator: dateTimeFormat.groupingSeparator
+                            )
+                        } else if let localizationSettings = localizationSettings {
                             stringsValue = PresentationStrings(primaryComponent: PresentationStrings.Component(languageCode: localizationSettings.primaryComponent.languageCode, localizedName: localizationSettings.primaryComponent.localizedName, pluralizationRulesCode: localizationSettings.primaryComponent.customPluralizationCode, dict: dictFromLocalization(localizationSettings.primaryComponent.localization)), secondaryComponent: localizationSettings.secondaryComponent.flatMap({ PresentationStrings.Component(languageCode: $0.languageCode, localizedName: $0.localizedName, pluralizationRulesCode: $0.customPluralizationCode, dict: dictFromLocalization($0.localization)) }), groupingSeparator: dateTimeFormat.groupingSeparator)
                         } else {
                             stringsValue = defaultPresentationStrings

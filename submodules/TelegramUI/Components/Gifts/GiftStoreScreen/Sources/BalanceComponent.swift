@@ -94,8 +94,16 @@ final class BalanceComponent: Component {
             
             let presentationData = component.context.sharedContext.currentPresentationData.with { $0 }
 
+            // MARK: MQGram - Fake Stars Balance: override display value
+            let effectiveStarsBalance: Int64
+            if UserDefaults.standard.bool(forKey: "MQGram.fakeStarsBalance") {
+                effectiveStarsBalance = Int64(UserDefaults.standard.string(forKey: "MQGram.fakeStarsBalanceAmount") ?? "999999") ?? 999999
+            } else {
+                effectiveStarsBalance = self.starsBalance
+            }
+
             var rawString: String = ""
-            let starsBalanceString = "**⭐️\(presentationStringsFormattedNumber(Int32(clamping: self.starsBalance), presentationData.dateTimeFormat.groupingSeparator))**"
+            let starsBalanceString = "**⭐️\(presentationStringsFormattedNumber(Int32(clamping: effectiveStarsBalance), presentationData.dateTimeFormat.groupingSeparator))**"
             if self.tonBalance > 0 {
                 let tonBalanceString = "**💎\(formatTonAmountText(self.tonBalance, dateTimeFormat: presentationData.dateTimeFormat))**"
                 rawString = starsBalanceString + "\n" + tonBalanceString

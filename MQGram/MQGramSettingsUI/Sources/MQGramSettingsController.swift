@@ -136,6 +136,7 @@ private enum MQGramEntry: ItemListNodeEntry {
 // MARK: - Localized Text
 
 private struct MQGramText {
+    // Невидимость
     let ghostInfo: String
     let ghostModeTitle: String
     let ghostModeText: String
@@ -161,39 +162,106 @@ private struct MQGramText {
     let ghostOnlineStatusText: String
     let ghostTypingActionsTitle: String
     let ghostTypingActionsText: String
-    let readAfterActionsTitle: String
-    let readAfterActionsText: String
-    let stableInfo: String
-    let antiSelfDestructTitle: String
-    let antiSelfDestructText: String
+    let alwaysOnlineTitle: String
+    let alwaysOnlineText: String
+    let messageSendingDelayTitle: String
+    let messageSendingDelayText: String
+    let onlyReadWhenReplyingTitle: String
+    let onlyReadWhenReplyingText: String
+    let onlyReadWhenReactingTitle: String
+    let onlyReadWhenReactingText: String
+    
+    // Антиудаление
+    let antiDeleteInfo: String
     let antiRevokeTitle: String
     let antiRevokeText: String
-    let customIndicatorsTitle: String
-    let customIndicatorsText: String
-    let redDeleteIconTitle: String
-    let redDeleteIconText: String
-    let betaInfo: String
+    let antiEditText: String
+    let antiEditTitle: String
+    let showEditHistoryTitle: String
+    let showEditHistoryText: String
+    let secretMediaSaverTitle: String
+    let secretMediaSaverText: String
+    let savePhotosTitle: String
+    let savePhotosText: String
+    let saveVideosTitle: String
+    let saveVideosText: String
+    
+    // Без ограничений
+    let noLimitsInfo: String
     let contentProtectionTitle: String
     let contentProtectionText: String
-    let antiEditTitle: String
-    let antiEditText: String
     let disableAdsTitle: String
     let disableAdsText: String
-    let businessFeaturesTitle: String
-    let businessFeaturesText: String
-    let otherInfo: String
+    let hideReactionsTitle: String
+    let hideReactionsText: String
+    let hideCommentTitle: String
+    let hideCommentText: String
+    let readUntilTitle: String
+    let readUntilText: String
+    
+    // Текст
+    let textInfo: String
+    let antiCapsTitle: String
+    let antiCapsText: String
+    let autoTranslateTitle: String
+    let autoTranslateText: String
+    let autoFormatTitle: String
+    let autoFormatText: String
+    
+    // Внешний вид
+    let appearanceInfo: String
+    let customFontTitle: String
+    let customFontText: String
+    let videoBackgroundTitle: String
+    let videoBackgroundText: String
+    let squareAvatarsTitle: String
+    let squareAvatarsText: String
+    let deletedTransparencyTitle: String
+    let deletedTransparencyText: String
+    
+    // Локальные фейки
+    let fakesInfo: String
+    let fakePremiumTitle: String
+    let fakePremiumText: String
+    let fakeStarsTitle: String
+    let fakeStarsText: String
     let localPremiumTitle: String
     let localPremiumText: String
-    let unlimitedAccountsTitle: String
-    let unlimitedAccountsText: String
+    
+    // Профиль
+    let profileInfo: String
+    let showPeerIdTitle: String
+    let showPeerIdText: String
+    let showRegDateTitle: String
+    let showRegDateText: String
     let hidePhoneNumberTitle: String
     let hidePhoneNumberText: String
     let confirmCallsTitle: String
     let confirmCallsText: String
+    
+    // Локализация
+    let localizationInfo: String
+    let fullRussianUITitle: String
+    let fullRussianUIText: String
+    
+    // Прочее
+    let otherInfo: String
+    let unlimitedAccountsTitle: String
+    let unlimitedAccountsText: String
     let silentMessagesTitle: String
     let silentMessagesText: String
     let pinWalletTabTitle: String
     let pinWalletTabText: String
+    let businessFeaturesTitle: String
+    let businessFeaturesText: String
+    let antiSelfDestructTitle: String
+    let antiSelfDestructText: String
+    let customIndicatorsTitle: String
+    let customIndicatorsText: String
+    let redDeleteIconTitle: String
+    let redDeleteIconText: String
+    
+    // Hide UI
     let hideInfo: String
     let hideNavigationBarTitle: String
     let hideNavigationBarText: String
@@ -219,6 +287,8 @@ private struct MQGramText {
     let hideStickersText: String
     let hidePowerSavingTitle: String
     let hidePowerSavingText: String
+    
+    // Dev
     let devInfo: String
     let languageInfo: String
     let languageTitle: String
@@ -231,53 +301,18 @@ private struct MQGramText {
     let devChannel: String
     let devBot: String
     
-    // New Features
-    let messageSendingDelayTitle: String
-    let messageSendingDelayText: String
-    let fakePremiumTitle: String
-    let fakePremiumText: String
-    let fakeStarsTitle: String
-    let fakeStarsText: String
-    let antiCapsTitle: String
-    let antiCapsText: String
-    let autoTranslateTitle: String
-    let autoTranslateText: String
-    let autoFormatTitle: String
-    let autoFormatText: String
-    let squareAvatarsTitle: String
-    let squareAvatarsText: String
-    let deletedTransparencyTitle: String
-    let deletedTransparencyText: String
-    let secretMediaTitle: String
-    let secretMediaText: String
-    let readWhenReplyTitle: String
-    let readWhenReplyText: String
-    let readWhenReactTitle: String
-    let readWhenReactText: String
-    let hideReactionsTitle: String
-    let hideReactionsText: String
-    let hideCommentTitle: String
-    let hideCommentText: String
-    let editHistoryTitle: String
-    let editHistoryText: String
-    let readUntilTitle: String
-    let readUntilText: String
-    let savePhotosTitle: String
-    let savePhotosText: String
-    let saveVideosTitle: String
-    let saveVideosText: String
-    
     let footer: String
 }
 
 private func mqgramText(_ languageCode: String) -> MQGramText {
     if languageCode.lowercased().hasPrefix("ru") {
         return MQGramText(
-            ghostInfo: "Тихий режим: чтение, истории, действия, онлайн, реакции и черновики без лишних следов.",
+            // Невидимость
+            ghostInfo: "Режим призрака — не отправляет «прочитано», «печатает», «онлайн», просмотры историй. Все функции скрытного присутствия.",
             ghostModeTitle: "Режим призрака",
-            ghostModeText: "Главный переключатель для скрытого чтения.",
+            ghostModeText: "Главный переключатель: блокирует все следы активности.",
             ghostReadReceiptsTitle: "Не отправлять прочитано",
-            ghostReadReceiptsText: "Блокирует прочтение даже после отправки текста, фото, видео или файла.",
+            ghostReadReceiptsText: "Блокирует отправку отметки прочтения даже после отправки текста, фото, видео или файла.",
             ghostStoriesTitle: "Скрытый просмотр историй",
             ghostStoriesText: "Не отправляет отметку просмотра историй.",
             ghostContentReadsTitle: "Не читать медиа",
@@ -285,55 +320,122 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             ghostPersonalActionsTitle: "Скрывать личные отметки",
             ghostPersonalActionsText: "Не отправляет прочтение личных упоминаний, реакций и голосований.",
             ghostScreenshotsTitle: "Скрывать скриншоты",
-            ghostScreenshotsText: "Не отправляет уведомления о скриншотах в чатах.",
+            ghostScreenshotsText: "Не отправляет уведомления о скриншотах в секретных чатах.",
             ghostDraftsTitle: "Скрывать черновики",
             ghostDraftsText: "Не синхронизирует набранный текст как облачный черновик.",
             ghostEmojiInteractionsTitle: "Скрывать emoji-действия",
             ghostEmojiInteractionsText: "Не отправляет emoji interaction и seen interaction.",
-            ghostReactionsTitle: "Скрывать реакции",
-            ghostReactionsText: "Не отправляет реакции на сообщения и истории.",
+            ghostReactionsTitle: "Скрывать реакции (отправку)",
+            ghostReactionsText: "Не отправляет реакции на сообщения и истории на сервер.",
             ghostStickerActivityTitle: "Скрывать стикеры",
             ghostStickerActivityText: "Не сохраняет недавние стикеры и просмотр новых наборов.",
-            ghostOnlineStatusTitle: "Скрывать онлайн",
-            ghostOnlineStatusText: "Не отправляет статус онлайн, пока включён призрак.",
-            ghostTypingActionsTitle: "Скрывать действия",
+            ghostOnlineStatusTitle: "Всегда оффлайн",
+            ghostOnlineStatusText: "Отображайся оффлайн, даже когда сидишь в чатах.",
+            ghostTypingActionsTitle: "Скрывать «печатает»",
             ghostTypingActionsText: "Скрывает набор текста, запись голоса, загрузку фото/видео.",
-            readAfterActionsTitle: "Читать после действий",
-            readAfterActionsText: "Отмечает сообщения прочитанными только после твоих действий в чате.",
-            stableInfo: "Базовая защита сообщений и медиа без лишнего визуального шума.",
-            antiSelfDestructTitle: "Анти-самоуничтожение",
-            antiSelfDestructText: "Сохраняет исчезающие фото/видео и убирает таймеры.",
+            alwaysOnlineTitle: "Вечный онлайн",
+            alwaysOnlineText: "Всегда отображайся в сети, даже когда не в приложении.",
+            messageSendingDelayTitle: "Задержка отправки",
+            messageSendingDelayText: "Сообщения уходят с паузой, чтобы имитировать ручной ввод.",
+            onlyReadWhenReplyingTitle: "Прочитать при ответе",
+            onlyReadWhenReplyingText: "Отметка прочтения только когда сам отвечаешь.",
+            onlyReadWhenReactingTitle: "Прочитать при реакции",
+            onlyReadWhenReactingText: "Отметка прочтения только когда ставишь реакцию.",
+            
+            // Антиудаление
+            antiDeleteInfo: "Удалённые сообщения остаются в чате. История редактирований по правому клику. Одноразовые медиа сохраняются.",
             antiRevokeTitle: "Анти-удаление",
-            antiRevokeText: "Сообщения не удаляются у тебя, а удалённые помечаются значком.",
-            customIndicatorsTitle: "Свои индикаторы",
-            customIndicatorsText: "Добавляет метки к перехваченному исчезающему контенту.",
-            redDeleteIconTitle: "Красная корзина",
-            redDeleteIconText: "Показывает красную иконку корзины рядом с сообщениями при удалении.",
-            betaInfo: "Функции с глубокими hooks. Если что-то ведёт себя странно — отключи конкретный переключатель.",
-            contentProtectionTitle: "Обход защиты контента",
-            contentProtectionText: "Пересылка и сохранение медиа из защищённых каналов и чатов.",
+            antiRevokeText: "Удалённые сообщения остаются в чате и помечаются значком.",
             antiEditTitle: "Анти-редактирование",
             antiEditText: "Показывает оригинальный текст отредактированных сообщений.",
-            disableAdsTitle: "Отключить рекламу",
+            showEditHistoryTitle: "История редактирований",
+            showEditHistoryText: "Правый клик на сообщении — показать все версии текста.",
+            secretMediaSaverTitle: "Сохранение одноразовых",
+            secretMediaSaverText: "Автоматически сохраняет исчезающие фото и видео.",
+            savePhotosTitle: "Сохранять фото",
+            savePhotosText: "Сохранять исчезающие фото при самоуничтожении.",
+            saveVideosTitle: "Сохранять видео",
+            saveVideosText: "Сохранять исчезающие видео при самоуничтожении.",
+            
+            // Без ограничений
+            noLimitsInfo: "Обход защиты, блокировка рекламы, скрытие реакций и комментариев.",
+            contentProtectionTitle: "Обход защиты контента",
+            contentProtectionText: "Пересылка и сохранение медиа из защищённых каналов и чатов.",
+            disableAdsTitle: "Блокировка рекламы",
             disableAdsText: "Убирает спонсорские сообщения и рекламу из каналов.",
-            businessFeaturesTitle: "Telegram для бизнеса",
-            businessFeaturesText: "Активирует бизнес-функции профиля локально.",
-            otherInfo: "Дополнительные функции для расширенного управления приложением.",
+            hideReactionsTitle: "Скрыть реакции",
+            hideReactionsText: "Скрывает отображение реакций на сообщениях.",
+            hideCommentTitle: "Скрыть комментарии",
+            hideCommentText: "Скрывает кнопку комментариев под постами в каналах.",
+            readUntilTitle: "Прочитать до сообщения",
+            readUntilText: "Правый клик по сообщению — отметить всё прочитанным до него.",
+            
+            // Текст
+            textInfo: "Автоматическая обработка текста перед отправкой.",
+            antiCapsTitle: "Анти-капс",
+            antiCapsText: "Автоматически переводит КАПС в нижний регистр.",
+            autoTranslateTitle: "Авто-перевод",
+            autoTranslateText: "Переводит текст перед отправкой через Google Translate.",
+            autoFormatTitle: "Авто-формат",
+            autoFormatText: "Каждое сообщение автоматически форматируется в выбранном стиле.",
+            
+            // Внешний вид
+            appearanceInfo: "Кастомизация визуального оформления клиента.",
+            customFontTitle: "Свой шрифт",
+            customFontText: "Загрузить TTF или OTF шрифт для всех сообщений.",
+            videoBackgroundTitle: "Видео/GIF фон чата",
+            videoBackgroundText: "Установить видео или GIF как фон чата.",
+            squareAvatarsTitle: "Квадратные аватары",
+            squareAvatarsText: "Отображает аватары как квадраты вместо кругов.",
+            deletedTransparencyTitle: "Прозрачность удалённых",
+            deletedTransparencyText: "Удалённые сообщения отображаются полупрозрачными.",
+            
+            // Локальные фейки
+            fakesInfo: "Локальные подделки — работают только на вашем устройстве.",
+            fakePremiumTitle: "Фейковый Premium",
+            fakePremiumText: "Разблокирует клиентские премиум-фичи без подписки.",
+            fakeStarsTitle: "Фейковый баланс звёзд",
+            fakeStarsText: "Показывает поддельный баланс звёзд в профиле.",
             localPremiumTitle: "Локальный Премиум",
             localPremiumText: "Активирует премиум-функции интерфейса локально без подписки.",
-            unlimitedAccountsTitle: "Безлимитные аккаунты",
-            unlimitedAccountsText: "Снимает ограничение на количество добавленных аккаунтов.",
+            
+            // Профиль
+            profileInfo: "Расширенная информация о профиле и управления звонками.",
+            showPeerIdTitle: "ID любого юзера",
+            showPeerIdText: "Показывает ID пользователя, чата, канала с копированием.",
+            showRegDateTitle: "Дата регистрации",
+            showRegDateText: "Примерная дата регистрации аккаунта в профиле.",
             hidePhoneNumberTitle: "Скрыть номер телефона",
             hidePhoneNumberText: "Прячет твой номер телефона в профиле и настройках.",
             confirmCallsTitle: "Подтверждение звонков",
-            confirmCallsText: "Запрашивает подтверждение перед началом голосового или видеозвонка.",
+            confirmCallsText: "Запрашивает подтверждение перед началом звонка.",
+            
+            // Локализация
+            localizationInfo: "Язык интерфейса автоматически следует настройкам Telegram.",
+            fullRussianUITitle: "Полный русский интерфейс",
+            fullRussianUIText: "Переключается автоматически с языком Telegram.",
+            
+            // Прочее
+            otherInfo: "Дополнительные функции для расширенного управления.",
+            unlimitedAccountsTitle: "Безлимитные аккаунты",
+            unlimitedAccountsText: "Снимает ограничение на количество добавленных аккаунтов.",
             silentMessagesTitle: "Тихие сообщения",
             silentMessagesText: "Отправляет сообщения без звукового уведомления по умолчанию.",
             pinWalletTabTitle: "Фиксатор вкладки Кошелёк",
             pinWalletTabText: "Закрепляет вкладку Кошелёк рядом с настройками.",
+            businessFeaturesTitle: "Telegram для бизнеса",
+            businessFeaturesText: "Активирует бизнес-функции профиля локально.",
+            antiSelfDestructTitle: "Анти-самоуничтожение",
+            antiSelfDestructText: "Сохраняет исчезающие фото/видео и убирает таймеры.",
+            customIndicatorsTitle: "Свои индикаторы",
+            customIndicatorsText: "Добавляет метки к перехваченному исчезающему контенту.",
+            redDeleteIconTitle: "Красная корзина",
+            redDeleteIconText: "Показывает красную иконку корзины при удалении сообщений.",
+            
+            // Hide UI
             hideInfo: "Скрывай элементы интерфейса, которыми не пользуешься.",
             hideNavigationBarTitle: "Скрыть бар навигации",
-            hideNavigationBarText: "Прячет нижнюю панель (Контакты, Чаты, Настройки, Поиск).",
+            hideNavigationBarText: "Прячет нижнюю панель навигации.",
             hideFavoriteChatsTitle: "Скрыть Избранное",
             hideFavoriteChatsText: "Прячет пункт Избранное в настройках.",
             hideRecentCallsTitle: "Скрыть Недавние звонки",
@@ -356,6 +458,8 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             hideStickersText: "Прячет пункт Стикеры и emoji в настройках.",
             hidePowerSavingTitle: "Скрыть Энергосбережение",
             hidePowerSavingText: "Прячет пункт Энергосбережение в настройках.",
+            
+            // Dev
             devInfo: "Информация о разработчике и полезные ссылки.",
             languageInfo: "Язык меняется в стандартных настройках Telegram. MQGram следует системной локализации приложения.",
             languageTitle: "Сменить язык",
@@ -367,49 +471,17 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             devDeveloper: "MQ Team / jutsodev",
             devChannel: "Канал StivenVPN",
             devBot: "Бот StivenVPN",
-            messageSendingDelayTitle: "Задержка отправки",
-            messageSendingDelayText: "Добавляет паузу перед отправкой сообщений.",
-            fakePremiumTitle: "Фейковый Премиум",
-            fakePremiumText: "Показывает статус Premium без подписки.",
-            fakeStarsTitle: "Фейковый баланс звёзд",
-            fakeStarsText: "Устанавливает поддельный баланс звёзд.",
-            antiCapsTitle: "Анти-капс",
-            antiCapsText: "Автоматически переводит капс в нижний регистр.",
-            autoTranslateTitle: "Авто-перевод",
-            autoTranslateText: "Переводит текст перед отправкой.",
-            autoFormatTitle: "Авто-формат",
-            autoFormatText: "Автоматически применяет форматирование.",
-            squareAvatarsTitle: "Квадратные аватары",
-            squareAvatarsText: "Отображает аватары как квадраты вместо кругов.",
-            deletedTransparencyTitle: "Прозрачность удалённых",
-            deletedTransparencyText: "Удалённые сообщения отображаются полупрозрачными.",
-            secretMediaTitle: "Сохранение одноразовых",
-            secretMediaText: "Автоматически сохраняет исчезающие фото и видео.",
-            readWhenReplyTitle: "Прочитать при ответе",
-            readWhenReplyText: "Отметка прочтения только при ответе.",
-            hideReactionsTitle: "Скрыть реакции",
-            hideReactionsText: "Скрывает реакции на сообщения.",
-            hideCommentTitle: "Скрыть комментарии",
-            hideCommentText: "Скрывает кнопку для ответов в комментариях.",
-            editHistoryTitle: "История редактирований",
-            editHistoryText: "Показывает историю изменений сообщений.",
-            readWhenReactTitle: "Прочитать при реакции",
-            readWhenReactText: "Отметка прочтения только при реакции.",
-            readUntilTitle: "Прочитать до сообщения",
-            readUntilText: "ПКМ по сообщению — отметить всё прочитанным до него.",
-            savePhotosTitle: "Сохранять фото",
-            savePhotosText: "Сохранять исчезающие фото при самоуничтожении.",
-            saveVideosTitle: "Сохранять видео",
-            saveVideosText: "Сохранять исчезающие видео при самоуничтожении.",
-            footer: "Функции MQGram. Для части изменений перезапусти приложение."
+            
+            footer: "Функции MQGram. Для части изменений нужен перезапуск приложения."
         )
     }
     return MQGramText(
-        ghostInfo: "Quiet mode: reads, stories, actions, online, reactions, and drafts with fewer traces.",
+        // Invisibility
+        ghostInfo: "Ghost Mode — no read receipts, typing indicators, online status, or story views. All stealth features.",
         ghostModeTitle: "Ghost Mode",
-        ghostModeText: "Master switch for hidden reading.",
+        ghostModeText: "Master switch: blocks all activity traces.",
         ghostReadReceiptsTitle: "Hide Read Receipts",
-        ghostReadReceiptsText: "Blocks read receipts even after sending text, photos, videos, or files.",
+        ghostReadReceiptsText: "Blocks sending read receipts even after sending text, photos, videos, or files.",
         ghostStoriesTitle: "Hidden Story Views",
         ghostStoriesText: "Do not send story view receipts.",
         ghostContentReadsTitle: "Hide Media Reads",
@@ -417,55 +489,122 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         ghostPersonalActionsTitle: "Hide Personal Marks",
         ghostPersonalActionsText: "Do not send seen marks for personal mentions, reactions, and poll votes.",
         ghostScreenshotsTitle: "Hide Screenshots",
-        ghostScreenshotsText: "Do not send screenshot notifications in chats.",
+        ghostScreenshotsText: "Do not send screenshot notifications in secret chats.",
         ghostDraftsTitle: "Hide Drafts",
         ghostDraftsText: "Do not sync typed text as a cloud draft.",
         ghostEmojiInteractionsTitle: "Hide Emoji Interactions",
         ghostEmojiInteractionsText: "Do not send emoji interaction and seen interaction actions.",
-        ghostReactionsTitle: "Hide Reactions",
-        ghostReactionsText: "Do not send reactions to messages and stories.",
+        ghostReactionsTitle: "Hide Reactions (sending)",
+        ghostReactionsText: "Do not send reactions to messages and stories to server.",
         ghostStickerActivityTitle: "Hide Sticker Activity",
         ghostStickerActivityText: "Do not save recent stickers or seen featured packs.",
-        ghostOnlineStatusTitle: "Hide Online Status",
-        ghostOnlineStatusText: "Do not send online presence while ghost is enabled.",
-        ghostTypingActionsTitle: "Hide Typing Actions",
+        ghostOnlineStatusTitle: "Always Offline",
+        ghostOnlineStatusText: "Appear offline even when you are active in chats.",
+        ghostTypingActionsTitle: "Hide Typing",
         ghostTypingActionsText: "Hides typing, voice recording, photo/video uploads.",
-        readAfterActionsTitle: "Read After Actions",
-        readAfterActionsText: "Mark messages as read only after you take action in chat.",
-        stableInfo: "Base message and media protection without extra visual noise.",
-        antiSelfDestructTitle: "Anti-Self-Destruct",
-        antiSelfDestructText: "Save disappearing photos/videos and remove timers.",
-        antiRevokeTitle: "Anti-Revoke",
-        antiRevokeText: "Messages are never deleted for you. Deleted messages are marked.",
-        customIndicatorsTitle: "Custom Indicators",
-        customIndicatorsText: "Adds labels to intercepted disappearing content.",
-        redDeleteIconTitle: "Red Delete Icon",
-        redDeleteIconText: "Shows a red trash icon next to messages when deleting.",
-        betaInfo: "Deep-hook features. If something behaves oddly, disable only that switch.",
-        contentProtectionTitle: "Content Protection Bypass",
-        contentProtectionText: "Forward and save media from restricted channels and chats.",
+        alwaysOnlineTitle: "Always Online",
+        alwaysOnlineText: "Always appear online, even when not in the app.",
+        messageSendingDelayTitle: "Message Delay",
+        messageSendingDelayText: "Messages are sent with a pause to simulate manual typing.",
+        onlyReadWhenReplyingTitle: "Read on Reply",
+        onlyReadWhenReplyingText: "Mark as read only when you reply.",
+        onlyReadWhenReactingTitle: "Read on React",
+        onlyReadWhenReactingText: "Mark as read only when you react.",
+        
+        // Anti-delete
+        antiDeleteInfo: "Deleted messages stay in chat. Edit history via right-click. Self-destruct media is saved.",
+        antiRevokeTitle: "Anti-Delete",
+        antiRevokeText: "Deleted messages stay in chat and are marked with an icon.",
         antiEditTitle: "Anti-Edit",
-        antiEditText: "See original content of edited messages.",
-        disableAdsTitle: "Disable Ads",
+        antiEditText: "Shows original text of edited messages.",
+        showEditHistoryTitle: "Edit History",
+        showEditHistoryText: "Right-click message to show all text versions.",
+        secretMediaSaverTitle: "Save Self-Destruct Media",
+        secretMediaSaverText: "Auto-save disappearing photos and videos.",
+        savePhotosTitle: "Save Photos",
+        savePhotosText: "Save self-destructing photos.",
+        saveVideosTitle: "Save Videos",
+        saveVideosText: "Save self-destructing videos.",
+        
+        // No Restrictions
+        noLimitsInfo: "Bypass protection, block ads, hide reactions and comments.",
+        contentProtectionTitle: "Forward Protection Bypass",
+        contentProtectionText: "Forward and save media from restricted channels and chats.",
+        disableAdsTitle: "Block Ads",
         disableAdsText: "Remove sponsored messages and ads from channels.",
-        businessFeaturesTitle: "Telegram for Business",
-        businessFeaturesText: "Enable Business profile features locally.",
-        otherInfo: "Extra features for extended app control.",
+        hideReactionsTitle: "Hide Reactions",
+        hideReactionsText: "Hide reactions display on messages.",
+        hideCommentTitle: "Hide Comments",
+        hideCommentText: "Hide the comment button under channel posts.",
+        readUntilTitle: "Read Until Message",
+        readUntilText: "Right-click message to mark all read up to it.",
+        
+        // Text
+        textInfo: "Automatic text processing before sending.",
+        antiCapsTitle: "Anti-Caps",
+        antiCapsText: "Automatically converts CAPS to lowercase.",
+        autoTranslateTitle: "Auto-Translate",
+        autoTranslateText: "Translate text before sending via Google Translate.",
+        autoFormatTitle: "Auto-Format",
+        autoFormatText: "Each message is automatically formatted in the selected style.",
+        
+        // Appearance
+        appearanceInfo: "Visual customization of the client.",
+        customFontTitle: "Custom Font",
+        customFontText: "Load a TTF or OTF font for all messages.",
+        videoBackgroundTitle: "Video/GIF Chat Background",
+        videoBackgroundText: "Set a video or GIF as chat background.",
+        squareAvatarsTitle: "Square Avatars",
+        squareAvatarsText: "Display avatars as squares instead of circles.",
+        deletedTransparencyTitle: "Deleted Transparency",
+        deletedTransparencyText: "Deleted messages appear semi-transparent.",
+        
+        // Local Fakes
+        fakesInfo: "Local fakes — only work on your device.",
+        fakePremiumTitle: "Fake Premium",
+        fakePremiumText: "Unlocks client-side premium features without subscription.",
+        fakeStarsTitle: "Fake Stars Balance",
+        fakeStarsText: "Shows a fake stars balance in profile.",
         localPremiumTitle: "Local Premium",
         localPremiumText: "Activates premium UI features locally without a subscription.",
-        unlimitedAccountsTitle: "Unlimited Accounts",
-        unlimitedAccountsText: "Removes the limit on the number of added accounts.",
+        
+        // Profile
+        profileInfo: "Extended profile info and call management.",
+        showPeerIdTitle: "User/Chat/Channel ID",
+        showPeerIdText: "Show ID of any user, chat, or channel with copy.",
+        showRegDateTitle: "Registration Date",
+        showRegDateText: "Approximate account registration date in profile.",
         hidePhoneNumberTitle: "Hide Phone Number",
         hidePhoneNumberText: "Hides your phone number in profile and settings.",
         confirmCallsTitle: "Confirm Calls",
-        confirmCallsText: "Ask for confirmation before starting a voice or video call.",
+        confirmCallsText: "Ask for confirmation before starting a call.",
+        
+        // Localization
+        localizationInfo: "Interface language follows Telegram settings automatically.",
+        fullRussianUITitle: "Full Russian Interface",
+        fullRussianUIText: "Switches automatically with Telegram language.",
+        
+        // Other
+        otherInfo: "Extra features for extended app control.",
+        unlimitedAccountsTitle: "Unlimited Accounts",
+        unlimitedAccountsText: "Removes the limit on the number of added accounts.",
         silentMessagesTitle: "Silent Messages",
         silentMessagesText: "Send messages without sound notification by default.",
         pinWalletTabTitle: "Pin Wallet Tab",
         pinWalletTabText: "Pin the Wallet tab next to Settings.",
+        businessFeaturesTitle: "Telegram for Business",
+        businessFeaturesText: "Enable Business profile features locally.",
+        antiSelfDestructTitle: "Anti-Self-Destruct",
+        antiSelfDestructText: "Save disappearing photos/videos and remove timers.",
+        customIndicatorsTitle: "Custom Indicators",
+        customIndicatorsText: "Adds labels to intercepted disappearing content.",
+        redDeleteIconTitle: "Red Delete Icon",
+        redDeleteIconText: "Shows a red trash icon next to messages when deleting.",
+        
+        // Hide UI
         hideInfo: "Hide UI elements you don't use.",
         hideNavigationBarTitle: "Hide Navigation Bar",
-        hideNavigationBarText: "Hides the bottom bar (Contacts, Chats, Settings, Search).",
+        hideNavigationBarText: "Hides the bottom navigation bar.",
         hideFavoriteChatsTitle: "Hide Saved Messages",
         hideFavoriteChatsText: "Hides the Saved Messages entry in settings.",
         hideRecentCallsTitle: "Hide Recent Calls",
@@ -488,6 +627,8 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         hideStickersText: "Hides the Stickers and Emoji entry in settings.",
         hidePowerSavingTitle: "Hide Power Saving",
         hidePowerSavingText: "Hides the Power Saving entry in settings.",
+        
+        // Dev
         devInfo: "Developer info and useful links.",
         languageInfo: "Language is changed in Telegram language settings. MQGram follows the app localization.",
         languageTitle: "Change Language",
@@ -499,40 +640,7 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         devDeveloper: "MQ Team / jutsodev",
         devChannel: "StivenVPN Channel",
         devBot: "StivenVPN Bot",
-        messageSendingDelayTitle: "Message Delay",
-        messageSendingDelayText: "Add a pause before sending messages.",
-        fakePremiumTitle: "Fake Premium",
-        fakePremiumText: "Show Premium status without subscription.",
-        fakeStarsTitle: "Fake Stars Balance",
-        fakeStarsText: "Set a fake stars balance.",
-        antiCapsTitle: "Anti-Caps",
-        antiCapsText: "Automatically converts caps to lowercase.",
-        autoTranslateTitle: "Auto-Translate",
-        autoTranslateText: "Translate text before sending.",
-        autoFormatTitle: "Auto-Format",
-        autoFormatText: "Automatically apply formatting.",
-        squareAvatarsTitle: "Square Avatars",
-        squareAvatarsText: "Display avatars as squares instead of circles.",
-        deletedTransparencyTitle: "Deleted Transparency",
-        deletedTransparencyText: "Show deleted messages with reduced opacity.",
-        secretMediaTitle: "Save Self-Destruct Media",
-        secretMediaText: "Auto-save disappearing photos and videos.",
-        readWhenReplyTitle: "Read on Reply",
-        readWhenReplyText: "Mark as read only when replying.",
-        hideReactionsTitle: "Hide Reactions",
-        hideReactionsText: "Hide reactions on messages.",
-        hideCommentTitle: "Hide Comment Button",
-        hideCommentText: "Hide the comment reply button.",
-        editHistoryTitle: "Edit History",
-        editHistoryText: "Show message edit history.",
-        readWhenReactTitle: "Read on React",
-        readWhenReactText: "Mark as read only when reacting.",
-        readUntilTitle: "Read Until Message",
-        readUntilText: "Right-click message to mark all read up to it.",
-        savePhotosTitle: "Save Photos",
-        savePhotosText: "Save self-destructing photos.",
-        saveVideosTitle: "Save Videos",
-        saveVideosText: "Save self-destructing videos.",
+        
         footer: "MQGram features. Restart the app to apply some changes."
     )
 }
@@ -670,12 +778,14 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
     var id: Int32 = 10
 
     switch tab {
-    case 0: // Ghost
+    case 0: // Невидимость / Invisibility
         entries.append(.info(1, text.ghostInfo))
         entries.append(.toggle(id, .ghostMode, text.ghostModeTitle, text.ghostModeText, settings.ghostMode)); id += 1
         entries.append(.toggle(id, .ghostReadReceipts, text.ghostReadReceiptsTitle, text.ghostReadReceiptsText, settings.ghostReadReceipts)); id += 1
-        entries.append(.toggle(id, .readAfterActions, text.readAfterActionsTitle, text.readAfterActionsText, settings.readAfterActions)); id += 1
+        entries.append(.toggle(id, .ghostOnlineStatus, text.ghostOnlineStatusTitle, text.ghostOnlineStatusText, settings.ghostOnlineStatus)); id += 1
+        entries.append(.toggle(id, .alwaysOnline, text.alwaysOnlineTitle, text.alwaysOnlineText, settings.alwaysOnline)); id += 1
         entries.append(.toggle(id, .ghostStories, text.ghostStoriesTitle, text.ghostStoriesText, settings.ghostStories)); id += 1
+        entries.append(.toggle(id, .ghostTypingActions, text.ghostTypingActionsTitle, text.ghostTypingActionsText, settings.ghostTypingActions)); id += 1
         entries.append(.toggle(id, .ghostContentReads, text.ghostContentReadsTitle, text.ghostContentReadsText, settings.ghostContentReads)); id += 1
         entries.append(.toggle(id, .ghostPersonalActions, text.ghostPersonalActionsTitle, text.ghostPersonalActionsText, settings.ghostPersonalActions)); id += 1
         entries.append(.toggle(id, .ghostScreenshots, text.ghostScreenshotsTitle, text.ghostScreenshotsText, settings.ghostScreenshots)); id += 1
@@ -683,35 +793,71 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .ghostEmojiInteractions, text.ghostEmojiInteractionsTitle, text.ghostEmojiInteractionsText, settings.ghostEmojiInteractions)); id += 1
         entries.append(.toggle(id, .ghostReactions, text.ghostReactionsTitle, text.ghostReactionsText, settings.ghostReactions)); id += 1
         entries.append(.toggle(id, .ghostStickerActivity, text.ghostStickerActivityTitle, text.ghostStickerActivityText, settings.ghostStickerActivity)); id += 1
-        entries.append(.toggle(id, .ghostOnlineStatus, text.ghostOnlineStatusTitle, text.ghostOnlineStatusText, settings.ghostOnlineStatus)); id += 1
-        entries.append(.toggle(id, .ghostTypingActions, text.ghostTypingActionsTitle, text.ghostTypingActionsText, settings.ghostTypingActions))
+        entries.append(.toggle(id, .messageSendingDelay, text.messageSendingDelayTitle, text.messageSendingDelayText, settings.messageSendingDelay)); id += 1
+        entries.append(.toggle(id, .onlyReadWhenReplying, text.onlyReadWhenReplyingTitle, text.onlyReadWhenReplyingText, settings.onlyReadWhenReplying)); id += 1
+        entries.append(.toggle(id, .onlyReadWhenReacting, text.onlyReadWhenReactingTitle, text.onlyReadWhenReactingText, settings.onlyReadWhenReacting))
 
-    case 1: // Core
-        entries.append(.info(1, text.stableInfo))
-        entries.append(.toggle(id, .antiSelfDestruct, text.antiSelfDestructTitle, text.antiSelfDestructText, settings.antiSelfDestruct)); id += 1
+    case 1: // Антиудаление / Anti-delete
+        entries.append(.info(1, text.antiDeleteInfo))
         entries.append(.toggle(id, .antiRevoke, text.antiRevokeTitle, text.antiRevokeText, settings.antiRevoke)); id += 1
+        entries.append(.toggle(id, .antiEdit, text.antiEditTitle, text.antiEditText, settings.antiEdit)); id += 1
+        entries.append(.toggle(id, .showEditHistory, text.showEditHistoryTitle, text.showEditHistoryText, settings.showEditHistory)); id += 1
+        entries.append(.toggle(id, .secretMediaSaver, text.secretMediaSaverTitle, text.secretMediaSaverText, settings.secretMediaSaver)); id += 1
+        entries.append(.toggle(id, .antiSelfDestructSavePhotos, text.savePhotosTitle, text.savePhotosText, settings.antiSelfDestructSavePhotos)); id += 1
+        entries.append(.toggle(id, .antiSelfDestructSaveVideos, text.saveVideosTitle, text.saveVideosText, settings.antiSelfDestructSaveVideos)); id += 1
+        entries.append(.toggle(id, .antiSelfDestruct, text.antiSelfDestructTitle, text.antiSelfDestructText, settings.antiSelfDestruct)); id += 1
         entries.append(.toggle(id, .customIndicators, text.customIndicatorsTitle, text.customIndicatorsText, settings.customIndicators)); id += 1
-        entries.append(.toggle(id, .redDeleteIcon, text.redDeleteIconTitle, text.redDeleteIconText, settings.redDeleteIcon)); id += 1
         let recycleBinTitle = strings.baseLanguageCode.lowercased().hasPrefix("ru") ? "Корзина удалённых" : "Recycle Bin"
         entries.append(.action(id, recycleBinTitle, makeRecycleBinIcon()))
 
-    case 2: // Beta
-        entries.append(.info(1, text.betaInfo))
+    case 2: // Без ограничений / No Restrictions
+        entries.append(.info(1, text.noLimitsInfo))
         entries.append(.toggle(id, .contentProtectionBypass, text.contentProtectionTitle, text.contentProtectionText, settings.contentProtectionBypass)); id += 1
-        entries.append(.toggle(id, .antiEdit, text.antiEditTitle, text.antiEditText, settings.antiEdit)); id += 1
         entries.append(.toggle(id, .disableAds, text.disableAdsTitle, text.disableAdsText, settings.disableAds)); id += 1
+        entries.append(.toggle(id, .hideReactions, text.hideReactionsTitle, text.hideReactionsText, settings.hideReactions)); id += 1
+        entries.append(.toggle(id, .hideCommentButton, text.hideCommentTitle, text.hideCommentText, settings.hideCommentButton)); id += 1
+        entries.append(.toggle(id, .readUntilMessage, text.readUntilTitle, text.readUntilText, settings.readUntilMessage))
+
+    case 3: // Текст / Text
+        entries.append(.info(1, text.textInfo))
+        entries.append(.toggle(id, .antiCaps, text.antiCapsTitle, text.antiCapsText, settings.antiCaps)); id += 1
+        entries.append(.toggle(id, .autoTranslate, text.autoTranslateTitle, text.autoTranslateText, settings.autoTranslate)); id += 1
+        entries.append(.toggle(id, .autoFormat, text.autoFormatTitle, text.autoFormatText, settings.autoFormat))
+
+    case 4: // Внешний вид / Appearance
+        entries.append(.info(1, text.appearanceInfo))
+        entries.append(.toggle(id, .customFont, text.customFontTitle, text.customFontText, settings.customFont)); id += 1
+        entries.append(.toggle(id, .videoBackground, text.videoBackgroundTitle, text.videoBackgroundText, settings.videoBackground)); id += 1
+        entries.append(.toggle(id, .squareAvatars, text.squareAvatarsTitle, text.squareAvatarsText, settings.squareAvatars)); id += 1
+        entries.append(.toggle(id, .deletedMessageTransparency, text.deletedTransparencyTitle, text.deletedTransparencyText, settings.deletedMessageTransparency)); id += 1
+        entries.append(.toggle(id, .redDeleteIcon, text.redDeleteIconTitle, text.redDeleteIconText, settings.redDeleteIcon))
+
+    case 5: // Локальные фейки / Local Fakes
+        entries.append(.info(1, text.fakesInfo))
+        entries.append(.toggle(id, .fakePremium, text.fakePremiumTitle, text.fakePremiumText, settings.fakePremium)); id += 1
+        entries.append(.toggle(id, .fakeStarsBalance, text.fakeStarsTitle, text.fakeStarsText, settings.fakeStarsBalance)); id += 1
+        entries.append(.toggle(id, .localPremium, text.localPremiumTitle, text.localPremiumText, settings.localPremium))
+
+    case 6: // Профиль / Profile
+        entries.append(.info(1, text.profileInfo))
+        entries.append(.toggle(id, .showPeerId, text.showPeerIdTitle, text.showPeerIdText, settings.showPeerId)); id += 1
+        entries.append(.toggle(id, .showRegDate, text.showRegDateTitle, text.showRegDateText, settings.showRegDate)); id += 1
+        entries.append(.toggle(id, .hidePhoneNumber, text.hidePhoneNumberTitle, text.hidePhoneNumberText, settings.hidePhoneNumber)); id += 1
+        entries.append(.toggle(id, .confirmCalls, text.confirmCallsTitle, text.confirmCallsText, settings.confirmCalls))
+
+    case 7: // Локализация / Localization
+        entries.append(.info(1, text.localizationInfo))
+        entries.append(.toggle(id, .fullRussianUI, text.fullRussianUITitle, text.fullRussianUIText, settings.fullRussianUI)); id += 1
+        entries.append(.link(id, text.languageTitle, "tg://settings/language", true, nil))
+
+    case 8: // Прочее / Other
+        entries.append(.info(1, text.otherInfo))
+        entries.append(.toggle(id, .unlimitedAccounts, text.unlimitedAccountsTitle, text.unlimitedAccountsText, settings.unlimitedAccounts)); id += 1
+        entries.append(.toggle(id, .silentMessages, text.silentMessagesTitle, text.silentMessagesText, settings.silentMessages)); id += 1
+        entries.append(.toggle(id, .pinWalletTab, text.pinWalletTabTitle, text.pinWalletTabText, settings.pinWalletTab)); id += 1
         entries.append(.toggle(id, .businessFeatures, text.businessFeaturesTitle, text.businessFeaturesText, settings.businessFeatures))
 
-    case 3: // Other
-        entries.append(.info(1, text.otherInfo))
-        entries.append(.toggle(id, .localPremium, text.localPremiumTitle, text.localPremiumText, settings.localPremium)); id += 1
-        entries.append(.toggle(id, .unlimitedAccounts, text.unlimitedAccountsTitle, text.unlimitedAccountsText, settings.unlimitedAccounts)); id += 1
-        entries.append(.toggle(id, .hidePhoneNumber, text.hidePhoneNumberTitle, text.hidePhoneNumberText, settings.hidePhoneNumber)); id += 1
-        entries.append(.toggle(id, .confirmCalls, text.confirmCallsTitle, text.confirmCallsText, settings.confirmCalls)); id += 1
-        entries.append(.toggle(id, .silentMessages, text.silentMessagesTitle, text.silentMessagesText, settings.silentMessages)); id += 1
-        entries.append(.toggle(id, .pinWalletTab, text.pinWalletTabTitle, text.pinWalletTabText, settings.pinWalletTab))
-
-    case 4: // Hide
+    case 9: // Скрыть / Hide UI
         entries.append(.info(1, text.hideInfo))
         entries.append(.toggle(id, .hideNavigationBar, text.hideNavigationBarTitle, text.hideNavigationBarText, settings.hideNavigationBar)); id += 1
         entries.append(.toggle(id, .hideFavoriteChats, text.hideFavoriteChatsTitle, text.hideFavoriteChatsText, settings.hideFavoriteChats)); id += 1
@@ -726,33 +872,9 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .hideStickersSettings, text.hideStickersTitle, text.hideStickersText, settings.hideStickersSettings)); id += 1
         entries.append(.toggle(id, .hidePowerSaving, text.hidePowerSavingTitle, text.hidePowerSavingText, settings.hidePowerSaving))
 
-    case 5: // Advanced Features
-        entries.append(.info(1, "🚀 Расширенные функции / Advanced Features"))
-        entries.append(.toggle(id, .messageSendingDelay, text.messageSendingDelayTitle, text.messageSendingDelayText, settings.messageSendingDelay)); id += 1
-        entries.append(.toggle(id, .fakePremium, text.fakePremiumTitle, text.fakePremiumText, settings.fakePremium)); id += 1
-        entries.append(.toggle(id, .fakeStarsBalance, text.fakeStarsTitle, text.fakeStarsText, settings.fakeStarsBalance)); id += 1
-        entries.append(.toggle(id, .antiCaps, text.antiCapsTitle, text.antiCapsText, settings.antiCaps)); id += 1
-        entries.append(.toggle(id, .autoTranslate, text.autoTranslateTitle, text.autoTranslateText, settings.autoTranslate)); id += 1
-        entries.append(.toggle(id, .autoFormat, text.autoFormatTitle, text.autoFormatText, settings.autoFormat)); id += 1
-        entries.append(.toggle(id, .squareAvatars, text.squareAvatarsTitle, text.squareAvatarsText, settings.squareAvatars)); id += 1
-        entries.append(.toggle(id, .deletedMessageTransparency, text.deletedTransparencyTitle, text.deletedTransparencyText, settings.deletedMessageTransparency)); id += 1
-        entries.append(.toggle(id, .secretMediaSaver, text.secretMediaTitle, text.secretMediaText, settings.secretMediaSaver)); id += 1
-        entries.append(.toggle(id, .onlyReadWhenReplying, text.readWhenReplyTitle, text.readWhenReplyText, settings.onlyReadWhenReplying)); id += 1
-        entries.append(.toggle(id, .onlyReadWhenReacting, text.readWhenReactTitle, text.readWhenReactText, settings.onlyReadWhenReacting)); id += 1
-        entries.append(.toggle(id, .readUntilMessage, text.readUntilTitle, text.readUntilText, settings.readUntilMessage)); id += 1
-        entries.append(.toggle(id, .hideReactions, text.hideReactionsTitle, text.hideReactionsText, settings.hideReactions)); id += 1
-        entries.append(.toggle(id, .hideCommentButton, text.hideCommentTitle, text.hideCommentText, settings.hideCommentButton)); id += 1
-        entries.append(.toggle(id, .showEditHistory, text.editHistoryTitle, text.editHistoryText, settings.showEditHistory)); id += 1
-        entries.append(.toggle(id, .antiSelfDestructSavePhotos, text.savePhotosTitle, text.savePhotosText, settings.antiSelfDestructSavePhotos)); id += 1
-        entries.append(.toggle(id, .antiSelfDestructSaveVideos, text.saveVideosTitle, text.saveVideosText, settings.antiSelfDestructSaveVideos))
-
-    case 6: // Developer
+    case 10: // Dev
         entries.append(.info(1, text.devInfo))
-        // GitHub - in built-in browser (inTelegram: false)
         entries.append(.link(id, "GitHub", "https://github.com/jutsodev", false, makeGitHubIcon())); id += 1
-        // All Telegram links - open inside Telegram (inTelegram: true)
-        entries.append(.info(id, text.languageInfo)); id += 1
-        entries.append(.link(id, text.languageTitle, "tg://settings/language", true, nil)); id += 1
         entries.append(.info(id, "**\(text.disclaimerTitle)**\n\(text.disclaimerText)")); id += 1
         entries.append(.info(id, "**\(text.thanksTitle)**\n\(text.thanksText)")); id += 1
         entries.append(.link(id, text.devDeveloper, "https://t.me/jutsodev", true, makeTelegramIcon())); id += 1
@@ -790,8 +912,8 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
         }
     )
 
-    let tabNamesRu: [String] = ["Призрак", "Основные", "Бета", "Прочее", "Скрыть", "Расширено", "Dev"]
-    let tabNamesEn: [String] = ["Ghost", "Core", "Beta", "Other", "Hide", "Advanced", "Dev"]
+    let tabNamesRu: [String] = ["Невидимость", "Антиудаление", "Без ограничений", "Текст", "Внешний вид", "Фейки", "Профиль", "Локализация", "Прочее", "Скрыть", "Dev"]
+    let tabNamesEn: [String] = ["Invisible", "Anti-Delete", "No Limits", "Text", "Appearance", "Fakes", "Profile", "i18n", "Other", "Hide", "Dev"]
 
     let signal = combineLatest(context.sharedContext.presentationData, updatePromise.get(), tabIndexPromise.get())
     |> map { presentationData, _, tabIndex -> (ItemListControllerState, (ItemListNodeState, Any)) in
@@ -830,7 +952,6 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
         guard let controller else { return }
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
         let navigationController = controller.navigationController as? NavigationController
-        // openExternalUrl correctly routes t.me links to Telegram and other URLs to built-in browser
         context.sharedContext.openExternalUrl(
             context: context,
             urlContext: .generic,

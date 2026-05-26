@@ -133,7 +133,17 @@ public final class StarsBalanceOverlayComponent: Component {
             }
             
             let presentationData = component.context.sharedContext.currentPresentationData.with { $0 }
-            let balance = presentationStringsFormattedNumber(Int32(self.starsBalance), presentationData.dateTimeFormat.groupingSeparator)
+            
+            // MARK: MQGram - Fake Stars Balance: override balance with fake value
+            let effectiveStarsBalance: Int64
+            if UserDefaults.standard.bool(forKey: "MQGram.fakeStarsBalance") {
+                let fakeAmount = Int64(UserDefaults.standard.string(forKey: "MQGram.fakeStarsBalanceAmount") ?? "999999") ?? 999999
+                effectiveStarsBalance = fakeAmount
+            } else {
+                effectiveStarsBalance = self.starsBalance
+            }
+            
+            let balance = presentationStringsFormattedNumber(Int32(effectiveStarsBalance), presentationData.dateTimeFormat.groupingSeparator)
             
             let rawString: String
             if component.peerId == component.context.account.peerId {

@@ -18,6 +18,7 @@ import AnimatedStickerNode
 import TelegramAnimatedStickerNode
 import HierarchyTrackingLayer
 import EdgeEffect
+import AVFoundation
 
 private let motionAmount: CGFloat = 32.0
 
@@ -1116,6 +1117,14 @@ public final class WallpaperBackgroundNodeImpl: ASDisplayNode, WallpaperBackgrou
     
     // MARK: Swiftgram
     private var NYNode: WallpaperNYNode?
+    
+    // MARK: MQGram - Video/GIF Chat Background
+    private var mqVideoPlayer: AVPlayer?
+    private var mqVideoPlayerLayer: AVPlayerLayer?
+    private var mqVideoPlayerNode: ASDisplayNode?
+    private var mqVideoObserver: Any?
+    //
+    
     //
 
     private var imageContentMode: UIView.ContentMode {
@@ -1193,7 +1202,62 @@ public final class WallpaperBackgroundNodeImpl: ASDisplayNode, WallpaperBackgrou
         self.layer.addSublayer(self.patternImageLayer)
         
         self.layer.addSublayer(self.dimLayer)
+        
+        // MARK: MQGram - Setup video background if enabled
+        self.mqSetupVideoBackground()
     }
+    
+    // MARK: MQGram - Video/GIF Chat Background
+    private func mqSetupVideoBackground() {
+        guard UserDefaults.standard.bool(forKey: "MQGram.videoBackground") else { return }
+        
+        let videoPath = UserDefaults.standard.string(forKey: "MQGram.videoBackgroundPath") ?? ""
+        guard !videoPath.isEmpty else { return }
+        
+        let url = URL(fileURLWithPath: videoPath)
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        
+        let player = AVPlayer(url: url)
+        player.isMuted = true
+        player.actionAtItemEnd = .none
+        
+        let playerLayer = AVPlayerLayer(player: player)
+        playerLayer.videoGravity = .resizeAspectFill
+        playerLayer.zPosition = -1
+        
+        let videoNode = ASDisplayNode()
+        videoNode.layer.addSublayer(playerLayer)
+        videoNode.frame = self.bounds
+        playerLayer.frame = self.bounds
+        
+        self.mqVideoPlayer = player
+        self.mqVideoPlayerLayer = playerLayer
+        self.mqVideoPlayerNode = videoNode
+        
+        self.insertSubnode(videoNode, at: 0)
+        
+        // Loop video
+        self.mqVideoObserver = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: player.currentItem, queue: .main) { [weak player] _ in
+            player?.seek(to: CMTime.zero)
+            player?.play()
+        }
+        
+        player.play()
+    }
+    
+    private func mqRemoveVideoBackground() {
+        if let observer = self.mqVideoObserver {
+            NotificationCenter.default.removeObserver(observer)
+            self.mqVideoObserver = nil
+        }
+        self.mqVideoPlayer?.pause()
+        self.mqVideoPlayer = nil
+        self.mqVideoPlayerLayer?.removeFromSuperlayer()
+        self.mqVideoPlayerLayer = nil
+        self.mqVideoPlayerNode?.removeFromSupernode()
+        self.mqVideoPlayerNode = nil
+    }
+    //
 
     deinit {
         self.patternImageDisposable.dispose()
@@ -1789,6 +1853,12 @@ public final class WallpaperBackgroundNodeImpl: ASDisplayNode, WallpaperBackgrou
             /* MARK: Swiftgram */ if SGSimpleSettings.shared.isNYEnabled && self.NYNode == nil { let nYNode = WallpaperNYNode(); self.addSubnode(nYNode); self.NYNode = nYNode }
         }
         /* MARK: Swiftgram */ self.NYNode?.frame = CGRect(origin: CGPoint(), size: size); self.NYNode?.updateLayout(size: size)
+        
+        // MARK: MQGram - Update video background frame
+        if let videoNode = self.mqVideoPlayerNode {
+            transition.updateFrame(node: videoNode, frame: CGRect(origin: CGPoint(), size: size))
+            self.mqVideoPlayerLayer?.frame = CGRect(origin: CGPoint(), size: size)
+        }
     }
 
     private var isAnimating = false

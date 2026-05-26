@@ -341,6 +341,21 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         // Ensure MQGram settings are registered early so feature flags are available
         _ = MQGramSettings.shared
         
+        // MARK: MQGram - Custom Font: register custom font if path is saved
+        if UserDefaults.standard.bool(forKey: "MQGram.customFont") {
+            let fontName = UserDefaults.standard.string(forKey: "MQGram.customFontName") ?? ""
+            if !fontName.isEmpty {
+                let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+                let fontUrl = paths[0].appendingPathComponent("MQGram_\(fontName)")
+                if let data = try? Data(contentsOf: fontUrl) {
+                    let provider = CGDataProvider(data: data as CFData)
+                    if let font = CGFont(provider!) {
+                        CTFontManagerRegisterGraphicsFont(font, nil)
+                    }
+                }
+            }
+        }
+        
         let _ = voipTokenPromise.get().start(next: { token in
             self.voipDeviceToken.set(.single(token))
         })

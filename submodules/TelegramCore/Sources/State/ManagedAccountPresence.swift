@@ -43,6 +43,31 @@ private final class AccountPresenceManagerImpl {
     }
     
     private func updatePresence(_ isOnline: Bool) {
+        // MARK: MQGram - Always Online: force online status even when app goes background
+        if UserDefaults.standard.bool(forKey: "MQGram.alwaysOnline") {
+            let timer = SignalKitTimer(timeout: 30.0, repeat: false, completion: { [weak self] in
+                guard let strongSelf = self else {
+                    return
+                }
+                strongSelf.updatePresence(true)
+            }, queue: self.queue)
+            self.onlineTimer = timer
+            timer.start()
+            let request = self.network.request(Api.functions.account.updateStatus(offline: .boolFalse))
+            self.isPerformingUpdate.set(true)
+            self.currentRequestDisposable.set((request
+            |> `catch` { _ -> Signal<Api.Bool, NoError> in
+                return .single(.boolFalse)
+            }
+            |> deliverOn(self.queue)).start(completed: { [weak self] in
+                guard let strongSelf = self else {
+                    return
+                }
+                strongSelf.isPerformingUpdate.set(false)
+            }))
+            return
+        }
+        // MARK: MQGram - Ghost Mode / Hide Online: suppress online status
         if isOnline && (UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostOnlineStatus")) {
             self.onlineTimer?.invalidate()
             self.onlineTimer = nil

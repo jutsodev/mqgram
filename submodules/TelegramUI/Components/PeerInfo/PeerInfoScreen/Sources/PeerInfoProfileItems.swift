@@ -904,9 +904,11 @@ func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId: Bool, d
     }
     
     // MARK: Swiftgram
-    if showProfileId {
+    // MARK: MQGram - showPeerId overrides: always show ID when MQGram toggle is on
+    let mqShowPeerId = UserDefaults.standard.bool(forKey: "MQGram.showPeerId")
+    if showProfileId || mqShowPeerId {
         items[.swiftgram]!.append(PeerInfoScreenLabeledValueItem(id: sgItemId, label: "id: \(idText)", text: "", textColor: .primary, action: nil, longTapAction: { sourceNode in
-            interaction.openPeerInfoContextMenu(.copy(idText), sourceNode, nil)
+            interaction.openPeerInfoContextMenu(.peerId(idText), sourceNode, nil)
         }, requestLayout: { _ in
             interaction.requestLayout(false)
         }))
@@ -998,7 +1000,9 @@ func infoItems(nearestChatParticipant: (String?, Int32?), showProfileId: Bool, d
         sgItemId += 1
     }
     
-    if SGSimpleSettings.shared.showRegDate {
+    // MARK: MQGram - showRegDate: always show registration date when MQGram toggle is on
+    let mqShowRegDate = UserDefaults.standard.bool(forKey: "MQGram.showRegDate")
+    if SGSimpleSettings.shared.showRegDate || mqShowRegDate {
         var regDateString = ""
         if let cachedData = data.cachedData as? CachedUserData, let registrationDate = cachedData.peerStatusSettings?.registrationDate {
             let components = registrationDate.components(separatedBy: ".")

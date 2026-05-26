@@ -84,6 +84,17 @@ public final class MQGramSettings {
         case showEditHistory
         case antiSelfDestructSavePhotos
         case antiSelfDestructSaveVideos
+        
+        // MQGram v2 Features
+        case alwaysOnline
+        case customFont
+        case customFontName
+        case videoBackground
+        case videoBackgroundPath
+        case showPeerId
+        case showRegDate
+        case fullRussianUI
+        case fakeStarsBalanceAmount
     }
 
     private let defaults: UserDefaults
@@ -483,5 +494,52 @@ public final class MQGramSettings {
     public var antiSelfDestructSaveVideos: Bool {
         get { bool(for: .antiSelfDestructSaveVideos) }
         set { setBool(newValue, for: .antiSelfDestructSaveVideos) }
+    }
+    
+    // MARK: - v2 Features Properties
+    
+    public var alwaysOnline: Bool {
+        get { bool(for: .alwaysOnline) }
+        set { setBool(newValue, for: .alwaysOnline) }
+    }
+    
+    public var customFont: Bool {
+        get { bool(for: .customFont) }
+        set { setBool(newValue, for: .customFont) }
+    }
+    
+    public var customFontName: String {
+        get { self.defaults.string(forKey: "MQGram.customFontName") ?? "" }
+        set { self.defaults.set(newValue, forKey: "MQGram.customFontName"); self.defaults.synchronize() }
+    }
+    
+    public var videoBackground: Bool {
+        get { bool(for: .videoBackground) }
+        set { setBool(newValue, for: .videoBackground) }
+    }
+    
+    public var showPeerId: Bool {
+        get { bool(for: .showPeerId) }
+        set { setBool(newValue, for: .showPeerId) }
+    }
+    
+    public var showRegDate: Bool {
+        get { bool(for: .showRegDate) }
+        set { setBool(newValue, for: .showRegDate) }
+    }
+    
+    public var fullRussianUI: Bool {
+        get { bool(for: .fullRussianUI) }
+        set { setBool(newValue, for: .fullRussianUI) }
+    }
+    
+    public var videoBackgroundPath: String {
+        get { self.defaults.string(forKey: "MQGram.videoBackgroundPath") ?? "" }
+        set { self.defaults.set(newValue, forKey: "MQGram.videoBackgroundPath"); self.defaults.synchronize() }
+    }
+    
+    public var fakeStarsBalanceAmount: String {
+        get { self.defaults.string(forKey: "MQGram.fakeStarsBalanceAmount") ?? "999999" }
+        set { self.defaults.set(newValue, forKey: "MQGram.fakeStarsBalanceAmount"); self.defaults.synchronize() }
     }
 }
