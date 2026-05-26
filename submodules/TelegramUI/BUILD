@@ -29,6 +29,7 @@ sgdeps = [
 
 mqdeps = [
     "//MQGram/MQDeletedMessages:MQDeletedMessages",
+    "//MQGram/MQGramSettingsUI:MQGramSettingsUI",
 ]
 
 sgsrcs = [
