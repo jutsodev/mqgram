@@ -96,7 +96,7 @@ public extension TelegramEngine {
         }
 
         public func clearCloudDraftsInteractively() -> Signal<Void, NoError> {
-        	return _internal_clearCloudDraftsInteractively(postbox: self.account.postbox, network: self.account.network, accountPeerId: self.account.peerId)
+                return _internal_clearCloudDraftsInteractively(postbox: self.account.postbox, network: self.account.network, accountPeerId: self.account.peerId)
         }
 
         public func applyMaxReadIndexInteractively(index: MessageIndex) -> Signal<Void, NoError> {
@@ -159,7 +159,7 @@ public extension TelegramEngine {
         }
 
         public func deleteMessages(transaction: Transaction, ids: [MessageId]) {
-            return _internal_deleteMessages(transaction: transaction, mediaBox: self.account.postbox.mediaBox, ids: ids, deleteMedia: true, manualAddMessageThreadStatsDifference: nil)
+            _internal_deleteMessages(transaction: transaction, mediaBox: self.account.postbox.mediaBox, ids: ids, deleteMedia: true, manualAddMessageThreadStatsDifference: nil)
         }
 
         public func deleteAllMessagesWithAuthor(peerId: PeerId, authorId: PeerId, namespace: MessageId.Namespace) -> Signal<Never, NoError> {
