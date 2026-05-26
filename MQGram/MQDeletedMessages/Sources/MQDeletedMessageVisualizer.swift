@@ -5,7 +5,6 @@ import UIKit
 import Display
 import AsyncDisplayKit
 import Postbox
-import TelegramCore
 
 /// Visual configuration for deleted messages
 public struct MQDeletedMessageVisualConfig {

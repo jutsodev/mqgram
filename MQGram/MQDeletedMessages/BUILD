@@ -12,7 +12,6 @@ swift_library(
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/Display:Display",
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
-        "//submodules/TelegramCore:TelegramCore",
         "//MQGram/MQGramDatabase:MQGramDatabase",
     ],
     visibility = ["//visibility:public"],
