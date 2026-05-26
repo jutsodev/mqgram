@@ -319,9 +319,10 @@ public final class MQDeletedMessageIconNode: ASDisplayNode {
 
 // MARK: - Deleted Message Label Node
 
-public final class MQDeletedMessageLabelNode: ASTextNode {
+public final class MQDeletedMessageLabelNode: ASDisplayNode {
     private var config: MQDeletedMessageVisualConfig
     private var languageCode: String
+    public let textNode = ASTextNode()
     
     public init(config: MQDeletedMessageVisualConfig, languageCode: String, deletedAt: Date? = nil) {
         self.config = config
@@ -330,7 +331,8 @@ public final class MQDeletedMessageLabelNode: ASTextNode {
         super.init()
         
         self.isUserInteractionEnabled = false
-        self.displaysAsynchronously = false
+        self.textNode.displaysAsynchronously = false
+        self.addSubnode(self.textNode)
         
         let text: String
         if let deletedAt = deletedAt, config.showDeletedTimestamp {
@@ -347,7 +349,17 @@ public final class MQDeletedMessageLabelNode: ASTextNode {
             .foregroundColor: UIColor(white: 0.5, alpha: 0.8)
         ]
         
-        self.attributedText = NSAttributedString(string: text, attributes: attributes)
+        self.textNode.attributedText = NSAttributedString(string: text, attributes: attributes)
+    }
+    
+    override public func layout() {
+        super.layout()
+        let textSize = self.textNode.measure(self.bounds.size)
+        self.textNode.frame = CGRect(origin: CGPoint(x: (self.bounds.width - textSize.width) / 2, y: (self.bounds.height - textSize.height) / 2), size: textSize)
+    }
+    
+    override public func calculateSizeThatFits(_ constrainedSize: CGSize) -> CGSize {
+        return self.textNode.measure(constrainedSize)
     }
 }
 
