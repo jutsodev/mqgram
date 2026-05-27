@@ -672,7 +672,7 @@ public final class ChatTitleComponent: Component {
                             stringValue = component.strings.Activity_ChoosingSticker
                         case let .seeingEmojiInteraction(emoticon):
                             stringValue = component.strings.Activity_EnjoyingAnimations(emoticon).string
-                        case .speakingInGroupCall, .interactingWithEmoji:
+                        case .speakingInGroupCall, .interactingWithEmoji, .choosingContact, .choosingLocation:
                             stringValue = ""
                         }
                     } else {
@@ -701,7 +701,7 @@ public final class ChatTitleComponent: Component {
                         state = .uploading(string, color)
                     case .playingGame:
                         state = .playingGame(string, color)
-                    case .speakingInGroupCall, .interactingWithEmoji:
+                    case .speakingInGroupCall, .interactingWithEmoji, .choosingContact, .choosingLocation:
                         state = .typingText(string, color)
                     case .choosingSticker:
                         state = .choosingSticker(string, color)
