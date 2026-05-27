@@ -87,6 +87,7 @@ public final class MQGramSettings {
         
         // MQGram v2 Features
         case alwaysOnline
+        case alwaysOffline
         case customFont
         case customFontName
         case videoBackground
@@ -501,6 +502,11 @@ public final class MQGramSettings {
     public var alwaysOnline: Bool {
         get { bool(for: .alwaysOnline) }
         set { setBool(newValue, for: .alwaysOnline) }
+    }
+    
+    public var alwaysOffline: Bool {
+        get { bool(for: .alwaysOffline) }
+        set { setBool(newValue, for: .alwaysOffline) }
     }
     
     public var customFont: Bool {

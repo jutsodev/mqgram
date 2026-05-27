@@ -177,6 +177,8 @@ private struct MQGramText {
     let ghostTypingActionsText: String
     let alwaysOnlineTitle: String
     let alwaysOnlineText: String
+    let alwaysOfflineTitle: String
+    let alwaysOfflineText: String
     let messageSendingDelayTitle: String
     let messageSendingDelayText: String
     let onlyReadWhenReplyingTitle: String
@@ -348,6 +350,8 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
             ghostTypingActionsText: "Скрывает набор текста, запись голоса, загрузку фото/видео.",
             alwaysOnlineTitle: "Вечный онлайн",
             alwaysOnlineText: "Всегда отображайся в сети, даже когда не в приложении.",
+            alwaysOfflineTitle: "Всегда оффлайн",
+            alwaysOfflineText: "Никогда не отправлять статус онлайн, даже когда открыто приложение.",
             messageSendingDelayTitle: "Задержка отправки",
             messageSendingDelayText: "Сообщения уходят с паузой, чтобы имитировать ручной ввод.",
             onlyReadWhenReplyingTitle: "Прочитать при ответе",
@@ -517,6 +521,8 @@ private func mqgramText(_ languageCode: String) -> MQGramText {
         ghostTypingActionsText: "Hides typing, voice recording, photo/video uploads.",
         alwaysOnlineTitle: "Always Online",
         alwaysOnlineText: "Always appear online, even when not in the app.",
+        alwaysOfflineTitle: "Always Offline",
+        alwaysOfflineText: "Never send online status, even when the app is open.",
         messageSendingDelayTitle: "Message Delay",
         messageSendingDelayText: "Messages are sent with a pause to simulate manual typing.",
         onlyReadWhenReplyingTitle: "Read on Reply",
@@ -797,6 +803,7 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .ghostReadReceipts, text.ghostReadReceiptsTitle, text.ghostReadReceiptsText, settings.ghostReadReceipts)); id += 1
         entries.append(.toggle(id, .ghostOnlineStatus, text.ghostOnlineStatusTitle, text.ghostOnlineStatusText, settings.ghostOnlineStatus)); id += 1
         entries.append(.toggle(id, .alwaysOnline, text.alwaysOnlineTitle, text.alwaysOnlineText, settings.alwaysOnline)); id += 1
+        entries.append(.toggle(id, .alwaysOffline, text.alwaysOfflineTitle, text.alwaysOfflineText, settings.alwaysOffline)); id += 1
         entries.append(.toggle(id, .ghostStories, text.ghostStoriesTitle, text.ghostStoriesText, settings.ghostStories)); id += 1
         entries.append(.toggle(id, .ghostTypingActions, text.ghostTypingActionsTitle, text.ghostTypingActionsText, settings.ghostTypingActions)); id += 1
         entries.append(.toggle(id, .ghostContentReads, text.ghostContentReadsTitle, text.ghostContentReadsText, settings.ghostContentReads)); id += 1
@@ -915,6 +922,23 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
 
     let arguments = MQGramArguments(
         toggleSetting: { key, value in
+            // MARK: MQGram - mutual exclusion for online status modes
+            if value {
+                switch key {
+                case .alwaysOnline:
+                    MQGramSettings.shared.setBool(false, for: .alwaysOffline)
+                    MQGramSettings.shared.setBool(false, for: .ghostOnlineStatus)
+                    MQGramSettings.shared.setBool(false, for: .ghostMode)
+                case .alwaysOffline:
+                    MQGramSettings.shared.setBool(false, for: .alwaysOnline)
+                    MQGramSettings.shared.setBool(false, for: .ghostOnlineStatus)
+                case .ghostOnlineStatus:
+                    MQGramSettings.shared.setBool(false, for: .alwaysOnline)
+                    MQGramSettings.shared.setBool(false, for: .alwaysOffline)
+                default:
+                    break
+                }
+            }
             MQGramSettings.shared.setBool(value, for: key)
             updatePromise.set(true)
         },
