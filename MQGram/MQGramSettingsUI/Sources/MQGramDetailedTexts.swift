@@ -30,7 +30,7 @@ struct MQGramDetailedTexts {
     let ghostUploadingRoundText: String
     let ghostSpeakingInGroupCallTitle: String
     let ghostSpeakingInGroupCallText: String
-    let ghostChoosingSticker Title: String
+    let ghostChoosingStickerTitle: String
     let ghostChoosingStickerText: String
     let ghostEmojiInteractionTitle: String
     let ghostEmojiInteractionText: String

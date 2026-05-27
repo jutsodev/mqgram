@@ -127,6 +127,19 @@ private enum MQGramEntry: ItemListNodeEntry {
                     args.openRecycleBin()
                 }
             )
+        case let .disclosure(_, title, subtitle, icon):
+            return ItemListDisclosureItem(
+                presentationData: presentationData,
+                icon: icon,
+                title: title,
+                label: subtitle ?? "",
+                sectionId: self.section,
+                style: .blocks,
+                disclosureStyle: .arrow,
+                action: {
+                    args.openAdvancedGhost()
+                }
+            )
         case let .footer(_, text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         }
@@ -175,8 +188,8 @@ private struct MQGramText {
     let antiDeleteInfo: String
     let antiRevokeTitle: String
     let antiRevokeText: String
-    let antiEditText: String
     let antiEditTitle: String
+    let antiEditText: String
     let showEditHistoryTitle: String
     let showEditHistoryText: String
     let secretMediaSaverTitle: String
@@ -898,6 +911,7 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
 
     var openUrlImpl: ((String, Bool) -> Void)?
     var openRecycleBinImpl: (() -> Void)?
+    var openAdvancedGhostImpl: (() -> Void)?
 
     let arguments = MQGramArguments(
         toggleSetting: { key, value in
@@ -909,6 +923,9 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
         },
         openRecycleBin: {
             openRecycleBinImpl?()
+        },
+        openAdvancedGhost: {
+            openAdvancedGhostImpl?()
         }
     )
 
@@ -966,6 +983,11 @@ public func mqgramSettingsController(context: AccountContext) -> ViewController 
     openRecycleBinImpl = { [weak controller] in
         let recycleBinController = savedDeletedMessagesListController(context: context)
         controller?.navigationController?.pushViewController(recycleBinController, animated: true)
+    }
+
+    openAdvancedGhostImpl = { [weak controller] in
+        let advancedGhostController = mqgramAdvancedGhostController(context: context)
+        controller?.navigationController?.pushViewController(advancedGhostController, animated: true)
     }
 
     return controller
