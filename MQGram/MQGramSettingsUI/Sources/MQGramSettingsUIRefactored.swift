@@ -1,4 +1,3 @@
-// MARK: MQGram - Redesigned Settings UI with Categories
 import Foundation
 import UIKit
 import Display
@@ -8,26 +7,25 @@ import ItemListUI
 import PresentationDataUtils
 import AccountContext
 
-// MARK: - Settings Categories
 enum MQGramSettingsCategory: Int, CaseIterable {
-    case privacy = 0          // Приватность / Privacy
-    case appearance = 1       // Внешний вид / Appearance
-    case content = 2          // Контент / Content
-    case messages = 3         // Сообщения / Messages
-    case advanced = 4         // Расширенные / Advanced
-    case other = 5            // Другое / Other
-    
+    case privacy = 0
+    case appearance = 1
+    case content = 2
+    case messages = 3
+    case advanced = 4
+    case other = 5
+
     var title: String {
         switch self {
-        case .privacy: return "🔒 Приватность"
-        case .appearance: return "🎨 Внешний вид"
-        case .content: return "📦 Контент"
-        case .messages: return "💬 Сообщения"
-        case .advanced: return "⚙️ Расширенные"
-        case .other: return "📋 Другое"
+        case .privacy: return "Приватность"
+        case .appearance: return "Внешний вид"
+        case .content: return "Контент"
+        case .messages: return "Сообщения"
+        case .advanced: return "Расширенные"
+        case .other: return "Другое"
         }
     }
-    
+
     var description: String {
         switch self {
         case .privacy: return "Скрытие статуса, действий, читаемости"
@@ -38,7 +36,7 @@ enum MQGramSettingsCategory: Int, CaseIterable {
         case .other: return "Остальные функции"
         }
     }
-    
+
     var emoji: String {
         switch self {
         case .privacy: return "🔒"
@@ -51,7 +49,6 @@ enum MQGramSettingsCategory: Int, CaseIterable {
     }
 }
 
-// MARK: - Settings Item Model
 struct MQGramSettingsItem {
     let key: MQGramSettings.Key
     let title: String
@@ -60,140 +57,125 @@ struct MQGramSettingsItem {
     let category: MQGramSettingsCategory
 }
 
-// MARK: - Category View Controller
-public func mqgramCategoryViewController(context: AccountContext, category: MQGramSettingsCategory) -> ViewController {
-    var dismissImpl: (() -> Void)?
-    
-    let items = getMQGramItemsForCategory(category)
-    var entries: [ItemListNodeEntry] = []
-    var id = 0
-    
-    // Header
-    entries.append(.info(id, "\(category.emoji) \(category.title)\n\(category.description)")); id += 1
-    
-    // Settings items
-    for item in items {
-        let currentValue = UserDefaults.standard.bool(forKey: "MQGram.\(item.key.rawValue)")
-        entries.append(.toggle(id, item.key, item.title, item.description, { value in
-            UserDefaults.standard.set(value, forKey: "MQGram.\(item.key.rawValue)")
-            MQGramSettings.shared.setBool(value, for: item.key)
-        })); id += 1
+private enum MQGramCategoryEntry: ItemListNodeEntry {
+    case header(Int32, String)
+    case info(Int32, String)
+    case toggle(Int32, MQGramSettings.Key, String, String?, Bool)
+    case footer(Int32, String)
+
+    var section: ItemListSectionId {
+        switch self {
+        case .header:
+            return 0
+        case .info, .toggle:
+            return 1
+        case .footer:
+            return 2
+        }
     }
-    
-    entries.append(.footer(id, ""))
-    
-    let controller = ItemListViewController(
-        context: context,
-        state: ItemListControllerState(
-            theme: context.sharedContext.currentPresentationData.with { $0.theme },
+
+    var stableId: Int32 {
+        switch self {
+        case let .header(id, _):      return id
+        case let .info(id, _):        return id
+        case let .toggle(id, _, _, _, _): return id
+        case let .footer(id, _):      return id
+        }
+    }
+
+    static func ==(lhs: MQGramCategoryEntry, rhs: MQGramCategoryEntry) -> Bool {
+        switch lhs {
+        case let .header(lId, lText):
+            if case let .header(rId, rText) = rhs, lId == rId, lText == rText { return true }
+            return false
+        case let .info(lId, lText):
+            if case let .info(rId, rText) = rhs, lId == rId, lText == rText { return true }
+            return false
+        case let .toggle(lId, lKey, lTitle, lText, lValue):
+            if case let .toggle(rId, rKey, rTitle, rText, rValue) = rhs, lId == rId, lKey == rKey, lTitle == rTitle, lText == rText, lValue == rValue { return true }
+            return false
+        case let .footer(lId, lText):
+            if case let .footer(rId, rText) = rhs, lId == rId, lText == rText { return true }
+            return false
+        }
+    }
+
+    static func <(lhs: MQGramCategoryEntry, rhs: MQGramCategoryEntry) -> Bool {
+        return lhs.stableId < rhs.stableId
+    }
+
+    func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
+        let args = arguments as! MQGramCategoryArguments
+        switch self {
+        case let .header(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .info(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .markdown(text), sectionId: self.section)
+        case let .toggle(_, key, title, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, text: text, value: value, sectionId: self.section, style: .blocks, updated: { newValue in
+                args.toggleSetting(key, newValue)
+            })
+        case let .footer(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .markdown(text), sectionId: self.section)
+        }
+    }
+}
+
+private struct MQGramCategoryArguments {
+    let toggleSetting: (MQGramSettings.Key, Bool) -> Void
+}
+
+private func getMQGramItemsForCategory(_ category: MQGramSettingsCategory) -> [MQGramSettingsItem] {
+    let allItems: [MQGramSettingsItem] = [
+        MQGramSettingsItem(key: .ghostMode, title: "Ghost Mode", description: "Скрыть активность", icon: "👻", category: .privacy),
+    ]
+    return allItems.filter { $0.category == category }
+}
+
+public func mqgramCategoryViewController(context: AccountContext, category: MQGramSettingsCategory) -> ViewController {
+    let updatePromise = ValuePromise<Bool>(true, ignoreRepeated: false)
+
+    let arguments = MQGramCategoryArguments(
+        toggleSetting: { key, value in
+            MQGramSettings.shared.setBool(value, for: key)
+            updatePromise.set(true)
+        }
+    )
+
+    let signal = combineLatest(context.sharedContext.presentationData, updatePromise.get())
+    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        let settings = MQGramSettings.shared
+        let strings = presentationData.strings
+
+        let items = getMQGramItemsForCategory(category)
+        var entries: [MQGramCategoryEntry] = []
+        var id: Int32 = 0
+
+        entries.append(.info(id, "\(category.emoji) \(category.title)\n\(category.description)")); id += 1
+
+        for item in items {
+            let value = settings.bool(for: item.key)
+            entries.append(.toggle(id, item.key, item.title, item.description, value)); id += 1
+        }
+
+        let controllerState = ItemListControllerState(
+            presentationData: ItemListPresentationData(presentationData),
             title: .text(category.title),
             leftNavigationButton: nil,
             rightNavigationButton: nil,
-            backNavigationButton: ItemListBackButton(title: "Назад"),
-            animateChanges: false
-        ),
-        tabBarItem: nil,
-        sections: [ItemListSection(id: 0, header: nil, footer: nil, items: [])]
-    )
-    
-    dismissImpl = { [weak controller] in
-        controller?.dismiss()
+            backNavigationButton: ItemListBackButton(title: strings.Common_Back)
+        )
+
+        let listState = ItemListNodeState(
+            presentationData: ItemListPresentationData(presentationData),
+            entries: entries,
+            style: .blocks,
+            animateChanges: true
+        )
+
+        return (controllerState, (listState, arguments))
     }
-    
+
+    let controller = ItemListController(context: context, state: signal)
     return controller
 }
-
-// MARK: - Get items for category
-private func getMQGramItemsForCategory(_ category: MQGramSettingsCategory) -> [MQGramSettingsItem] {
-    switch category {
-    case .privacy:
-        return [
-            MQGramSettingsItem(key: .ghostMode, title: "🫥 Режим призрака", description: "Полное скрытие активности", category: .privacy),
-            MQGramSettingsItem(key: .ghostReadReceipts, title: "✔️ Скрывать прочтение", description: "Не отправлять информацию о прочтении", category: .privacy),
-            MQGramSettingsItem(key: .ghostOnlineStatus, title: "⏱️ Всегда оффлайн", description: "Никогда не отправлять онлайн-статус", category: .privacy),
-            MQGramSettingsItem(key: .ghostTypingActions, title: "✍️ Скрывать печать", description: "Не показывать что вы пишете", category: .privacy),
-            MQGramSettingsItem(key: .ghostStories, title: "📖 Скрывать просмотры историй", description: "Никто не узнает что вы видели историю", category: .privacy),
-            MQGramSettingsItem(key: .alwaysOnline, title: "🟢 Вечный онлайн", description: "Всегда показывать статус онлайн", category: .privacy),
-            MQGramSettingsItem(key: .alwaysOffline, title: "🔴 Всегда оффлайн", description: "Всегда отображаться как оффлайн", category: .privacy),
-            MQGramSettingsItem(key: .confirmCalls, title: "☎️ Подтверждать звонки", description: "Спрашивать перед принятием звонка", category: .privacy),
-        ]
-    
-    case .appearance:
-        return [
-            MQGramSettingsItem(key: .squareAvatars, title: "⬛ Квадратные аватары", description: "Аватары в виде квадратов вместо кругов", category: .appearance),
-            MQGramSettingsItem(key: .videoBackground, title: "🎬 Видеофон чата", description: "Анимированный фон в чатах", category: .appearance),
-            MQGramSettingsItem(key: .customFont, title: "🔤 Свой шрифт", description: "Загрузить кастомный .ttf или .otf файл", category: .appearance),
-            MQGramSettingsItem(key: .deletedMessageTransparency, title: "👻 Прозрачные удалённые", description: "Удалённые сообщения с прозрачностью", category: .appearance),
-        ]
-    
-    case .content:
-        return [
-            MQGramSettingsItem(key: .antiSelfDestruct, title: "💾 Сохранять самоуничтожающееся", description: "Сохранять фото/видео которые исчезают", category: .content),
-            MQGramSettingsItem(key: .secretMediaSaver, title: "🔐 Сохранять из секретных чатов", description: "Сохранять медиа из секретных чатов", category: .content),
-            MQGramSettingsItem(key: .antiRevoke, title: "🔄 Восстанавливать удалённые", description: "Удалённые сообщения остаются видны", category: .content),
-            MQGramSettingsItem(key: .showEditHistory, title: "📝 История редактирования", description: "Смотреть историю всех редактирований", category: .content),
-            MQGramSettingsItem(key: .showRegDate, title: "📅 Дата регистрации", description: "Показывать примерную дату регистрации", category: .content),
-        ]
-    
-    case .messages:
-        return [
-            MQGramSettingsItem(key: .messageSendingDelay, title: "⏳ Задержка отправки", description: "Сообщения отправляются с паузой", category: .messages),
-            MQGramSettingsItem(key: .antiCaps, title: "🔤 Авто-преобразование КАПСА", description: "ТЕКСТ → текст автоматически", category: .messages),
-            MQGramSettingsItem(key: .autoTranslate, title: "🌐 Автоперевод", description: "Переводить сообщения перед отправкой", category: .messages),
-            MQGramSettingsItem(key: .autoFormat, title: "✨ Автоформатирование", description: "Применять стиль ко всем сообщениям", category: .messages),
-            MQGramSettingsItem(key: .silentMessages, title: "🔇 Беззвучные сообщения", description: "Отправлять без звука уведомления", category: .messages),
-        ]
-    
-    case .advanced:
-        return [
-            MQGramSettingsItem(key: .ghostDrafts, title: "📄 Скрывать черновики", description: "Не синхронизировать черновики", category: .advanced),
-            MQGramSettingsItem(key: .ghostEmojiInteractions, title: "😊 Скрывать emoji-взаимодействия", description: "Не отправлять реакции эмодзи", category: .advanced),
-            MQGramSettingsItem(key: .ghostReactions, title: "👍 Скрывать реакции", description: "Скрывать отправку реакций на сообщения", category: .advanced),
-            MQGramSettingsItem(key: .ghostStickerActivity, title: "🎨 Скрывать стикеры", description: "Не сохранять недавние стикеры", category: .advanced),
-            MQGramSettingsItem(key: .ghostScreenshots, title: "📸 Отключить уведомления о скриншоте", description: "Не получать уведомления о скриншотах", category: .advanced),
-            MQGramSettingsItem(key: .hideReactions, title: "🙈 Скрывать реакции от других", description: "Скрывать счётчик реакций в чатах", category: .advanced),
-            MQGramSettingsItem(key: .hideCommentButton, title: "💬 Скрывать кнопку комментариев", description: "Убрать кнопку для ответа в комментарии", category: .advanced),
-        ]
-    
-    case .other:
-        return [
-            MQGramSettingsItem(key: .fakePremium, title: "⭐ Фейк Premium", description: "Отображать как подписчик Telegram Premium", category: .other),
-            MQGramSettingsItem(key: .fakeStarsBalance, title: "💫 Фейк баланс звёзд", description: "Показывать поддельный баланс звёзд", category: .other),
-            MQGramSettingsItem(key: .localPremium, title: "👑 Локальный Premium", description: "Разблокировать функции как в Premium", category: .other),
-            MQGramSettingsItem(key: .showPeerId, title: "🔢 Показывать ID", description: "Отображать ID пользователей и чатов", category: .other),
-            MQGramSettingsItem(key: .hidePhoneNumber, title: "📱 Скрывать номер телефона", description: "Скрыть номер в профиле", category: .other),
-        ]
-    }
-}
-
-// MARK: - Main Settings List with Categories
-public func mqgramCategoryListViewController(context: AccountContext) -> ViewController {
-    var entries: [ItemListNodeEntry] = []
-    var id = 0
-    
-    entries.append(.info(id, "MQGram Settings\n\nВыбери категорию функций")); id += 1
-    
-    for category in MQGramSettingsCategory.allCases {
-        entries.append(.disclosure(id, category.title, category.description, { openCategoryImpl?(category) })); id += 1
-    }
-    
-    entries.append(.footer(id, "💡 Каждая категория содержит функции по теме"))
-    
-    let controller = ItemListViewController(
-        context: context,
-        state: ItemListControllerState(
-            theme: context.sharedContext.currentPresentationData.with { $0.theme },
-            title: .text("Функции MQGram"),
-            leftNavigationButton: nil,
-            rightNavigationButton: nil,
-            backNavigationButton: ItemListBackButton(title: "Назад"),
-            animateChanges: false
-        ),
-        tabBarItem: nil,
-        sections: [ItemListSection(id: 0, header: nil, footer: nil, items: [])]
-    )
-    
-    return controller
-}
-
-private var openCategoryImpl: ((MQGramSettingsCategory) -> Void)?

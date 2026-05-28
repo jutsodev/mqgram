@@ -1,4 +1,3 @@
-// MARK: MQGram - Video Background Controller
 import Foundation
 import UIKit
 import Display
@@ -11,159 +10,162 @@ import AccountContext
 import Photos
 import AVFoundation
 
-private final class MQGramVideoBackgroundNode: ItemListControllerNode {
-    private var videoPlayer: AVPlayer?
-    private var playerLayer: AVPlayerLayer?
-    private let videoPreviewNode = ASDisplayNode()
-    
-    override init(controller: ItemListViewController) {
-        super.init(controller: controller)
+private enum MQGramEntry: ItemListNodeEntry {
+    case header(Int32, String)
+    case info(Int32, String)
+    case toggle(Int32, MQGramSettings.Key, String, Bool)
+    case action(Int32, String)
+    case footer(Int32, String)
+
+    var section: ItemListSectionId {
+        switch self {
+        case .header:
+            return 0
+        case .info, .toggle, .action:
+            return 1
+        case .footer:
+            return 2
+        }
     }
-    
-    deinit {
-        videoPlayer?.pause()
+
+    var stableId: Int32 {
+        switch self {
+        case let .header(id, _):      return id
+        case let .info(id, _):        return id
+        case let .toggle(id, _, _, _): return id
+        case let .action(id, _):      return id
+        case let .footer(id, _):      return id
+        }
     }
-    
-    func playVideo(at path: String) {
-        guard FileManager.default.fileExists(atPath: path) else { return }
-        let url = URL(fileURLWithPath: path)
-        videoPlayer = AVPlayer(url: url)
-        videoPlayer?.play()
+
+    static func ==(lhs: MQGramEntry, rhs: MQGramEntry) -> Bool {
+        switch lhs {
+        case let .header(lId, lText):
+            if case let .header(rId, rText) = rhs, lId == rId, lText == rText { return true }
+            return false
+        case let .info(lId, lText):
+            if case let .info(rId, rText) = rhs, lId == rId, lText == rText { return true }
+            return false
+        case let .toggle(lId, lKey, lTitle, lValue):
+            if case let .toggle(rId, rKey, rTitle, rValue) = rhs, lId == rId, lKey == rKey, lTitle == rTitle, lValue == rValue { return true }
+            return false
+        case let .action(lId, lText):
+            if case let .action(rId, rText) = rhs, lId == rId, lText == rText { return true }
+            return false
+        case let .footer(lId, lText):
+            if case let .footer(rId, rText) = rhs, lId == rId, lText == rText { return true }
+            return false
+        }
     }
+
+    static func <(lhs: MQGramEntry, rhs: MQGramEntry) -> Bool {
+        return lhs.stableId < rhs.stableId
+    }
+
+    func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
+        let args = arguments as! MQGramArguments
+        switch self {
+        case let .header(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .info(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .markdown(text), sectionId: self.section)
+        case let .toggle(_, key, title, value):
+            return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, text: nil, value: value, sectionId: self.section, style: .blocks, updated: { newValue in
+                args.toggleSetting(key, newValue)
+            })
+        case let .action(_, text):
+            return ItemListActionItem(presentationData: presentationData, title: text, kind: .generic, alignment: .natural, sectionId: self.section, style: .blocks, action: {
+                args.pressedButton()
+            })
+        case let .footer(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .markdown(text), sectionId: self.section)
+        }
+    }
+}
+
+private struct MQGramArguments {
+    let toggleSetting: (MQGramSettings.Key, Bool) -> Void
+    let pressedButton: () -> Void
+}
+
+private enum MQGramVideoBackgroundButtonAction {
+    case selectVideo
+    case clearBackground
 }
 
 public func mqgramVideoBackgroundController(context: AccountContext) -> ViewController {
-    let statePromise = ValuePromise<MQGramVideoBackgroundState>(MQGramVideoBackgroundState(), ignoreRepeated: true)
-    let stateValue = Atomic<MQGramVideoBackgroundState>(MQGramVideoBackgroundState())
-    
-    let updateState: ((MQGramVideoBackgroundState) -> MQGramVideoBackgroundState) -> Void = { f in
-        stateValue.modify { f($0) }
-        statePromise.set(stateValue.with { $0 })
-    }
-    
-    var dismissImpl: (() -> Void)?
-    
-    let arguments = MQGramVideoBackgroundArguments(
-        toggleVideoBackground: { enabled in
-            MQGramSettings.shared.setBool(enabled, for: .videoBackground)
-            UserDefaults.standard.set(enabled, forKey: "MQGram.videoBackground")
-            updateState { state in
-                var updated = state
-                updated.videoBackgroundEnabled = enabled
-                return updated
-            }
+    let updatePromise = ValuePromise<Bool>(true, ignoreRepeated: false)
+
+    var buttonAction: MQGramVideoBackgroundButtonAction = .selectVideo
+
+    let arguments = MQGramArguments(
+        toggleSetting: { key, value in
+            MQGramSettings.shared.setBool(value, for: key)
+            updatePromise.set(true)
         },
-        selectVideo: { [weak context] in
-            let picker = UIImagePickerController()
-            picker.sourceType = .photoLibrary
-            picker.mediaTypes = ["public.movie"]
-            picker.allowsEditing = false
-            picker.delegate = nil
-            
-            // In real implementation, would present picker
-            // For now, just load from documents
-            let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-            let documentsDirectory = paths[0]
-            let videoPath = documentsDirectory.appendingPathComponent("mqgram_background.mp4").path
-            
-            if FileManager.default.fileExists(atPath: videoPath) {
-                MQGramSettings.shared.set(videoPath, for: .videoBackgroundPath)
-                UserDefaults.standard.set(videoPath, forKey: "MQGram.videoBackgroundPath")
-                updateState { state in
-                    var updated = state
-                    updated.videoBackgroundPath = videoPath
-                    return updated
+        pressedButton: {
+            switch buttonAction {
+            case .selectVideo:
+                let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+                let documentsDirectory = paths[0]
+                let videoPath = documentsDirectory.appendingPathComponent("mqgram_background.mp4").path
+                if FileManager.default.fileExists(atPath: videoPath) {
+                    MQGramSettings.shared.videoBackgroundPath = videoPath
+                    UserDefaults.standard.set(videoPath, forKey: "MQGram.videoBackgroundPath")
+                    updatePromise.set(true)
                 }
-            }
-        },
-        clearBackground: {
-            MQGramSettings.shared.set("", for: .videoBackgroundPath)
-            UserDefaults.standard.set("", forKey: "MQGram.videoBackgroundPath")
-            updateState { state in
-                var updated = state
-                updated.videoBackgroundPath = ""
-                return updated
+            case .clearBackground:
+                MQGramSettings.shared.videoBackgroundPath = ""
+                UserDefaults.standard.set("", forKey: "MQGram.videoBackgroundPath")
+                updatePromise.set(true)
             }
         }
     )
-    
-    let signal = statePromise.get()
-    |> map { state -> [ItemListNodeEntry] in
-        var entries: [ItemListNodeEntry] = []
-        var id = 0
-        
-        entries.append(.info(id, "🎬 Видеофон чата (Video Background)\n\nВыбери видео из галереи для фона в чатах. Видео будет проигрываться в полупрозрачном оверлее.")); id += 1
-        entries.append(.toggle(id, .videoBackground, "Видеофон включен", state.videoBackgroundEnabled, { value in
-            arguments.toggleVideoBackground(value)
-        })); id += 1
-        
-        if state.videoBackgroundEnabled {
-            entries.append(.action(id, "📁 Выбрать видео из галереи", { arguments.selectVideo() })); id += 1
-            
-            if !state.videoBackgroundPath.isEmpty {
-                entries.append(.info(id, "✅ Видео выбрано\n\(state.videoBackgroundPath)")); id += 1
-                entries.append(.action(id, "❌ Удалить фон", { arguments.clearBackground() })); id += 1
+
+    let signal = combineLatest(context.sharedContext.presentationData, updatePromise.get())
+    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        let settings = MQGramSettings.shared
+        let strings = presentationData.strings
+
+        var entries: [MQGramEntry] = []
+        var id: Int32 = 0
+
+        entries.append(.info(id, "Выбери видео из галереи для фона в чатах. Видео будет проигрываться в полупрозрачном оверлее.")); id += 1
+        entries.append(.toggle(id, .videoBackground, "Видеофон включен", settings.videoBackground)); id += 1
+
+        if settings.videoBackground {
+            buttonAction = .selectVideo
+            entries.append(.action(id, "Выбрать видео из галереи")); id += 1
+
+            if !settings.videoBackgroundPath.isEmpty {
+                entries.append(.info(id, "Видео выбрано\n\(settings.videoBackgroundPath)")); id += 1
+                buttonAction = .clearBackground
+                entries.append(.action(id, "Удалить фон")); id += 1
             } else {
-                entries.append(.info(id, "⚠️ Видео не выбрано\n\nКликни выше чтобы выбрать видео из галереи")); id += 1
+                entries.append(.info(id, "Видео не выбрано. Нажми выше чтобы выбрать видео из галереи")); id += 1
             }
         }
-        
-        entries.append(.footer(id, "💡 Совет: Используй видео не более 10MB для лучшей производительности")); id += 1
-        
-        return entries
+
+        entries.append(.footer(id, "Совет: Используй видео не более 10MB для лучшей производительности")); id += 1
+
+        let controllerState = ItemListControllerState(
+            presentationData: ItemListPresentationData(presentationData),
+            title: .text("Видеофон"),
+            leftNavigationButton: nil,
+            rightNavigationButton: nil,
+            backNavigationButton: ItemListBackButton(title: strings.Common_Back)
+        )
+
+        let listState = ItemListNodeState(
+            presentationData: ItemListPresentationData(presentationData),
+            entries: entries,
+            style: .blocks,
+            animateChanges: true
+        )
+
+        return (controllerState, (listState, arguments))
     }
-    
-    let controller = ItemListViewController(context: context, state: ItemListControllerState(theme: context.sharedContext.currentPresentationData.with { $0.theme }, title: .text("Видеофон"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: "Назад"), animateChanges: false), tabBarItem: nil, sections: [
-        ItemListSection(id: 0, header: nil, footer: nil, items: [])
-    ])
-    
-    dismissImpl = { [weak controller] in
-        controller?.dismiss()
-    }
-    
+
+    let controller = ItemListController(context: context, state: signal)
     return controller
-}
-
-private struct MQGramVideoBackgroundState: Equatable {
-    var videoBackgroundEnabled: Bool = MQGramSettings.shared.videoBackground
-    var videoBackgroundPath: String = MQGramSettings.shared.videoBackgroundPath
-}
-
-private struct MQGramVideoBackgroundArguments {
-    let toggleVideoBackground: (Bool) -> Void
-    let selectVideo: () -> Void
-    let clearBackground: () -> Void
-}
-
-// MARK: - ChatHistoryNode Video Background Extension
-extension ChatHistoryNode {
-    func applyVideoBackground() {
-        guard MQGramSettings.shared.videoBackground else { return }
-        let backgroundPath = MQGramSettings.shared.videoBackgroundPath
-        guard !backgroundPath.isEmpty, FileManager.default.fileExists(atPath: backgroundPath) else { return }
-        
-        let url = URL(fileURLWithPath: backgroundPath)
-        let player = AVPlayer(url: url)
-        let playerLayer = AVPlayerLayer(player: player)
-        playerLayer.videoGravity = .resizeAspectFill
-        playerLayer.opacity = 0.15 // Полупрозрачность для читаемости текста
-        
-        // Add to background
-        if let layer = self.layer {
-            layer.insertSublayer(playerLayer, at: 0)
-            playerLayer.frame = layer.bounds
-            
-            // Loop video
-            NotificationCenter.default.addObserver(
-                forName: .AVPlayerItemDidPlayToEndTime,
-                object: player.currentItem,
-                queue: .main
-            ) { _ in
-                player.seek(to: .zero)
-                player.play()
-            }
-            
-            player.play()
-        }
-    }
 }
