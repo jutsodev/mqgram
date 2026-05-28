@@ -21,6 +21,13 @@ jobs:
     runs-on: macos-26
 
     steps:
+      - name: Free disk space
+        run: |
+          # Keep only the Xcode versions we might actually need or the default
+          # This is a safer cleanup that avoids deleting Homebrew and essential tools.
+          sudo rm -rf /Applications/Xcode_13* /Applications/Xcode_14*
+          df -h
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -88,18 +95,17 @@ jobs:
 
       - name: Copy sources to canonical path
         # Source paths are embedded in the binary; a stable path makes builds reproducible.
-        # Use APFS clonefile (cp -cR) for near-instant copy instead of full cp -R.
         run: |
           sudo mkdir -p /Users/Shared
-          cp -cR "$GITHUB_WORKSPACE" /Users/Shared/telegram-ios 2>/dev/null \
-            || cp -R "$GITHUB_WORKSPACE" /Users/Shared/telegram-ios
+          sudo rsync -aq --delete "$GITHUB_WORKSPACE/" /Users/Shared/telegram-ios/
+          sudo chown -R $USER /Users/Shared/telegram-ios
 
       - name: Cache Bazel output
         uses: actions/cache@v4
         with:
           path: |
             ~/telegram-bazel-cache
-            ~/.cache/mqgram-bazel-user-root
+            ~/.cache/bazel-repo
           key: bazel-${{ runner.os }}-${{ hashFiles('WORKSPACE', 'MODULE.bazel', 'MODULE.bazel.lock', 'versions.json') }}
           restore-keys: |
             bazel-${{ runner.os }}-
