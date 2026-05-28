@@ -1,7 +1,6 @@
 // MARK: MQGram - Activity Logger and Statistics
 // Comprehensive logging and statistics system for blocked activities
 import Foundation
-import Postbox
 
 /// Types of activities that can be blocked
 public enum MQBlockedActivityType: String, CaseIterable {

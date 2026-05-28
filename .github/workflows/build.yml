@@ -100,9 +100,11 @@ jobs:
           path: |
             ~/telegram-bazel-cache
             ~/.cache/mqgram-bazel-user-root
-          key: bazel-${{ runner.os }}-${{ hashFiles('WORKSPACE', 'MODULE.bazel', 'MODULE.bazel.lock', 'versions.json') }}
+          key: bazel-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
+            bazel-${{ runner.os }}-${{ hashFiles('WORKSPACE', 'MODULE.bazel', 'MODULE.bazel.lock', 'versions.json') }}
             bazel-${{ runner.os }}-
+          save-always: true
 
       - name: Compute build number and app version
         id: meta
