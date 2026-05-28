@@ -14,7 +14,7 @@ def import_certificates(certificatesPath):
 
     existing_keychains = run_executable_with_output('security', arguments=['list-keychains'], check_result=True)
     if keychain_name in existing_keychains:
-        run_executable_with_output('security', arguments=['delete-keychain'], check_result=True)
+        run_executable_with_output('security', arguments=['delete-keychain', keychain_name], check_result=True)
 
     run_executable_with_output('security', arguments=[
         'create-keychain',
@@ -24,16 +24,16 @@ def import_certificates(certificatesPath):
     ], check_result=True)
 
     existing_keychains = run_executable_with_output('security', arguments=['list-keychains', '-d', 'user'])
-    existing_keychains.replace('"', '')
+    existing_keychains = existing_keychains.replace('"', '').strip()
+    keychain_list = [k.strip() for k in existing_keychains.split('\n') if k.strip()]
 
     run_executable_with_output('security', arguments=[
         'list-keychains',
         '-d',
         'user',
         '-s',
-        keychain_name,
-        existing_keychains
-    ], check_result=True)
+        keychain_name
+    ] + keychain_list, check_result=True)
 
     run_executable_with_output('security', arguments=['set-keychain-settings', keychain_name])
     run_executable_with_output('security', arguments=['unlock-keychain', '-p', keychain_password, keychain_name])
@@ -70,7 +70,7 @@ def import_certificates(certificatesPath):
     run_executable_with_output('security', arguments=[
         'set-key-partition-list',
         '-S',
-        'apple-tool:,apple:',
+        'apple-tool:,apple:,codesign:',
         '-k',
         keychain_password,
         keychain_name
