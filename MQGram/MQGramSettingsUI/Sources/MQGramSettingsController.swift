@@ -849,6 +849,7 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .customFont, text.customFontTitle, text.customFontText, settings.customFont)); id += 1
         entries.append(.toggle(id, .videoBackground, text.videoBackgroundTitle, text.videoBackgroundText, settings.videoBackground)); id += 1
         entries.append(.toggle(id, .squareAvatars, text.squareAvatarsTitle, text.squareAvatarsText, settings.squareAvatars)); id += 1
+        entries.append(.toggle(id, .videoBackground, "🎬 Видеофон чата", "Анимированный фон в чатах (из файла)", settings.videoBackground)); id += 1
         entries.append(.toggle(id, .deletedMessageTransparency, text.deletedTransparencyTitle, text.deletedTransparencyText, settings.deletedMessageTransparency)); id += 1
         entries.append(.toggle(id, .redDeleteIcon, text.redDeleteIconTitle, text.redDeleteIconText, settings.redDeleteIcon))
 
