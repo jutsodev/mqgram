@@ -7,7 +7,7 @@ import ItemListUI
 import PresentationDataUtils
 import AccountContext
 
-enum MQGramSettingsCategory: Int, CaseIterable {
+public enum MQGramSettingsCategory: Int, CaseIterable {
     case privacy = 0
     case appearance = 1
     case content = 2
