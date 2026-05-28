@@ -4,11 +4,15 @@ import TelegramCore
 import TelegramUIPreferences
 import AccountContext
 
-// MARK: Swiftgram
-public let maximumSwiftgramNumberOfAccounts = 500
+// MARK: Swiftgram + MQGram - unlimited accounts toggle
+private let mqgramUnlimitedAccountCount = 500
+private let mqgramDefaultAccountCount = 3
+public var maximumSwiftgramNumberOfAccounts: Int {
+    UserDefaults.standard.bool(forKey: "MQGram.unlimitedAccounts") ? mqgramUnlimitedAccountCount : mqgramDefaultAccountCount
+}
 public let maximumSafeNumberOfAccounts = 6
-public let maximumNumberOfAccounts = maximumSwiftgramNumberOfAccounts
-public let maximumPremiumNumberOfAccounts = maximumSwiftgramNumberOfAccounts
+public var maximumNumberOfAccounts: Int { maximumSwiftgramNumberOfAccounts }
+public var maximumPremiumNumberOfAccounts: Int { maximumSwiftgramNumberOfAccounts }
 
 public func activeAccountsAndPeers(context: AccountContext, includePrimary: Bool = false) -> Signal<((AccountContext, EnginePeer)?, [(AccountContext, EnginePeer, Int32)]), NoError> {
     let sharedContext = context.sharedContext

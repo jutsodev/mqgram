@@ -8607,15 +8607,17 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             return
         }
         
-        // MARK: MQGram - message sending delay
+        // MARK: MQGram - message sending delay with cancel
         if UserDefaults.standard.bool(forKey: "MQGram.messageSendingDelay") && !commit {
             let delaySeconds: Double
             if UserDefaults.standard.bool(forKey: "MQGram.messageSendingDelayRandom") {
                 delaySeconds = Double(arc4random_uniform(6) + 2)
             } else {
-                delaySeconds = 3.0
+                let saved = UserDefaults.standard.integer(forKey: "MQGram.messageSendingDelaySeconds")
+                delaySeconds = saved > 0 ? Double(saved) : 3.0
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + delaySeconds) { [weak self] in
+            var workItem: DispatchWorkItem?
+            let item = DispatchWorkItem { [weak self] in
                 guard let self else { return }
                 let transformed = self.transformEnqueueMessages(messages, postpone: postpone)
                 let _ = (enqueueMessages(account: self.context.account, peerId: peerId, messages: transformed)
@@ -8627,6 +8629,29 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 donateSendMessageIntent(account: self.context.account, sharedContext: self.context.sharedContext, intentContext: .chat, peerIds: [peerId])
                 self.updateChatPresentationInterfaceState(interactive: true, { $0.updatedShowCommands(false) })
             }
+            workItem = item
+            DispatchQueue.main.asyncAfter(deadline: .now() + delaySeconds, execute: item)
+            let undoController = UndoOverlayController(
+                presentationData: self.presentationData,
+                content: .universal(
+                    animation: "anim_timer",
+                    scale: 0.066,
+                    colors: [:],
+                    title: nil,
+                    text: self.presentationData.strings.Conversation_SendingOptionsTooltip,
+                    customUndoText: self.presentationData.strings.Undo_Undo,
+                    timeout: delaySeconds
+                ),
+                elevatedLayout: false,
+                action: { action in
+                    if case .undo = action {
+                        workItem?.cancel()
+                        workItem = nil
+                    }
+                    return true
+                }
+            )
+            self.present(undoController, in: .current)
             return
         }
         

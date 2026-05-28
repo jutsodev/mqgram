@@ -290,6 +290,11 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
         }))
     }
     
+    if !UserDefaults.standard.bool(forKey: "MQGram.hideStickersSettings") {
+        items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 5, text: presentationData.strings.ChatSettings_Stickers, icon: PresentationResourcesSettings.stickers, action: {
+            interaction.openSettings(.stickers)
+        }))
+    }
     if !UserDefaults.standard.bool(forKey: "MQGram.hidePowerSaving") {
         items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 6, label: .text(data.isPowerSavingEnabled == true ? presentationData.strings.Settings_PowerSavingOn : presentationData.strings.Settings_PowerSavingOff), text: presentationData.strings.Settings_PowerSaving, icon: PresentationResourcesSettings.powerSaving, action: {
             interaction.openSettings(.powerSaving)

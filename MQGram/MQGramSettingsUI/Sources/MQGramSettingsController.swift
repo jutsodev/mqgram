@@ -813,6 +813,8 @@ private func mqgramEntries(settings: MQGramSettings, strings: PresentationString
         entries.append(.toggle(id, .ghostEmojiInteractions, text.ghostEmojiInteractionsTitle, text.ghostEmojiInteractionsText, settings.ghostEmojiInteractions)); id += 1
         entries.append(.toggle(id, .ghostReactions, text.ghostReactionsTitle, text.ghostReactionsText, settings.ghostReactions)); id += 1
         entries.append(.toggle(id, .ghostStickerActivity, text.ghostStickerActivityTitle, text.ghostStickerActivityText, settings.ghostStickerActivity)); id += 1
+        // MARK: MQGram - Smart Send & Read section
+        entries.append(.info(id, isRussian ? "⏱ Умная отправка и чтение" : "⏱ Smart Send & Read")); id += 1
         entries.append(.toggle(id, .messageSendingDelay, text.messageSendingDelayTitle, text.messageSendingDelayText, settings.messageSendingDelay)); id += 1
         entries.append(.toggle(id, .onlyReadWhenReplying, text.onlyReadWhenReplyingTitle, text.onlyReadWhenReplyingText, settings.onlyReadWhenReplying)); id += 1
         entries.append(.toggle(id, .onlyReadWhenReacting, text.onlyReadWhenReactingTitle, text.onlyReadWhenReactingText, settings.onlyReadWhenReacting))
