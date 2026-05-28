@@ -1915,8 +1915,8 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         if UserDefaults.standard.bool(forKey: "MQGram.readUntilMessage") {
             actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.ChatList_Context_MarkAsRead, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/MarkAsUnread"), color: theme.actionSheet.primaryTextColor)
-            }, action: { action in
-                action.dismissWithResult(.dismissWithoutContent)
+            }, action: { _, f in
+                f(.dismissWithoutContent)
                 let _ = (context.engine.messages.markAllAsRead(peerId: message.id.peerId, upperIndex: message.index)
                 |> deliverOnMainQueue).startStandalone()
             })))
@@ -1927,8 +1927,8 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             if editHistory != nil {
                 actions.append(.action(ContextMenuActionItem(text: "История редактирований", icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/MessageDelete"), color: theme.actionSheet.primaryTextColor)
-                }, action: { action in
-                    action.dismissWithResult(.dismissWithoutContent)
+                }, action: { _, f in
+                    f(.dismissWithoutContent)
                 })))
             }
         }
