@@ -248,6 +248,10 @@ private func pushPeerReadState(network: Network, postbox: Postbox, stateManager:
     } else {
         return inputPeer(postbox: postbox, peerId: peerId)
         |> mapToSignal { inputPeer -> Signal<PeerReadState, PeerReadStateValidationError> in
+            // MARK: MQGram - Ghost Mode (skip blue ticks / read receipts)
+            if UserDefaults.standard.bool(forKey: "MQGram.ghostMode") || UserDefaults.standard.bool(forKey: "MQGram.ghostReadReceipts") {
+                return .single(readState)
+            }
             switch inputPeer {
             case let .inputPeerChannel(inputPeerChannelData):
                 let (channelId, accessHash) = (inputPeerChannelData.channelId, inputPeerChannelData.accessHash)

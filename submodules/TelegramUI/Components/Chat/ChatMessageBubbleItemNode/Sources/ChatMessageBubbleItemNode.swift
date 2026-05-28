@@ -5317,18 +5317,23 @@ public class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewI
                 strongSelf.messageAccessibilityArea.frame = backgroundFrame
             }
             let isDeleted = MQDeletedMessages.isMessageDeleted(item.message)
-            let showMQDeletedIcon = isDeleted && UserDefaults.standard.bool(forKey: "MQGram.redDeleteIcon")
+            // MARK: MQGram - show trash icon when antiRevoke is on; red color if redDeleteIcon is on
+            let showMQDeletedIcon = isDeleted && UserDefaults.standard.bool(forKey: "MQGram.antiRevoke")
             if showMQDeletedIcon {
+                let useRedIcon = UserDefaults.standard.bool(forKey: "MQGram.redDeleteIcon")
+                let iconColor = useRedIcon
+                    ? UIColor(red: 1.0, green: 0.12, blue: 0.12, alpha: 1.0)
+                    : UIColor(white: 0.5, alpha: 0.85)
                 let iconNode: ASImageNode
                 if let current = strongSelf.mqDeletedIconNode {
                     iconNode = current
                 } else {
                     iconNode = ASImageNode()
                     iconNode.displaysAsynchronously = false
-                    iconNode.image = generateTintedImage(image: UIImage(bundleImageName: "Item List/Icons/Delete"), color: UIColor(red: 1.0, green: 0.12, blue: 0.12, alpha: 1.0), customSize: CGSize(width: 18.0, height: 18.0))
                     strongSelf.mqDeletedIconNode = iconNode
                     strongSelf.addSubnode(iconNode)
                 }
+                iconNode.image = generateTintedImage(image: UIImage(bundleImageName: "Item List/Icons/Delete"), color: iconColor, customSize: CGSize(width: 18.0, height: 18.0))
                 let iconSize = CGSize(width: 18.0, height: 18.0)
                 let iconX = incoming ? max(2.0, backgroundFrame.minX - iconSize.width - 4.0) : backgroundFrame.maxX + 4.0
                 let iconY = backgroundFrame.maxY - iconSize.height - 2.0
