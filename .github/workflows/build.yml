@@ -2,117 +2,107 @@ name: Build MQGram
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master]
   pull_request:
-    branches: [ master, main ]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-15
-    
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-        fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
-    - name: Set up Bazel
-      uses: bazelbuild/setup-bazelisk@v3
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
 
-    - name: System Info
-      run: |
-        echo "🍎 macOS $(sw_vers -productVersion)"
-        echo "💾 Xcode $(xcode-select -p)"
-        xcodebuild -version
-        echo "🔧 CPU cores: $(sysctl -n hw.ncpu)"
-        bazel --version
+      - name: Create build configuration
+        run: |
+          # Используем дефолтные значения если секреты не заданы (для сборки без подписи)
+          python3 - <<'EOF'
+          import json, os
+          cfg = {
+            "bundle_id": "ph.telegra.Telegraph",
+            "api_id": "2496",
+            "api_hash": "8ee6933d125226c0c000350438686948",
+            "team_id": "C67CF9S4VU",
+            "app_center_id": "0",
+            "is_internal_build": "false",
+            "is_appstore_build": "false",
+            "appstore_id": "0",
+            "app_specific_url_scheme": "tg",
+            "premium_iap_product_id": "",
+            "enable_siri": False,
+            "enable_icloud": False,
+            "sg_config": ""
+          }
+          path = "build-system/ci-configuration.json"
+          os.makedirs(os.path.dirname(path), exist_ok=True)
+          with open(path, "w") as f:
+              json.dump(cfg, f, indent="\t")
+          EOF
 
-    - name: Patch BUILD files
-      run: |
-        # Принудительно добавляем load sh_binary в Telegram/BUILD
-        # Используем Python для надежного редактирования файла
-        python3 -c "
-        import os
-        path = 'Telegram/BUILD'
-        with open(path, 'r') as f:
-            content = f.read()
-        if 'sh_binary' not in content[:500]:
-            with open(path, 'w') as f:
-                f.write('load(\"@rules_shell//shell:sh.bzl\", \"sh_binary\")\\n' + content)
-        "
+      - name: Import fake certificates
+        run: |
+          python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
 
-    - name: Prepare Build Configuration
-      run: |
-        mkdir -p build-input/configuration-repository
-        cp -R build-system/example-configuration/* build-input/configuration-repository/
-        echo 'module(name = "build_configuration")' > build-input/configuration-repository/MODULE.bazel
-        touch WORKSPACE
+      - name: Build MQGram (release_arm64)
+        run: |
+          # Используем Make.py как в успешном примере
+          python3 -u build-system/Make/Make.py \
+            --cacheDir="$HOME/telegram-bazel-cache" \
+            --bazelUserRoot="$HOME/.cache/mqgram-bazel-user-root" \
+            --overrideXcodeVersion \
+            build \
+            --configurationPath="build-system/ci-configuration.json" \
+            --codesigningInformationPath="build-system/fake-codesigning" \
+            --configuration=release_arm64 \
+            --buildNumber="1"
 
-    - name: Build MQGram (Bazel)
-      run: |
-        # Собираем Swiftgram (основная цель приложения)
-        bazel build \
-          --jobs=$(sysctl -n hw.ncpu) \
-          --announce_rc \
-          --verbose_failures \
-          --check_direct_dependencies=off \
-          --define=buildNumber=1 \
-          --apple_generate_dsym=false \
-          //Telegram:Swiftgram \
-          2>&1 | tee build_output.log
-
-    - name: Locate and Rename IPA
-      if: always()
-      run: |
-        IPA_PATH=$(find bazel-bin -name "*.ipa" | head -n 1)
-        if [ -n "$IPA_PATH" ]; then
-          cp "$IPA_PATH" MQGram.ipa
-          echo "✅ IPA found at $IPA_PATH"
-        else
-          echo "❌ IPA not found in bazel-bin"
-          APP_PATH=$(find bazel-bin -name "*.app" -type d | head -n 1)
-          if [ -n "$APP_PATH" ]; then
-            echo "📦 Packaging .app into .ipa manually..."
-            mkdir -p Payload
-            cp -R "$APP_PATH" Payload/
-            zip -r MQGram.ipa Payload
-            echo "✅ Manually created MQGram.ipa"
+      - name: Collect artifacts
+        if: always()
+        run: |
+          mkdir -p build/artifacts
+          # Ищем IPA в разных местах
+          IPA_PATH=$(find bazel-bin -name "*.ipa" | head -n 1)
+          if [ -n "$IPA_PATH" ]; then
+            cp -L "$IPA_PATH" build/artifacts/MQGram.ipa
+            echo "✅ Found IPA at $IPA_PATH"
           else
-            echo "❌ No .app found either"
+            CANDIDATE=$(find bazel-out -name "*.ipa" | head -n 1)
+            if [ -n "$CANDIDATE" ]; then
+              cp "$CANDIDATE" build/artifacts/MQGram.ipa
+              echo "✅ Found IPA at $CANDIDATE"
+            else
+              echo "❌ IPA not found"
+              # Пытаемся упаковать .app если есть
+              APP_PATH=$(find bazel-bin -name "*.app" -type d | head -n 1)
+              if [ -n "$APP_PATH" ]; then
+                mkdir -p Payload
+                cp -R "$APP_PATH" Payload/
+                zip -r build/artifacts/MQGram.ipa Payload
+                echo "✅ Manually packed IPA from $APP_PATH"
+              fi
+            fi
           fi
-        fi
 
-    - name: Check Results
-      if: always()
-      run: |
-        echo "### 📊 MQGram Build Report" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        if [ -f MQGram.ipa ]; then
-          echo "✅ BUILD SUCCESSFUL: IPA created" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "❌ BUILD FAILED" >> $GITHUB_STEP_SUMMARY
-          echo "#### Errors found:" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          grep -i "error:" build_output.log | head -n 20 >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-        fi
-        echo "#### Last 50 lines of output:" >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
-        tail -n 50 build_output.log >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
+      - name: Upload IPA
+        if: success() && hashFiles('build/artifacts/MQGram.ipa') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: MQGram-IPA
+          path: build/artifacts/MQGram.ipa
 
-    - name: Upload IPA
-      if: success() && hashFiles('MQGram.ipa') != ''
-      uses: actions/upload-artifact@v4
-      with:
-        name: MQGram-IPA
-        path: MQGram.ipa
-
-    - name: Upload Build Log
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-log
-        path: build_output.log
+      - name: Upload Build Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build_output.log
