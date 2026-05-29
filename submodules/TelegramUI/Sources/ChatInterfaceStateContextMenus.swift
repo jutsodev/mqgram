@@ -1915,7 +1915,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         if UserDefaults.standard.bool(forKey: "MQGram.readUntilMessage") {
             actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.ChatList_Context_MarkAsRead, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/MarkAsUnread"), color: theme.actionSheet.primaryTextColor)
-            }, iconSource: nil, action: { _, f in
+            }, iconSource: nil, action: { f in
                 f(.dismissWithoutContent)
                 let _ = (context.engine.messages.markAllAsRead(peerId: message.id.peerId, upperIndex: message.index)
                 |> deliverOnMainQueue).startStandalone()
