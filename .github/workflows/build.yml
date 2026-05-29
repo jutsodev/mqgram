@@ -29,25 +29,23 @@ jobs:
         echo "🔧 CPU cores: $(sysctl -n hw.ncpu)"
         bazel --version
 
-    - name: Patch BUILD files
-      run: |
-        # Исправляем отсутствие sh_binary в Telegram/BUILD
-        # Используем printf для корректного добавления строки с новой строкой
-        printf 'load("@rules_shell//shell:sh.bzl", "sh_binary")\n' > Telegram/BUILD.tmp
-        cat Telegram/BUILD >> Telegram/BUILD.tmp
-        mv Telegram/BUILD.tmp Telegram/BUILD
-
     - name: Prepare Build Configuration
       run: |
+        # Подготовка конфигурации для Bazel
         mkdir -p build-input/configuration-repository
         cp -R build-system/example-configuration/* build-input/configuration-repository/
+        
+        # Создаем MODULE.bazel для репозитория конфигурации
         echo 'module(name = "build_configuration")' > build-input/configuration-repository/MODULE.bazel
+        
+        # Создаем пустой WORKSPACE если его нет
         touch WORKSPACE
 
     - name: Build MQGram IPA (Bazel)
       run: |
         # Собираем Swiftgram
-        # Отключаем проверку зависимостей для ускорения и избежания конфликтов версий
+        # Убираем --//Telegram:disableProvisioningProfiles так как он вызывает ошибки загрузки
+        # Используем --define для передачи параметров если нужно
         bazel build \
           --jobs=$(sysctl -n hw.ncpu) \
           --announce_rc \
@@ -55,7 +53,6 @@ jobs:
           --check_direct_dependencies=off \
           --define=buildNumber=1 \
           --apple_generate_dsym=false \
-          --//Telegram:disableProvisioningProfiles=True \
           //Telegram:Swiftgram \
           2>&1 | tee build_output.log
 
