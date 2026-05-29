@@ -29,6 +29,14 @@ jobs:
         echo "🔧 CPU cores: $(sysctl -n hw.ncpu)"
         bazel --version
 
+    - name: Patch BUILD files
+      run: |
+        # Исправляем отсутствие sh_binary в Telegram/BUILD
+        # Добавляем load в начало файла
+        sed -i '' '1i\
+load("@rules_shell//shell:sh.bzl", "sh_binary")\
+' Telegram/BUILD
+
     - name: Prepare Build Configuration
       run: |
         # Подготовка конфигурации для Bazel
@@ -43,20 +51,20 @@ jobs:
 
     - name: Build MQGram IPA (Bazel)
       run: |
-        # Собираем Swiftgram с отключенной проверкой подписи для CI
-        # Используем --config=release если доступно, иначе передаем флаги оптимизации
+        # Собираем Swiftgram
+        # Используем правильный синтаксис для bool_flag
         bazel build \
           --jobs=$(sysctl -n hw.ncpu) \
           --announce_rc \
           --verbose_failures \
           --define=buildNumber=1 \
           --apple_generate_dsym=false \
-          --//Telegram:disableProvisioningProfiles \
+          --//Telegram:disableProvisioningProfiles=True \
           //Telegram:Swiftgram \
           2>&1 | tee build_output.log
 
     - name: Locate and Rename IPA
-      if: success()
+      if: always()
       run: |
         # Ищем сгенерированный .ipa файл
         IPA_PATH=$(find bazel-bin -name "Swiftgram.ipa" | head -n 1)
@@ -75,7 +83,7 @@ jobs:
             echo "✅ Manually created MQGram.ipa"
           else
             echo "❌ Swiftgram.app not found either"
-            exit 1
+            # Не выходим с ошибкой здесь, чтобы Check Results отработал
           fi
         fi
 
