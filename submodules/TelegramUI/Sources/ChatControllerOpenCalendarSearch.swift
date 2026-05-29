@@ -83,7 +83,7 @@ extension ChatControllerImpl {
                     
                     items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.Chat_JumpToDate, icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/GoToMessage"), color: theme.contextMenu.primaryColor)
-                    }, action: { _, f in
+                    }, action: { f in
                         f(.dismissWithoutContent)
                         dismissCalendarScreen?()
                         
@@ -115,7 +115,7 @@ extension ChatControllerImpl {
                     if enableMessageRangeDeletion && (peerId.namespace == Namespaces.Peer.CloudUser || peerId.namespace == Namespaces.Peer.SecretChat) {
                         items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.DialogList_ClearHistoryConfirmation, textColor: .destructive, icon: { theme in
                             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Delete"), color: theme.contextMenu.destructiveColor)
-                        }, action: { _, f in
+                        }, action: { f in
                             f(.dismissWithoutContent)
                             openClearHistory?(timestamp)
                         })))
@@ -124,7 +124,7 @@ extension ChatControllerImpl {
                         
                         items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.Common_Select, icon: { theme in
                             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Select"), color: theme.contextMenu.primaryColor)
-                        }, action: { _, f in
+                        }, action: { f in
                             f(.dismissWithoutContent)
                             selectDay?(timestamp)
                         })))

@@ -115,7 +115,7 @@ private final class InlineReactionSearchStickersNode: ASDisplayNode, ASScrollVie
                             if strongSelf.peerId != strongSelf.context.account.peerId && strongSelf.peerId?.namespace != Namespaces.Peer.SecretChat  {
                                 menuItems.append(.action(ContextMenuActionItem(text: strongSelf.strings.Conversation_SendMessage_SendSilently, icon: { theme in
                                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Input/Menu/SilentIcon"), color: theme.actionSheet.primaryTextColor)
-                                }, action: { _, f in
+                                }, action: { f in
                                     if let strongSelf = self, let peekController = strongSelf.peekController {
                                         if let animationNode = (peekController.contentNode as? StickerPreviewPeekContentNode)?.animationNode {
                                             let _ = controllerInteraction.sendSticker(.standalone(media: item.file._parse()), true, false, nil, true, animationNode.view, animationNode.bounds, nil, [])
@@ -130,7 +130,7 @@ private final class InlineReactionSearchStickersNode: ASDisplayNode, ASScrollVie
                             if strongSelf.currentInterfaceState?.sendPaidMessageStars == nil {
                                 menuItems.append(.action(ContextMenuActionItem(text: strongSelf.strings.Conversation_SendMessage_ScheduleMessage, icon: { theme in
                                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Input/Menu/ScheduleIcon"), color: theme.actionSheet.primaryTextColor)
-                                }, action: { _, f in
+                                }, action: { f in
                                     if let strongSelf = self, let peekController = strongSelf.peekController {
                                         if let animationNode = (peekController.contentNode as? StickerPreviewPeekContentNode)?.animationNode {
                                             let _ = controllerInteraction.sendSticker(.standalone(media: item.file._parse()), false, true, nil, true, animationNode.view, animationNode.bounds, nil, [])

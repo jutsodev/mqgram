@@ -240,7 +240,7 @@ private func chatForwardOptions(selfController: ChatControllerImpl, sourceView: 
             f(.default)
         })))
         
-        items.append(.action(ContextMenuActionItem(text: presentationData.strings.Conversation_MessageOptionsApplyChanges, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Select"), color: theme.contextMenu.primaryColor) }, action: { _, f in
+        items.append(.action(ContextMenuActionItem(text: presentationData.strings.Conversation_MessageOptionsApplyChanges, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Select"), color: theme.contextMenu.primaryColor) }, action: { f in
             f(.default)
         })))
         
@@ -334,7 +334,7 @@ private func generateChatReplyOptionItems(selfController: ChatControllerImpl, ch
         if replySubject.quote != nil {
             items.append(.action(ContextMenuActionItem(text: selfController.presentationData.strings.Conversation_MessageOptionsQuoteSelectedPart, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/QuoteSelected"), color: theme.contextMenu.primaryColor)
-            }, action: { _, f in
+            }, action: { f in
                 applyCurrentQuoteSelection()
                 
                 f(.default)
@@ -454,7 +454,7 @@ private func generateChatReplyOptionItems(selfController: ChatControllerImpl, ch
         if !items.isEmpty {
             items.append(.separator)
             
-            items.append(.action(ContextMenuActionItem(text: selfController.presentationData.strings.Conversation_MessageOptionsApplyChanges, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Select"), color: theme.contextMenu.primaryColor) }, action: { _, f in
+            items.append(.action(ContextMenuActionItem(text: selfController.presentationData.strings.Conversation_MessageOptionsApplyChanges, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Select"), color: theme.contextMenu.primaryColor) }, action: { f in
                 applyCurrentQuoteSelection()
                 
                 f(.default)
@@ -888,7 +888,7 @@ private func chatLinkOptions(selfController: ChatControllerImpl, sourceView: UIV
             items.append(.separator)
         }
         
-        items.append(.action(ContextMenuActionItem(text: selfController.presentationData.strings.Conversation_MessageOptionsApplyChanges, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Select"), color: theme.contextMenu.primaryColor) }, action: { _, f in
+        items.append(.action(ContextMenuActionItem(text: selfController.presentationData.strings.Conversation_MessageOptionsApplyChanges, icon: { theme in return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Select"), color: theme.contextMenu.primaryColor) }, action: { f in
             f(.default)
         })))
         

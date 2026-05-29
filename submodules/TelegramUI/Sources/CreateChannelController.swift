@@ -448,7 +448,7 @@ public func createChannelController(context: AccountContext, mode: CreateChannel
                             dismissImpl?()
                         })
                     } else {
-                        let controller = channelVisibilityController(context: context, peerId: peerId, mode: .initialSetup, upgradedToSupergroup: { _, f in f() })
+                        let controller = channelVisibilityController(context: context, peerId: peerId, mode: .initialSetup, upgradedToSupergroup: { f in f() })
                         replaceControllerImpl?(controller)
                     }
                 }, error: { error in

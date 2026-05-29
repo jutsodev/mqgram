@@ -380,14 +380,14 @@ final class EmojisChatInputContextPanelNode: ChatInputContextPanelNode {
                     } else {
                         return nil
                     }
-                }, action: { _, f in
+                }, action: { f in
                     sendEmoji(file)
                     f(.default)
                 })))
                 
                 menuItems.append(.action(ContextMenuActionItem(text: presentationData.strings.EmojiPreview_SetAsStatus, icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Smile"), color: theme.actionSheet.primaryTextColor)
-                }, action: { _, f in
+                }, action: { f in
                     f(.default)
                     
                     guard let strongSelf = self else {
@@ -411,7 +411,7 @@ final class EmojisChatInputContextPanelNode: ChatInputContextPanelNode {
                 
                 menuItems.append(.action(ContextMenuActionItem(text: presentationData.strings.EmojiPreview_CopyEmoji, icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Copy"), color: theme.actionSheet.primaryTextColor)
-                }, action: { _, f in
+                }, action: { f in
                     copyEmoji(file)
                     f(.default)
                 })))

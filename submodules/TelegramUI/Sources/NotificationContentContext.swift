@@ -129,7 +129,7 @@ public final class NotificationViewControllerImpl {
                 return []
             }, getAlternateIconName: {
                 return nil
-            }, requestSetAlternateIconName: { _, f in
+            }, requestSetAlternateIconName: { f in
                 f(false)
             }, forceOrientation: { _ in
             })

@@ -3456,7 +3456,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             })
         }, openSearch: {
         }, setupReply: { [weak self] messageId in
-            self?.interfaceInteraction?.setupReplyMessage(messageId, nil, { _, f in f() })
+            self?.interfaceInteraction?.setupReplyMessage(messageId, nil, { f in f() })
         }, canSetupReply: { [weak self] message in
             if message.adAttribute != nil {
                 return .none
@@ -4326,21 +4326,21 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 var items: [ContextMenuItem] = [
                     .action(ContextMenuActionItem(text: isChannel ? strongSelf.presentationData.strings.Conversation_ContextMenuOpenChannelProfile : strongSelf.presentationData.strings.Conversation_ContextMenuOpenProfile, icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/User"), color: theme.actionSheet.primaryTextColor)
-                    }, action: { _, f in
+                    }, action: { f in
                         f(.dismissWithoutContent)
                         self?.openPeer(peer: peer, navigation: .info(nil), fromMessage: nil)
                     }))
                 ]
                 items.append(.action(ContextMenuActionItem(text: isChannel ? strongSelf.presentationData.strings.Conversation_ContextMenuOpenChannel : strongSelf.presentationData.strings.Conversation_ContextMenuSendMessage, icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: isChannel ? "Chat/Context Menu/Channels" : "Chat/Context Menu/Message"), color: theme.actionSheet.primaryTextColor)
-                }, action: { _, f in
+                }, action: { f in
                     f(.dismissWithoutContent)
                     self?.openPeer(peer: peer, navigation: .chat(textInputState: nil, subject: nil, peekData: nil), fromMessage: nil)
                 })))
                 if !isChannel && canSendMessagesToChat(strongSelf.presentationInterfaceState) {
                     items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.Conversation_ContextMenuMention, icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Mention"), color: theme.actionSheet.primaryTextColor)
-                    }, action: { _, f in
+                    }, action: { f in
                         f(.dismissWithoutContent)
                         
                         guard let strongSelf = self else {
@@ -4361,7 +4361,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 if !isChannel {
                     items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.Conversation_ContextMenuSearchMessages, icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Search"), color: theme.actionSheet.primaryTextColor)
-                    }, action: { _, f in
+                    }, action: { f in
                         f(.dismissWithoutContent)
                         
                         guard let strongSelf = self else {
@@ -5600,7 +5600,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                         let openText = strongSelf.presentationData.strings.Conversation_ContextMenuOpenProfile
                         items.append(.action(ContextMenuActionItem(text: openText, icon: { theme in
                             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Info"), color: theme.actionSheet.primaryTextColor)
-                        }, action: { _, f in
+                        }, action: { f in
                             f(.dismissWithoutContent)
                             self?.navigationButtonAction(.openChatInfo(expandAvatar: true, section: nil))
                         })))
@@ -5608,7 +5608,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                         if canViewStats {
                             items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.ChannelInfo_Stats, icon: { theme in
                                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Statistics"), color: theme.actionSheet.primaryTextColor)
-                            }, action: { _, f in
+                            }, action: { f in
                                 f(.dismissWithoutContent)
                                 guard let strongSelf = self, let peer = strongSelf.presentationInterfaceState.renderedPeer?.chatMainPeer else {
                                     return
@@ -5626,7 +5626,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                         }
                         items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.Conversation_Search, icon: { theme in
                             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Search"), color: theme.actionSheet.primaryTextColor)
-                        }, action: { _, f in
+                        }, action: { f in
                             f(.dismissWithoutContent)
                             self?.interfaceInteraction?.beginMessageSearch(.everything, "")
                         })))
@@ -5695,7 +5695,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                         for value in presetValues {
                                             subItems.append(.action(ContextMenuActionItem(text: muteForIntervalString(strings: presentationData.strings, value: value), icon: { _ in
                                                 return nil
-                                            }, action: { _, f in
+                                            }, action: { f in
                                                 f(.default)
                                                 
                                                 let _ = context.engine.peers.updatePeerMuteSetting(peerId: peerId, threadId: threadId, muteInterval: value).startStandalone()
@@ -5706,7 +5706,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                         
                                         subItems.append(.action(ContextMenuActionItem(text: presentationData.strings.PeerInfo_MuteForCustom, icon: { _ in
                                             return nil
-                                        }, action: { _, f in
+                                        }, action: { f in
                                             f(.default)
                                             
                                             //                                        if let chatListController = chatListController {
@@ -5730,7 +5730,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                     if case .muted = threadData.notificationSettings.muteState {
                                         items.append(.action(ContextMenuActionItem(text: presentationData.strings.PeerInfo_ButtonUnmute, icon: { theme in
                                             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/SoundOn"), color: theme.contextMenu.primaryColor)
-                                        }, action: { _, f in
+                                        }, action: { f in
                                             f(.default)
                                             
                                             let _ = context.engine.peers.updatePeerMuteSetting(peerId: peerId, threadId: threadId, muteInterval: nil).startStandalone()
@@ -5747,7 +5747,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                     } else if !isSoundEnabled {
                                         items.append(.action(ContextMenuActionItem(text: presentationData.strings.PeerInfo_EnableSound, icon: { theme in
                                             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/SoundOn"), color: theme.contextMenu.primaryColor)
-                                        }, action: { _, f in
+                                        }, action: { f in
                                             f(.default)
                                             
                                             let _ = context.engine.peers.updatePeerNotificationSoundInteractive(peerId: peerId, threadId: threadId, sound: .default).startStandalone()
@@ -5757,7 +5757,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                     } else {
                                         items.append(.action(ContextMenuActionItem(text: presentationData.strings.PeerInfo_DisableSound, icon: { theme in
                                             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/SoundOff"), color: theme.contextMenu.primaryColor)
-                                        }, action: { _, f in
+                                        }, action: { f in
                                             f(.default)
                                             
                                             let _ = context.engine.peers.updatePeerNotificationSoundInteractive(peerId: peerId, threadId: threadId, sound: .none).startStandalone()
@@ -5768,7 +5768,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                     
                                     items.append(.action(ContextMenuActionItem(text: presentationData.strings.PeerInfo_NotificationsCustomize, icon: { theme in
                                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Customize"), color: theme.contextMenu.primaryColor)
-                                    }, action: { _, f in
+                                    }, action: { f in
                                         f(.dismissWithoutContent)
                                         
                                         let _ = (context.engine.data.get(
@@ -5854,7 +5854,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                     
                                     items.append(.action(ContextMenuActionItem(text: presentationData.strings.PeerInfo_MuteForever, textColor: .destructive, icon: { theme in
                                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Muted"), color: theme.contextMenu.destructiveColor)
-                                    }, action: { _, f in
+                                    }, action: { f in
                                         f(.default)
                                         
                                         let _ = context.engine.peers.updatePeerMuteSetting(peerId: peerId, threadId: threadId, muteInterval: Int32.max).startStandalone()
@@ -5876,7 +5876,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                         
                         items.append(.action(ContextMenuActionItem(text: strongSelf.presentationData.strings.Conversation_Search, icon: { theme in
                             return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Search"), color: theme.actionSheet.primaryTextColor)
-                        }, action: { _, f in
+                        }, action: { f in
                             f(.dismissWithoutContent)
                             self?.interfaceInteraction?.beginMessageSearch(.everything, "")
                         })))
@@ -5891,7 +5891,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                                 canOpenClose = true
                             }
                             if canOpenClose {
-                                items.append(.action(ContextMenuActionItem(text: threadData.isClosed ? presentationData.strings.ChatList_Context_ReopenTopic : presentationData.strings.ChatList_Context_CloseTopic, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: threadData.isClosed ? "Chat/Context Menu/Play": "Chat/Context Menu/Pause"), color: theme.contextMenu.primaryColor) }, action: { _, f in
+                                items.append(.action(ContextMenuActionItem(text: threadData.isClosed ? presentationData.strings.ChatList_Context_ReopenTopic : presentationData.strings.ChatList_Context_CloseTopic, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: threadData.isClosed ? "Chat/Context Menu/Play": "Chat/Context Menu/Pause"), color: theme.contextMenu.primaryColor) }, action: { f in
                                     f(.default)
                                     
                                     let _ = context.engine.peers.setForumChannelTopicClosed(id: peer.id, threadId: threadId, isClosed: !threadData.isClosed).startStandalone()

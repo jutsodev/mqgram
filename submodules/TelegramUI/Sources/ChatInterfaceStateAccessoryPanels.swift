@@ -231,7 +231,7 @@ func textInputAccessoryPanel(
                     interfaceInteraction?.presentReplyOptions(sourceView)
                 },
                 dismiss: { _ in
-                    interfaceInteraction?.setupReplyMessage(nil, nil, { _, f in f() })
+                    interfaceInteraction?.setupReplyMessage(nil, nil, { f in f() })
                 }
             )))
         } else {

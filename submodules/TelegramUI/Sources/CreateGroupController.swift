@@ -1187,7 +1187,7 @@ public func createGroupControllerImpl(context: AccountContext, peerIds: [PeerId]
                 } else {
                     return UIImage()
                 }
-            }, action: { _, f in
+            }, action: { f in
                 applyValue(0)
                 f(.default)
             })))
@@ -1210,7 +1210,7 @@ public func createGroupControllerImpl(context: AccountContext, peerIds: [PeerId]
                     } else {
                         return UIImage()
                     }
-                }, action: { _, f in
+                }, action: { f in
                     applyValue(value)
                     f(.default)
                 })))
@@ -1218,7 +1218,7 @@ public func createGroupControllerImpl(context: AccountContext, peerIds: [PeerId]
             
             subItems.append(.action(ContextMenuActionItem(text: presentationData.strings.Autoremove_SetCustomTime, icon: { _ in
                 return nil
-            }, action: { _, f in
+            }, action: { f in
                 f(.default)
                 
                 let controller = ChatTimerScreen(context: context, updatedPresentationData: nil, style: .default, mode: .autoremove, currentTime: currentValue == 0 ? nil : currentValue, dismissByTapOutside: true, completion: { value in

@@ -150,7 +150,7 @@ final class HorizontalListContextResultsChatInputContextPanelNode: ChatInputCont
                     if itemNode.frame.contains(convertedPoint), let itemNode = itemNode as? HorizontalListContextResultsChatInputPanelItemNode, let item = itemNode.item {
                         if case let .internalReference(internalReference) = item.result, let file = internalReference.file, file.isSticker {
                             var menuItems: [ContextMenuItem] = []
-                            menuItems.append(.action(ContextMenuActionItem(text: strongSelf.strings.StickerPack_Send, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Resend"), color: theme.contextMenu.primaryColor) }, action: { _, f in
+                            menuItems.append(.action(ContextMenuActionItem(text: strongSelf.strings.StickerPack_Send, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Resend"), color: theme.contextMenu.primaryColor) }, action: { f in
                                 f(.default)
                                 
                                 let _ = item.resultSelected(item.result, itemNode, itemNode.bounds)
@@ -188,7 +188,7 @@ final class HorizontalListContextResultsChatInputContextPanelNode: ChatInputCont
                             if case let .internalReference(internalReference) = item.result, let file = internalReference.file, file.isAnimated {
                                 menuItems.append(.action(ContextMenuActionItem(text: strongSelf.strings.Preview_SaveGif, icon: { theme in
                                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Save"), color: theme.actionSheet.primaryTextColor)
-                                }, action: { _, f in
+                                }, action: { f in
                                     f(.dismissWithoutContent)
                                     
                                     guard let strongSelf = self else {
@@ -225,7 +225,7 @@ final class HorizontalListContextResultsChatInputContextPanelNode: ChatInputCont
                             }
                             menuItems.append(.action(ContextMenuActionItem(text: strongSelf.strings.ShareMenu_Send, icon: { theme in
                                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Resend"), color: theme.actionSheet.primaryTextColor)
-                            }, action: { _, f in
+                            }, action: { f in
                                 f(.default)
                                 let _ = item.resultSelected(item.result, itemNode, itemNode.bounds)
                             })))

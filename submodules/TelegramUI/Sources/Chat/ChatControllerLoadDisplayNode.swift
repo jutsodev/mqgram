@@ -1390,7 +1390,7 @@ extension ChatControllerImpl {
                 icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Read"), color: theme.contextMenu.primaryColor)
                 },
-                action: { _, f in
+                action: { f in
                     f(.dismissWithoutContent)
                     
                     guard let strongSelf = self, let peerId = strongSelf.chatLocation.peerId else {
@@ -1558,7 +1558,7 @@ extension ChatControllerImpl {
                 icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Read"), color: theme.contextMenu.primaryColor)
                 },
-                action: { _, f in
+                action: { f in
                     f(.dismissWithoutContent)
                     
                     guard let strongSelf = self, let peerId = strongSelf.chatLocation.peerId else {
@@ -1618,7 +1618,7 @@ extension ChatControllerImpl {
                 icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Read"), color: theme.contextMenu.primaryColor)
                 },
-                action: { _, f in
+                action: { f in
                     f(.dismissWithoutContent)
                     
                     guard let strongSelf = self, let peerId = strongSelf.chatLocation.peerId else {
@@ -5272,7 +5272,7 @@ extension ChatControllerImpl {
                     if let message = strongSelf.chatDisplayNode.historyNode.messageInCurrentHistoryView(mappedId) {
                         if toSubject.setupReply {
                             Queue.mainQueue().after(0.1) {
-                                strongSelf.interfaceInteraction?.setupReplyMessage(mappedId, toSubject.subject, { _, f in f() })
+                                strongSelf.interfaceInteraction?.setupReplyMessage(mappedId, toSubject.subject, { f in f() })
                             }
                         }
                         
