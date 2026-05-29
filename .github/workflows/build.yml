@@ -32,8 +32,10 @@ jobs:
     - name: Patch BUILD files
       run: |
         # Исправляем отсутствие sh_binary в Telegram/BUILD
-        sed -i '' '1i\
-        load("@rules_shell//shell:sh.bzl", "sh_binary")' Telegram/BUILD
+        # Используем printf для корректного добавления строки с новой строкой
+        printf 'load("@rules_shell//shell:sh.bzl", "sh_binary")\n' > Telegram/BUILD.tmp
+        cat Telegram/BUILD >> Telegram/BUILD.tmp
+        mv Telegram/BUILD.tmp Telegram/BUILD
 
     - name: Prepare Build Configuration
       run: |
@@ -44,10 +46,13 @@ jobs:
 
     - name: Build MQGram IPA (Bazel)
       run: |
+        # Собираем Swiftgram
+        # Отключаем проверку зависимостей для ускорения и избежания конфликтов версий
         bazel build \
           --jobs=$(sysctl -n hw.ncpu) \
           --announce_rc \
           --verbose_failures \
+          --check_direct_dependencies=off \
           --define=buildNumber=1 \
           --apple_generate_dsym=false \
           --//Telegram:disableProvisioningProfiles=True \
@@ -57,6 +62,7 @@ jobs:
     - name: Locate and Rename IPA
       if: always()
       run: |
+        # Ищем сгенерированный .ipa файл
         IPA_PATH=$(find bazel-bin -name "Swiftgram.ipa" | head -n 1)
         if [ -n "$IPA_PATH" ]; then
           cp "$IPA_PATH" MQGram.ipa
