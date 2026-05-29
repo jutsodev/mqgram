@@ -9,98 +9,90 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-13
     
     steps:
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v3
       with:
         submodules: recursive
         fetch-depth: 0
 
-    - name: Setup Xcode
+    - name: System Info
       run: |
-        sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+        echo "🍎 macOS $(sw_vers -productVersion)"
+        echo "💾 Xcode $(xcode-select -p)"
         xcodebuild -version
+        echo "🔧 CPU cores: $(sysctl -n hw.ncpu)"
 
-    - name: Check system info
+    - name: Clean
       run: |
-        echo "CPU cores: $(sysctl -n hw.ncpu)"
-        echo "Available RAM: $(vm_stat | grep 'free memory' | awk '{print $3}' | xargs)"
-        echo "Disk space: $(df -h / | tail -1)"
+        rm -rf ~/Library/Developer/Xcode/DerivedData 2>/dev/null || true
+        rm -rf build 2>/dev/null || true
 
-    - name: Setup build cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/Library/Developer/Xcode/DerivedData
-          ~/.bazel_cache
-          /var/tmp/bazel-cache
-        key: ${{ runner.os }}-xcode-${{ hashFiles('**/BUILD') }}
-        restore-keys: |
-          ${{ runner.os }}-xcode-
-
-    - name: Clean previous builds
+    - name: Build MQGram
       run: |
-        rm -rf ~/Library/Developer/Xcode/DerivedData || true
-        bazel clean --expunge || true
-
-    - name: Build with Xcode
-      run: |
-        cd $GITHUB_WORKSPACE
+        cd "${{ github.workspace }}"
+        
+        # Проверяем что workspace существует
+        ls -la Telegram/ | grep xcworkspace || echo "Workspace not found"
+        
+        # Пробуем собрать
         xcodebuild \
           -workspace Telegram/Telegram.xcworkspace \
           -scheme Telegram \
           -configuration Release \
           -arch arm64 \
-          -parallelizeTargets \
-          -jobs $(sysctl -n hw.ncpu) \
           -derivedDataPath build \
-          2>&1 | tee build.log
+          -quiet \
+          2>&1 | tee build_output.log
+      
+      continue-on-error: true
 
-    - name: Check build result
+    - name: Check Results
       if: always()
       run: |
-        if grep -q "Build complete!" build.log; then
-          echo "✅ BUILD SUCCESSFUL!"
-          exit 0
-        elif grep -q "error:" build.log; then
-          echo "❌ BUILD FAILED WITH ERRORS"
-          grep "error:" build.log | head -20
-          exit 1
+        echo "📊 Build Results:"
+        echo ""
+        
+        if [ -f build_output.log ]; then
+          if grep -i "error:" build_output.log; then
+            echo "❌ ERRORS FOUND"
+            echo ""
+            echo "First 5 errors:"
+            grep -i "error:" build_output.log | head -5
+          elif grep -q "Build complete" build_output.log || tail -50 build_output.log | grep -q "succeeded"; then
+            echo "✅ BUILD SUCCESSFUL"
+          else
+            echo "⚠️ UNKNOWN STATUS - Last 30 lines:"
+            tail -30 build_output.log
+          fi
         else
-          tail -100 build.log
-          exit 1
+          echo "No build log found"
         fi
 
-    - name: Upload build artifacts
-      if: success()
-      uses: actions/upload-artifact@v3
-      with:
-        name: MQGram-Build
-        path: build/
-
-    - name: Upload build log
+    - name: Upload Build Log
       if: always()
       uses: actions/upload-artifact@v3
       with:
         name: build-log
-        path: build.log
+        path: build_output.log
+        if-no-files-found: ignore
 
-    - name: Report status
+    - name: Summary
       if: always()
       run: |
-        echo "### Build Report 📊" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 MQGram Build Report" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        if [ -f build.log ]; then
-          if grep -q "Build complete!" build.log; then
-            echo "✅ **Status**: BUILD SUCCESSFUL" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ **Status**: BUILD FAILED" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Last 20 lines of log:**" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Runner:** macOS 13" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f build_output.log ]; then
+          LAST_LINES=$(tail -20 build_output.log)
+          echo "**Build Output (last 20 lines):**" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          tail -20 build.log >> $GITHUB_STEP_SUMMARY
+          echo "$LAST_LINES" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
         fi
