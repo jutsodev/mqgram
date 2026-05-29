@@ -31,17 +31,21 @@ jobs:
 
     - name: Prepare Build Configuration
       run: |
-        # Используем пример конфигурации для сборки
+        # Bazel bzlmod ищет MODULE.bazel в переопределенных путях
         mkdir -p build-input/configuration-repository
         cp -R build-system/example-configuration/* build-input/configuration-repository/
         
-        # Создаем пустой WORKSPACE если его нет (Bazel требует его наличия)
+        # Создаем MODULE.bazel для репозитория конфигурации, чтобы bzlmod не ругался
+        cat << EOF > build-input/configuration-repository/MODULE.bazel
+module(name = "build_configuration")
+EOF
+        
+        # Создаем пустой WORKSPACE если его нет
         touch WORKSPACE
 
     - name: Build MQGram (Bazel)
       run: |
         # Собираем основную цель Swiftgram
-        # Убрана опция --local_ram_resources, так как она не поддерживается в этой версии Bazel
         bazel build \
           --jobs=$(sysctl -n hw.ncpu) \
           --announce_rc \
