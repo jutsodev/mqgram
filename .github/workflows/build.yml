@@ -31,38 +31,62 @@ jobs:
 
     - name: Prepare Build Configuration
       run: |
-        # Bazel bzlmod ищет MODULE.bazel в переопределенных путях
+        # Подготовка конфигурации для Bazel
         mkdir -p build-input/configuration-repository
         cp -R build-system/example-configuration/* build-input/configuration-repository/
         
-        # Создаем MODULE.bazel для репозитория конфигурации, чтобы bzlmod не ругался
-        cat << EOF > build-input/configuration-repository/MODULE.bazel
-module(name = "build_configuration")
-EOF
+        # Создаем MODULE.bazel для репозитория конфигурации
+        echo 'module(name = "build_configuration")' > build-input/configuration-repository/MODULE.bazel
         
         # Создаем пустой WORKSPACE если его нет
         touch WORKSPACE
 
-    - name: Build MQGram (Bazel)
+    - name: Build MQGram IPA (Bazel)
       run: |
-        # Собираем основную цель Swiftgram
+        # Собираем Swiftgram с отключенной проверкой подписи для CI
+        # Используем --config=release если доступно, иначе передаем флаги оптимизации
         bazel build \
           --jobs=$(sysctl -n hw.ncpu) \
           --announce_rc \
           --verbose_failures \
           --define=buildNumber=1 \
           --apple_generate_dsym=false \
+          --//Telegram:disableProvisioningProfiles \
           //Telegram:Swiftgram \
           2>&1 | tee build_output.log
-      
+
+    - name: Locate and Rename IPA
+      if: success()
+      run: |
+        # Ищем сгенерированный .ipa файл
+        IPA_PATH=$(find bazel-bin -name "Swiftgram.ipa" | head -n 1)
+        if [ -n "$IPA_PATH" ]; then
+          cp "$IPA_PATH" MQGram.ipa
+          echo "✅ IPA found at $IPA_PATH"
+        else
+          echo "❌ IPA not found in bazel-bin"
+          # Пробуем найти .app и упаковать если .ipa не создался
+          APP_PATH=$(find bazel-bin -name "Swiftgram.app" -type d | head -n 1)
+          if [ -n "$APP_PATH" ]; then
+            echo "📦 Packaging .app into .ipa manually..."
+            mkdir -p Payload
+            cp -R "$APP_PATH" Payload/
+            zip -r MQGram.ipa Payload
+            echo "✅ Manually created MQGram.ipa"
+          else
+            echo "❌ Swiftgram.app not found either"
+            exit 1
+          fi
+        fi
+
     - name: Check Results
       if: always()
       run: |
         echo "### 📊 MQGram Build Report" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        if grep -q "Build completed successfully" build_output.log; then
-          echo "✅ BUILD SUCCESSFUL" >> $GITHUB_STEP_SUMMARY
+        if [ -f MQGram.ipa ]; then
+          echo "✅ BUILD SUCCESSFUL: IPA created" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ BUILD FAILED" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -77,6 +101,13 @@ EOF
         echo '```' >> $GITHUB_STEP_SUMMARY
         tail -n 50 build_output.log >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload IPA
+      if: success() && hashFiles('MQGram.ipa') != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: MQGram-IPA
+        path: MQGram.ipa
 
     - name: Upload Build Log
       if: always()
