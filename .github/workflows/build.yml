@@ -31,14 +31,15 @@ jobs:
 
     - name: Patch BUILD files
       run: |
-        # Добавляем load("@rules_shell//shell:sh.bzl", "sh_binary") в Telegram/BUILD
-        # Используем временный файл для надежности
-        echo 'load("@rules_shell//shell:sh.bzl", "sh_binary")' > Telegram/BUILD.new
-        cat Telegram/BUILD >> Telegram/BUILD.new
-        mv Telegram/BUILD.new Telegram/BUILD
+        # Вместо внешнего rules_shell используем нативные правила, которые обычно доступны
+        # Если sh_binary не определен, это странно для Bazel, но попробуем убрать патч
+        # и просто собрать основную цель
+        git checkout Telegram/BUILD
         
-        # Проверяем наличие цели Swiftgram (она может называться по-другому, например Telegram)
-        grep "name = \"Swiftgram\"" Telegram/BUILD || sed -i '' 's/name = "Telegram"/name = "Swiftgram"/g' Telegram/BUILD
+        # Проверяем как на самом деле называется основная цель
+        TARGET=$(grep -E "ios_application\(|ios_application_bundle\(" -B 5 Telegram/BUILD | grep "name =" | head -n 1 | cut -d'"' -f2)
+        echo "Detected target: $TARGET"
+        echo "TARGET=$TARGET" >> $GITHUB_ENV
 
     - name: Prepare Build Configuration
       run: |
@@ -47,9 +48,9 @@ jobs:
         echo 'module(name = "build_configuration")' > build-input/configuration-repository/MODULE.bazel
         touch WORKSPACE
 
-    - name: Build MQGram IPA (Bazel)
+    - name: Build MQGram (Bazel)
       run: |
-        # Пытаемся собрать Swiftgram
+        # Собираем основную цель (обычно Telegram или Swiftgram)
         bazel build \
           --jobs=$(sysctl -n hw.ncpu) \
           --announce_rc \
@@ -57,7 +58,7 @@ jobs:
           --check_direct_dependencies=off \
           --define=buildNumber=1 \
           --apple_generate_dsym=false \
-          //Telegram:Swiftgram \
+          //Telegram:${{ env.TARGET }} \
           2>&1 | tee build_output.log
 
     - name: Locate and Rename IPA
