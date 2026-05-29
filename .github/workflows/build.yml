@@ -9,14 +9,17 @@ on:
 
 jobs:
   build:
-    runs-on: macos-13
+    runs-on: macos-15
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
         fetch-depth: 0
+
+    - name: Set up Bazel
+      uses: bazelbuild/setup-bazelisk@v3
 
     - name: System Info
       run: |
@@ -24,75 +27,56 @@ jobs:
         echo "💾 Xcode $(xcode-select -p)"
         xcodebuild -version
         echo "🔧 CPU cores: $(sysctl -n hw.ncpu)"
+        bazel --version
 
-    - name: Clean
+    - name: Prepare Build Configuration
       run: |
-        rm -rf ~/Library/Developer/Xcode/DerivedData 2>/dev/null || true
-        rm -rf build 2>/dev/null || true
+        # Используем пример конфигурации для сборки
+        mkdir -p build-input/configuration-repository
+        cp -R build-system/example-configuration/* build-input/configuration-repository/
+        
+        # Создаем пустой WORKSPACE если его нет (Bazel требует его наличия)
+        touch WORKSPACE
 
-    - name: Build MQGram
+    - name: Build MQGram (Bazel)
       run: |
-        cd "${{ github.workspace }}"
-        
-        # Проверяем что workspace существует
-        ls -la Telegram/ | grep xcworkspace || echo "Workspace not found"
-        
-        # Пробуем собрать
-        xcodebuild \
-          -workspace Telegram/Telegram.xcworkspace \
-          -scheme Telegram \
-          -configuration Release \
-          -arch arm64 \
-          -derivedDataPath build \
-          -quiet \
+        # Собираем основную цель Swiftgram
+        bazel build \
+          --jobs=$(sysctl -n hw.ncpu) \
+          --local_ram_resources=12288 \
+          --announce_rc \
+          --verbose_failures \
+          --define=buildNumber=1 \
+          --apple_generate_dsym=false \
+          //Telegram:Swiftgram \
           2>&1 | tee build_output.log
       
-      continue-on-error: true
-
     - name: Check Results
-      if: always()
-      run: |
-        echo "📊 Build Results:"
-        echo ""
-        
-        if [ -f build_output.log ]; then
-          if grep -i "error:" build_output.log; then
-            echo "❌ ERRORS FOUND"
-            echo ""
-            echo "First 5 errors:"
-            grep -i "error:" build_output.log | head -5
-          elif grep -q "Build complete" build_output.log || tail -50 build_output.log | grep -q "succeeded"; then
-            echo "✅ BUILD SUCCESSFUL"
-          else
-            echo "⚠️ UNKNOWN STATUS - Last 30 lines:"
-            tail -30 build_output.log
-          fi
-        else
-          echo "No build log found"
-        fi
-
-    - name: Upload Build Log
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: build-log
-        path: build_output.log
-        if-no-files-found: ignore
-
-    - name: Summary
       if: always()
       run: |
         echo "### 📊 MQGram Build Report" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Branch:** ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Runner:** macOS 13" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
         
-        if [ -f build_output.log ]; then
-          LAST_LINES=$(tail -20 build_output.log)
-          echo "**Build Output (last 20 lines):**" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "$LAST_LINES" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        if grep -q "Build completed successfully" build_output.log; then
+          echo "✅ BUILD SUCCESSFUL" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ BUILD FAILED" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Errors found:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -i "error:" build_output.log | head -n 20 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
         fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "#### Last 50 lines of output:" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        tail -n 50 build_output.log >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload Build Log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-log
+        path: build_output.log
