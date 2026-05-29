@@ -41,9 +41,9 @@ jobs:
     - name: Build MQGram (Bazel)
       run: |
         # Собираем основную цель Swiftgram
+        # Убрана опция --local_ram_resources, так как она не поддерживается в этой версии Bazel
         bazel build \
           --jobs=$(sysctl -n hw.ncpu) \
-          --local_ram_resources=12288 \
           --announce_rc \
           --verbose_failures \
           --define=buildNumber=1 \
