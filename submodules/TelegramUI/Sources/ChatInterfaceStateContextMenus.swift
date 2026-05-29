@@ -1927,8 +1927,8 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             if editHistory != nil {
                 actions.append(.action(ContextMenuActionItem(text: "История редактирований", icon: { theme in
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/MessageDelete"), color: theme.actionSheet.primaryTextColor)
-                }, iconSource: nil, action: { _, f in
-                    f(.dismissWithoutContent)
+                }, iconSource: nil, action: { action in
+                    action.dismissWithResult(.dismissWithoutContent)
                 })))
             }
         }
