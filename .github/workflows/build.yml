@@ -23,9 +23,25 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Set Xcode version
+        run: |
+          # В логах была ошибка: Found Icon Composer .icon bundles... supported on Xcode 26 or later.
+          # Проверяем доступные версии Xcode и выбираем самую новую
+          ls /Applications/ | grep Xcode
+          XCODE_PATH="/Applications/Xcode_26.app/Contents/Developer"
+          if [ -d "$XCODE_PATH" ]; then
+            sudo xcode-select -s "$XCODE_PATH"
+          else
+            # Если 26 нет, попробуем 25 или оставим дефолтную
+            XCODE_PATH=$(ls -d /Applications/Xcode_*.app/Contents/Developer | sort -V | tail -n 1)
+            if [ -n "$XCODE_PATH" ]; then
+              sudo xcode-select -s "$XCODE_PATH"
+            fi
+          fi
+          xcodebuild -version
+
       - name: Create build configuration
         run: |
-          # Используем дефолтные значения если секреты не заданы (для сборки без подписи)
           python3 - <<'EOF'
           import json, os
           cfg = {
@@ -55,7 +71,6 @@ jobs:
 
       - name: Build MQGram (release_arm64)
         run: |
-          # Используем Make.py как в успешном примере
           python3 -u build-system/Make/Make.py \
             --cacheDir="$HOME/telegram-bazel-cache" \
             --bazelUserRoot="$HOME/.cache/mqgram-bazel-user-root" \
@@ -70,7 +85,6 @@ jobs:
         if: always()
         run: |
           mkdir -p build/artifacts
-          # Ищем IPA в разных местах
           IPA_PATH=$(find bazel-bin -name "*.ipa" | head -n 1)
           if [ -n "$IPA_PATH" ]; then
             cp -L "$IPA_PATH" build/artifacts/MQGram.ipa
@@ -82,7 +96,6 @@ jobs:
               echo "✅ Found IPA at $CANDIDATE"
             else
               echo "❌ IPA not found"
-              # Пытаемся упаковать .app если есть
               APP_PATH=$(find bazel-bin -name "*.app" -type d | head -n 1)
               if [ -n "$APP_PATH" ]; then
                 mkdir -p Payload
