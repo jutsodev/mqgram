@@ -362,6 +362,7 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
             interaction.openSettings(.businessSetup)
         }))
     }
+    let sgWebSettings = context.currentAppConfiguration.with { $0 }.sgWebSettings
     if let starsState = data.starsState {
         let sgWebSettings = context.currentAppConfiguration.with { $0 }.sgWebSettings
         if (!isPremiumDisabled || starsState.balance > StarsAmount.zero) && sgWebSettings.global.canGrant {
